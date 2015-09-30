@@ -1,8 +1,13 @@
 from __future__ import print_function
 
 import itertools
+import exceptions
 
 from _cdb2api import ffi, lib
+
+apilevel = "2.0"
+threadsafety = 1
+paramstyle = "comdb2"
 
 CONVERTER = {
     lib.CDB2_INTEGER: lambda x: ffi.cast("int *", x)[0],
@@ -14,9 +19,39 @@ CONVERTER = {
     # CDB2_INTERVALDS: 
 }
 
+class Error(exceptions.StandardError):
+    pass
+
+class Warning(exceptions.StandardError):
+    pass
+
+class InterfaceError(Error):
+    pass
+
+class DatabaseError(Error):
+    pass
+
+class InternalError(DatabaseError):
+    pass
+
+class OperationalError(DatabaseError):
+    pass
+
+class ProgrammingError(DatabaseError):
+    pass
+
+class IntegrityError(DatabaseError):
+    pass
+
+class DataError(DatabaseError):
+    pass
+
+class NotSupportedError(DatabaseError):
+    pass
+
 def _check_rc(rc):
     if rc != lib.CDB2_OK:
-        raise Exception("FAIL!")
+        raise Error("FAIL!")
 
 def connect(database_name, tier="default"):
     handle = ffi.new("struct cdb2_hndl **")
@@ -30,11 +65,19 @@ class Connection(object):
     def __init__(self, _connection):
         self._connection = _connection
 
-    def cursor(self):
-        return Cursor(self._connection)
-
     def close(self):
         _check_rc(lib.cdb2_close(self._connection[0]))
+
+    def commit(self):
+        cursor = self.cursor()
+        cursor.execute("COMMIT")
+
+    def rollback(self):
+        cursor = self.cursor()
+        cursor.execute("ROLLBACK")
+
+    def cursor(self):
+        return Cursor(self._connection)
 
 
 class Cursor(object):
@@ -74,7 +117,7 @@ class Cursor(object):
         elif rc == lib.CDB2_OK_DONE:
             self._valid = False
         else:
-            raise Exception("Fail!")
+            raise Error("Fail!")
 
     def _num_columns(self):
         return lib.cdb2_numcolumns(self._connection[0])
