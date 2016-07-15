@@ -11,7 +11,8 @@ ffi.cdef("""
     enum cdb2_hndl_alloc_flags {
         CDB2_READ_INTRANS_RESULTS = 2,
         CDB2_DIRECT_CPU           = 4,
-        CDB2_DBINFO_BUFFER        = 8
+        CDB2_RANDOM               = 8,
+        CDB2_RANDOMROOM           = 16
     };
 
     enum cdb2_request_type {
@@ -22,7 +23,7 @@ ffi.cdef("""
 
     enum cdb2_errors {
         CDB2_OK                    =  0,
-        CDB2_OK_DONE               =  1,   
+        CDB2_OK_DONE               =  1,
         CDB2ERR_CONNECT_ERROR      = -1,
         CDB2ERR_NOTCONNECTED       = -2,
         CDB2ERR_PREPARE_ERROR      = -3,
@@ -77,13 +78,13 @@ ffi.cdef("""
       CDB2_MAX_SERVER_KEY_SIZE=512,
       CDB2_MAX_CLIENT_KEY_SIZE=256,
       CDB2_MAX_ASK_ARRAY=1024,
-      CDB2_MAX_ASK_SEGS=511,
+      CDB2_MAX_ASK_SEGS=511, // (CDB2_MAX_ASK_ARRAY-2)/2,
       CDB2_MAX_BLOB_FIELDS=15,
       CDB2_MAX_TZNAME=36
     } ;
 
     /* New comdb2tm definition. */
-    typedef struct cdb2_tm 
+    typedef struct cdb2_tm
     {
       int tm_sec;
       int tm_min;
@@ -112,6 +113,13 @@ ffi.cdef("""
             char                tzname[CDB2_MAX_TZNAME];
     } cdb2_client_datetime_t;
 
+    /* microsecond-precision datetime type definition */
+    typedef struct cdb2_client_datetimeus {
+            cdb2_tm_t           tm;
+            unsigned int        usec;
+            char                tzname[CDB2_MAX_TZNAME];
+    } cdb2_client_datetimeus_t;
+
     /* interval types definition */
     typedef struct cdb2_client_intv_ym {
         int                 sign;       /* sign of the interval, +/-1 */
@@ -124,9 +132,18 @@ ffi.cdef("""
         unsigned int        days;       /* interval days    */
         unsigned int        hours;      /* interval hours   */
         unsigned int        mins;       /* interval minutes */
-        unsigned int        sec;        /* interval msec    */
+        unsigned int        sec;        /* interval sec     */
         unsigned int        msec;       /* msec             */
     } cdb2_client_intv_ds_t;
+
+    typedef struct cdb2_client_intv_dsus {
+        int                 sign;       /* sign of the interval, +/-1 */
+        unsigned int        days;       /* interval days    */
+        unsigned int        hours;      /* interval hours   */
+        unsigned int        mins;       /* interval minutes */
+        unsigned int        sec;        /* interval sec     */
+        unsigned int        usec;       /* usec             */
+    } cdb2_client_intv_dsus_t;
 
     typedef enum cdb2_coltype {
         CDB2_INTEGER   = 1,
@@ -135,12 +152,14 @@ ffi.cdef("""
         CDB2_BLOB      = 4,
         CDB2_DATETIME  = 6,
         CDB2_INTERVALYM= 7,
-        CDB2_INTERVALDS= 8
+        CDB2_INTERVALDS= 8,
+        CDB2_DATETIMEUS= 9,
+        CDB2_INTERVALDSUS=10
     } cdb2_coltype;
 
     typedef struct cdb2_hndl cdb2_hndl_tp;
     typedef struct cdb2_effects_type cdb2_effects_tp;
-    typedef struct cdb2_effects_type effects_tp; 
+    typedef struct cdb2_effects_type effects_tp;
 
     void cdb2_set_comdb2db_config(char *cfg_file);
     void cdb2_set_comdb2db_info(char *cfg_info);
@@ -169,6 +188,10 @@ ffi.cdef("""
     int cdb2_bind_param(cdb2_hndl_tp *hndl, const char *name, int type, const void *varaddr, int length);
     int cdb2_bind_index(cdb2_hndl_tp *hndl, int index, int type, const void *varaddr, int length);
     int cdb2_clearbindings(cdb2_hndl_tp *hndl);
+
+    /* SOCKPOOL CLIENT APIS */
+    int cdb2_socket_pool_get(const char *typestr, int dbnum, int *port); /* returns the fd.*/
+    void cdb2_socket_pool_donate_ext(const char* typestr, int fd, int ttl, int dbnum, int flags, void *destructor, void *voidargs);
 
     const char* cdb2_dbname(cdb2_hndl_tp* hndl);
 """)
