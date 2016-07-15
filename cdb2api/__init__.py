@@ -53,17 +53,20 @@ def _check_rc(rc):
     if rc != lib.CDB2_OK:
         raise Error("FAIL!")
 
-def connect(database_name, tier="default"):
-    handle = ffi.new("struct cdb2_hndl **")
-    _check_rc(lib.cdb2_open(handle, database_name, tier, 0))
-
-    return Connection(handle)
+def connect(*args, **kwargs):
+    return Connection(*args, **kwargs)
 
 
 class Connection(object):
+    def __init__(self, database_name, tier="default", autocommit=False):
+        if not autocommit:
+            raise NotSupportedError("Only autocommit mode is supported")
 
-    def __init__(self, _connection):
-        self._connection = _connection
+        self._connection = ffi.new("struct cdb2_hndl **")
+        rc = lib.cdb2_open(self._connection, database_name, tier, 0)
+        if rc != lib.CDB2_OK:
+            errmsg = ffi.string(lib.cdb2_errstr(self._connection[0]))
+            raise OperationalError(errmsg)
 
     def close(self):
         _check_rc(lib.cdb2_close(self._connection[0]))
