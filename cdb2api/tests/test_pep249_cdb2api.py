@@ -304,3 +304,10 @@ def test_fetchmany():
     cursor.arraysize = 4
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
     assert cursor.fetchmany() == [(1,), (2,), (3,)]
+
+
+def test_consuming_result_sets_automatically():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
+    cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
