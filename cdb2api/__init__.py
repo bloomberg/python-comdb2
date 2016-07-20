@@ -2,7 +2,6 @@ import itertools
 import datetime
 import re
 
-from ._cdb2api import lib
 import cdb2api
 
 __all__ = ['apilevel', 'threadsafety', 'paramstyle',
@@ -34,10 +33,10 @@ class _TypeObject(object):
         else:
             return -1
 
-STRING = _TypeObject(lib.CDB2_CSTRING)
-BINARY = _TypeObject(lib.CDB2_BLOB)
-NUMBER = _TypeObject(lib.CDB2_INTEGER, lib.CDB2_REAL)
-DATETIME = _TypeObject(lib.CDB2_DATETIME, lib.CDB2_DATETIMEUS)
+STRING = _TypeObject(cdb2api.TYPE['CSTRING'])
+BINARY = _TypeObject(cdb2api.TYPE['BLOB'])
+NUMBER = _TypeObject(cdb2api.TYPE['INTEGER'], cdb2api.TYPE['REAL'])
+DATETIME = _TypeObject(cdb2api.TYPE['DATETIME'], cdb2api.TYPE['DATETIMEUS'])
 ROWID = STRING
 
 # comdb2 doesn't support Date or Time, so I'm not defining them.

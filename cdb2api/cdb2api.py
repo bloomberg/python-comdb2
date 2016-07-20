@@ -3,12 +3,18 @@ from datetime import datetime
 import pytz
 import six
 
-__all__ = ['Error', 'Handle', 'DatetimeUs', 'Binary', 'ERROR_CODE']
+__all__ = ['Error', 'Handle', 'DatetimeUs', 'Binary', 'ERROR_CODE', 'TYPE']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
 ERROR_CODE = {k[len('CDB2ERR_'):]: v
               for k, v in ffi.typeof('enum cdb2_errors').relements.items()
               if k.startswith('CDB2ERR_')}
+
+# Pull comdb2 column types from cdb2api.h into our namespace
+TYPE = {k[len('CDB2_'):]: v
+        for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
+        if k.startswith('CDB2_')}
+
 
 class DatetimeUs(datetime):
     '''DatetimeUs parameters to Cursor.execute will give microsecond precision.
