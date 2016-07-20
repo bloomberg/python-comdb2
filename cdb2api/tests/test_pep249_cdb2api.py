@@ -203,6 +203,42 @@ def test_all_datatypes_as_parameters():
     assert cursor.fetchone() == None
 
 
+def test_naive_datetime_as_parameter():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    params = (
+        ("short_col", 32767),
+        ("u_short_col", 65535),
+        ("int_col", 2147483647),
+        ("u_int_col", 4294967295),
+        ("longlong_col", 9223372036854775807),
+        ("float_col", .125),
+        ("double_col", 2.**65),
+        ("byte_col", Binary(b'\x00')),
+        ("byte_array_col", Binary(b'\x02\x01\x00\x01\x02')),
+        ("cstring_col", 'HELLO'),
+        ("pstring_col", 'GOODBYE'),
+        ("blob_col", Binary('')),
+        ("datetime_col", Datetime(2009, 2, 13, 18, 31, 30, 234000)),
+        ("vutf8_col", "foo"*50)
+    )
+    cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
+                   " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
+                   " %(u_int_col)s, %(longlong_col)s, %(float_col)s,"
+                   " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
+                   " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
+                   " %(datetime_col)s, %(vutf8_col)s)", dict(params))
+
+    conn.commit()
+
+    cursor.execute("select * from all_datatypes")
+    row = list(cursor.fetchone())
+    assert row[12] == Datetime(2009, 2, 13, 18, 31, 30, 234000,
+                               pytz.timezone("America/New_York"))
+    row[12] = row[12].replace(tzinfo=None)
+    assert row == list(v for k,v in params)
+
+
 def test_retrieving_null():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()

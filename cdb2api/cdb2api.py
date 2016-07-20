@@ -117,7 +117,8 @@ def _cdb2_client_datetime_common(val, ptr):
     ptr.tm.tm_wday = struct_time.tm_wday
     ptr.tm.tm_yday = struct_time.tm_yday - 1
     ptr.tm.tm_isdst = struct_time.tm_isdst
-    ptr.tzname = val.tzname()
+    if val.tzname() is not None:
+        ptr.tzname = val.tzname()
 
 
 def _cdb2_client_datetime_t(val):
