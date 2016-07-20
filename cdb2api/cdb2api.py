@@ -215,6 +215,8 @@ class Handle(object):
 
     def get_effects(self):
         effects = ffi.new("cdb2_effects_tp *")
+        self._more_rows_available = False
+        # XXX cdb2_get_effects consumes any remaining rows implicitly
         rc = lib.cdb2_get_effects(self._hndl, effects)
         _check_rc(rc, self._hndl)
         return (effects.num_affected,
