@@ -98,51 +98,53 @@ class NotSupportedError(DatabaseError):
 
 
 _EXCEPTION_BY_RC = {
-    lib.CDB2ERR_CONNECT_ERROR         : OperationalError,
-    lib.CDB2ERR_NOTCONNECTED          : ProgrammingError,
-    lib.CDB2ERR_PREPARE_ERROR         : ProgrammingError,
-    lib.CDB2ERR_IO_ERROR              : OperationalError,
-    lib.CDB2ERR_INTERNAL              : InternalError,
-    lib.CDB2ERR_NOSTATEMENT           : ProgrammingError,
-    lib.CDB2ERR_BADCOLUMN             : ProgrammingError,
-    lib.CDB2ERR_BADSTATE              : ProgrammingError,
-    lib.CDB2ERR_ASYNCERR              : OperationalError,
+    cdb2api.ERROR_CODE['CONNECT_ERROR']         : OperationalError,
+    cdb2api.ERROR_CODE['NOTCONNECTED']          : ProgrammingError,
+    cdb2api.ERROR_CODE['PREPARE_ERROR']         : ProgrammingError,
+    cdb2api.ERROR_CODE['IO_ERROR']              : OperationalError,
+    cdb2api.ERROR_CODE['INTERNAL']              : InternalError,
+    cdb2api.ERROR_CODE['NOSTATEMENT']           : ProgrammingError,
+    cdb2api.ERROR_CODE['BADCOLUMN']             : ProgrammingError,
+    cdb2api.ERROR_CODE['BADSTATE']              : ProgrammingError,
+    cdb2api.ERROR_CODE['ASYNCERR']              : OperationalError,
 
-    lib.CDB2ERR_INVALID_ID            : InternalError,
-    lib.CDB2ERR_RECORD_OUT_OF_RANGE   : OperationalError,
+    cdb2api.ERROR_CODE['INVALID_ID']            : InternalError,
+    cdb2api.ERROR_CODE['RECORD_OUT_OF_RANGE']   : OperationalError,
 
-    lib.CDB2ERR_REJECTED              : OperationalError,
-    lib.CDB2ERR_STOPPED               : OperationalError,
-    lib.CDB2ERR_BADREQ                : OperationalError,
-    lib.CDB2ERR_DBCREATE_FAILED       : OperationalError,
+    cdb2api.ERROR_CODE['REJECTED']              : OperationalError,
+    cdb2api.ERROR_CODE['STOPPED']               : OperationalError,
+    cdb2api.ERROR_CODE['BADREQ']                : OperationalError,
+    cdb2api.ERROR_CODE['DBCREATE_FAILED']       : OperationalError,
 
-    lib.CDB2ERR_THREADPOOL_INTERNAL   : OperationalError,
-    lib.CDB2ERR_READONLY              : NotSupportedError,
+    cdb2api.ERROR_CODE['THREADPOOL_INTERNAL']   : OperationalError,
+    cdb2api.ERROR_CODE['READONLY']              : NotSupportedError,
 
-    lib.CDB2ERR_NOMASTER              : InternalError,
-    lib.CDB2ERR_UNTAGGED_DATABASE     : NotSupportedError,
-    lib.CDB2ERR_CONSTRAINTS           : IntegrityError,
-    lib.CDB2ERR_DEADLOCK              : OperationalError,
+    cdb2api.ERROR_CODE['NOMASTER']              : InternalError,
+    cdb2api.ERROR_CODE['UNTAGGED_DATABASE']     : NotSupportedError,
+    cdb2api.ERROR_CODE['CONSTRAINTS']           : IntegrityError,
+    cdb2api.ERROR_CODE['DEADLOCK']              : OperationalError,
 
-    lib.CDB2ERR_TRAN_IO_ERROR         : OperationalError,
-    lib.CDB2ERR_ACCESS                : OperationalError,
+    cdb2api.ERROR_CODE['TRAN_IO_ERROR']         : OperationalError,
+    cdb2api.ERROR_CODE['ACCESS']                : OperationalError,
 
-    lib.CDB2ERR_TRAN_MODE_UNSUPPORTED : NotSupportedError,
+    cdb2api.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
 
-    lib.CDB2ERR_VERIFY_ERROR          : OperationalError,
-    lib.CDB2ERR_FKEY_VIOLATION        : IntegrityError,
-    lib.CDB2ERR_NULL_CONSTRAINT       : IntegrityError,
-    lib.CDB2_OK_DONE                  : IntegrityError,
+    cdb2api.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
+    cdb2api.ERROR_CODE['FKEY_VIOLATION']        : IntegrityError,
+    cdb2api.ERROR_CODE['NULL_CONSTRAINT']       : IntegrityError,
 
-    lib.CDB2ERR_CONV_FAIL             : DataError,
-    lib.CDB2ERR_NONKLESS              : NotSupportedError,
-    lib.CDB2ERR_MALLOC                : OperationalError,
-    lib.CDB2ERR_NOTSUPPORTED          : NotSupportedError,
+    cdb2api.ERROR_CODE['CONV_FAIL']             : DataError,
+    cdb2api.ERROR_CODE['NONKLESS']              : NotSupportedError,
+    cdb2api.ERROR_CODE['MALLOC']                : OperationalError,
+    cdb2api.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
 
-    lib.CDB2ERR_DUPLICATE             : IntegrityError,
-    lib.CDB2ERR_TZNAME_FAIL           : DataError,
+    cdb2api.ERROR_CODE['DUPLICATE']             : IntegrityError,
+    cdb2api.ERROR_CODE['TZNAME_FAIL']           : DataError,
 
-    lib.CDB2ERR_UNKNOWN               : OperationalError,
+    cdb2api.ERROR_CODE['UNKNOWN']               : OperationalError,
+
+    # XXX This is returned for duplicates, despite not being an error code...
+    1                                           : IntegrityError,
 }
 
 
