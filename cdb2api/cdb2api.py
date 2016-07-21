@@ -264,7 +264,7 @@ class Handle(object):
 
             typecode, ptr, size = _bind_args(val)
 
-            params_cdata.append(ptr)
+            params_cdata.append((key, ptr))
             rc = lib.cdb2_bind_param(self._hndl, key, typecode, ptr, size)
             _check_rc(rc, self._hndl)
 
