@@ -253,8 +253,8 @@ class Handle(object):
                         "%s() called on closed connection" % func_name)
 
     def _consume_all_rows(self):
-        for row in self:
-            pass
+        while self._more_rows_available:
+            self._next_record()
 
     def _bind_params(self, parameters):
         params_cdata = []
