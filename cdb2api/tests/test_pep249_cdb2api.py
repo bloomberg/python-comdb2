@@ -159,9 +159,9 @@ def test_inserting_one_row_with_all_datatypes_without_parameters():
 
     row = cursor.fetchone()
     assert row == (1, 2, 3, 4, 5, 0.5, 0.25,
-                   bytearray('\x01'), bytearray('\x01\x02\x03\x04\x05'),
+                   Binary('\x01'), Binary('\x01\x02\x03\x04\x05'),
                    'hello', 'goodbye',
-                   bytearray('\x01\x02\x03\x04\x05\x06\x07'),
+                   Binary('\x01\x02\x03\x04\x05\x06\x07'),
                    Datetime(2009, 2, 13, 18, 31, 30, 234000,
                             pytz.timezone("America/New_York")),
                    "hello world")
