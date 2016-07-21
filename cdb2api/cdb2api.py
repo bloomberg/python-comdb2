@@ -162,6 +162,12 @@ class Handle(object):
         self._hndl_p = None
         self._hndl = None
 
+        if not isinstance(database_name, bytes):
+            database_name = database_name.encode('utf-8')  # Python 3
+
+        if not isinstance(tier, bytes):
+            tier = tier.encode('utf-8')  # Python 3
+
         self._hndl_p = ffi.new("struct cdb2_hndl **")
         rc = lib.cdb2_open(self._hndl_p, database_name, tier, 0)
         if rc != lib.CDB2_OK:
@@ -184,6 +190,9 @@ class Handle(object):
     def execute(self, sql, parameters=None):
         self._check_closed('execute')
         self._consume_all_rows()
+
+        if not isinstance(sql, bytes):
+            sql = sql.encode('utf-8')  # Python 3
 
         try:
             if parameters is not None:
