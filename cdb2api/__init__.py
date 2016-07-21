@@ -195,6 +195,18 @@ class Connection(object):
         self._active_cursor = Cursor(self._hndl)
         return self._active_cursor
 
+    # Optional DB API Extension
+    Error = Error
+    Warning = Warning
+    InterfaceError = InterfaceError
+    DatabaseError = DatabaseError
+    InternalError = InternalError
+    OperationalError = OperationalError
+    ProgrammingError = ProgrammingError
+    IntegrityError = IntegrityError
+    DataError = DataError
+    NotSupportedError = NotSupportedError
+
 
 class Cursor(object):
     def __init__(self, hndl):
