@@ -44,8 +44,7 @@ class DatetimeUs(datetime):
         return self.combine(ret.date(), ret.timetz())
 
 
-class Binary(bytes):
-    pass
+Binary = bytes
 
 
 class Error(RuntimeError):
@@ -82,9 +81,9 @@ def _comdb2_to_py(typecode, val, size):
     if typecode == lib.CDB2_REAL:
         return ffi.cast("double *", val)[0]
     if typecode == lib.CDB2_BLOB:
-        return Binary(ffi.buffer(val, size)[:])
+        return Binary(ffi.buffer(val, size))
     if typecode == lib.CDB2_CSTRING:
-        return ffi.string(ffi.cast("char *", val))
+        return unicode(ffi.buffer(val, size-1), "utf-8")
     if typecode == lib.CDB2_DATETIMEUS:
         return _datetimeus(ffi.cast("cdb2_client_datetimeus_t *", val))
     if typecode == lib.CDB2_DATETIME:
@@ -143,8 +142,9 @@ def _bind_args(val):
     elif isinstance(val, float):
         return lib.CDB2_REAL, ffi.new("double *", val), 8
     elif isinstance(val, Binary):
-        return lib.CDB2_BLOB, bytes(val), len(val)
-    elif isinstance(val, bytes):
+        return lib.CDB2_BLOB, val, len(val)
+    elif isinstance(val, unicode):
+        val = val.encode('utf-8')
         return lib.CDB2_CSTRING, val, len(val)
     elif isinstance(val, DatetimeUs):
         return (lib.CDB2_DATETIMEUS, _cdb2_client_datetimeus_t(val),
