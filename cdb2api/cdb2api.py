@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 import six
 
-__all__ = ['Error', 'Handle', 'DatetimeUs', 'Binary', 'ERROR_CODE', 'TYPE']
+__all__ = ['Error', 'Handle', 'DatetimeUs', 'ERROR_CODE', 'TYPE']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
 ERROR_CODE = {k[len('CDB2ERR_'):]: v
@@ -44,9 +44,6 @@ class DatetimeUs(datetime):
         return self.combine(ret.date(), ret.timetz())
 
 
-Binary = bytes
-
-
 class Error(RuntimeError):
     def __init__(self, error_code, error_message):
         self.error_code = error_code
@@ -81,7 +78,7 @@ def _comdb2_to_py(typecode, val, size):
     if typecode == lib.CDB2_REAL:
         return ffi.cast("double *", val)[0]
     if typecode == lib.CDB2_BLOB:
-        return Binary(ffi.buffer(val, size))
+        return bytes(ffi.buffer(val, size))
     if typecode == lib.CDB2_CSTRING:
         return unicode(ffi.buffer(val, size-1), "utf-8")
     if typecode == lib.CDB2_DATETIMEUS:
@@ -141,7 +138,7 @@ def _bind_args(val):
         return lib.CDB2_INTEGER, ffi.new("int64_t *", val), 8
     elif isinstance(val, float):
         return lib.CDB2_REAL, ffi.new("double *", val), 8
-    elif isinstance(val, Binary):
+    elif isinstance(val, bytes):
         return lib.CDB2_BLOB, val, len(val)
     elif isinstance(val, unicode):
         val = val.encode('utf-8')

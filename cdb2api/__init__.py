@@ -42,7 +42,7 @@ ROWID = STRING
 # comdb2 doesn't support Date or Time, so I'm not defining them.
 Datetime = datetime.datetime
 DatetimeUs = cdb2api.DatetimeUs
-Binary = cdb2api.Binary
+Binary = bytes
 Timestamp = Datetime
 TimestampUs = DatetimeUs
 
