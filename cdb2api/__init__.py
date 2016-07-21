@@ -192,7 +192,7 @@ class Connection(object):
         if self._active_cursor is not None:
             if not self._active_cursor._closed:
                 self._active_cursor.close()
-        self._active_cursor = Cursor(self._hndl)
+        self._active_cursor = Cursor(self)
         return self._active_cursor
 
     # Optional DB API Extension
@@ -209,9 +209,10 @@ class Connection(object):
 
 
 class Cursor(object):
-    def __init__(self, hndl):
+    def __init__(self, conn):
         self.arraysize = 1
-        self._hndl = hndl
+        self._conn = conn
+        self._hndl = conn._hndl
         self._description = None
         self._closed = False
         self._in_transaction = False
@@ -230,6 +231,12 @@ class Cursor(object):
     def rowcount(self):
         self._check_closed()
         return self._rowcount
+
+    # Optional DB API Extension
+    @property
+    def connection(self):
+        self._check_closed()
+        return self._conn
 
     def close(self):
         self._check_closed()

@@ -64,7 +64,7 @@ def test_inserts():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     cursor.execute("insert into simple(key, val) values(1, 2)")
-    conn.commit()
+    cursor.connection.commit()
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
