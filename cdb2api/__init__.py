@@ -288,6 +288,9 @@ class Cursor(object):
             self._update_rowcount()
 
         self._load_description()
+        # Optional DB API Extension: execute's return value is unspecified.  We
+        # return an iterable over the rows, but this isn't portable across DBs.
+        return self
 
     def setinputsizes(self, sizes):
         self._check_closed()

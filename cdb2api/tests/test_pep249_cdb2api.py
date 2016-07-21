@@ -134,8 +134,8 @@ def test_implicit_rollback_on_connection_close():
 
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
-    cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [(1,2)]
+    rows = list(cursor.execute("select key, val from simple order by key"))
+    assert rows == [(1,2)]
 
 
 def test_inserting_one_row_with_all_datatypes_without_parameters():
