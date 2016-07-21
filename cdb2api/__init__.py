@@ -330,10 +330,12 @@ class Cursor(object):
             raise InterfaceError("No result set exists")
         return [x for x in self]
 
+    # Optional DB API Extension
     def __iter__(self):
         self._check_closed()
         return self._hndl
 
+    # Optional DB API Extension
     def next(self):
         try:
             return next(self._hndl)
