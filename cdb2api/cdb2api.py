@@ -213,8 +213,15 @@ class Handle(object):
         if not self._more_rows_available:
             raise StopIteration()
 
-        data = self._column_values()
-        self._next_record()
+        try:
+            data = self._column_values()
+            self._next_record()
+        except UnicodeDecodeError as e:
+            # Allow _consume_all_rows to raise.  Its error code is relevant,
+            # since it may indicate that the connection is no longer usable.
+            self._consume_all_rows()
+            # If it didn't, raise our own error for the failed UTF-8 decode.
+            raise Error(lib.CDB2ERR_CONV_FAIL, str(e))
 
         return data
 

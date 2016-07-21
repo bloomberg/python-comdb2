@@ -28,6 +28,11 @@ def delete_all_rows():
         conn.commit()
         if cursor.rowcount != 100:
             break
+    while True:
+        cursor.execute("delete from strings limit 100")
+        conn.commit()
+        if cursor.rowcount != 100:
+            break
     conn.close()
 
 
@@ -349,3 +354,19 @@ def test_consuming_result_sets_automatically():
     cursor = conn.cursor()
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
+
+
+def test_inserting_non_utf8_string():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+
+    cursor.execute("insert into strings values(cast(%(x)s as text), %(y)s)",
+                   dict(x=b'\x68\xeb\x6c\x6c\x6f', y=b'\x68\xeb\x6c\x6c\x6f'))
+    conn.commit()
+
+    with pytest.raises(DataError):
+        cursor.execute("select foo, bar from strings")
+        rows = list(cursor)
+
+    rows = list(cursor.execute("select cast(foo as blob), bar from strings"))
+    assert rows == [(b'\x68\xeb\x6c\x6c\x6f', b'\x68\xeb\x6c\x6c\x6f')]

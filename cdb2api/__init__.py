@@ -336,7 +336,7 @@ class Cursor(object):
     # Optional DB API Extension
     def __iter__(self):
         self._check_closed()
-        return self._hndl
+        return self
 
     # Optional DB API Extension
     def next(self):
