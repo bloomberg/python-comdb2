@@ -72,17 +72,6 @@ ffi.cdef("""
 
     };
 
-    enum cdb2_api_const
-    {
-        CDB2_MAX_KEYS=28,
-        CDB2_MAX_SERVER_KEY_SIZE=512,
-        CDB2_MAX_CLIENT_KEY_SIZE=256,
-        CDB2_MAX_ASK_ARRAY=1024,
-        CDB2_MAX_ASK_SEGS=511, // (CDB2_MAX_ASK_ARRAY-2)/2,
-        CDB2_MAX_BLOB_FIELDS=15,
-        CDB2_MAX_TZNAME=36
-    } ;
-
     /* New comdb2tm definition. */
     typedef struct cdb2_tm
     {
