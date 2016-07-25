@@ -144,7 +144,6 @@ ffi.cdef("""
 
     typedef struct cdb2_hndl cdb2_hndl_tp;
     typedef struct cdb2_effects_type cdb2_effects_tp;
-    typedef struct cdb2_effects_type effects_tp;
 
     void cdb2_set_comdb2db_config(char *cfg_file);
     void cdb2_set_comdb2db_info(char *cfg_info);
