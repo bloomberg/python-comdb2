@@ -9,67 +9,69 @@ ffi.set_source("_cdb2api",
     libraries=["cdb2api", "protobuf-c"])
 ffi.cdef("""
     enum cdb2_hndl_alloc_flags {
-        CDB2_READ_INTRANS_RESULTS = 2,
-        CDB2_DIRECT_CPU           = 4,
-        CDB2_RANDOM               = 8,
-        CDB2_RANDOMROOM           = 16
+        CDB2_READ_INTRANS_RESULTS,
+        CDB2_DIRECT_CPU,
+        CDB2_RANDOM,
+        CDB2_RANDOMROOM,
+        ...
     };
 
     enum cdb2_request_type {
-        CDB2_REQUEST_CDB2QUERY = 1,
-        CDB2_REQUEST_SQLQUERY = 2,
-        CDB2_REQUEST_DBINFO = 3
+        CDB2_REQUEST_CDB2QUERY,
+        CDB2_REQUEST_SQLQUERY,
+        CDB2_REQUEST_DBINFO,
+        ...
     };
 
     enum cdb2_errors {
-        CDB2_OK                    =  0,
-        CDB2_OK_DONE               =  1,
-        CDB2ERR_CONNECT_ERROR      = -1,
-        CDB2ERR_NOTCONNECTED       = -2,
-        CDB2ERR_PREPARE_ERROR      = -3,
-        CDB2ERR_IO_ERROR           = -4,
-        CDB2ERR_INTERNAL           = -5,
-        CDB2ERR_NOSTATEMENT        = -6,
-        CDB2ERR_BADCOLUMN          = -7,
-        CDB2ERR_BADSTATE           = -8,
-        CDB2ERR_ASYNCERR           = -9,
-        CDB2_OK_ASYNC              = -10,
+        CDB2_OK,
+        CDB2_OK_DONE,
+        CDB2ERR_CONNECT_ERROR,
+        CDB2ERR_NOTCONNECTED,
+        CDB2ERR_PREPARE_ERROR,
+        CDB2ERR_IO_ERROR,
+        CDB2ERR_INTERNAL,
+        CDB2ERR_NOSTATEMENT,
+        CDB2ERR_BADCOLUMN,
+        CDB2ERR_BADSTATE,
+        CDB2ERR_ASYNCERR,
+        CDB2_OK_ASYNC,
 
-        CDB2ERR_INVALID_ID              = -12,
-        CDB2ERR_RECORD_OUT_OF_RANGE     = -13,
+        CDB2ERR_INVALID_ID,
+        CDB2ERR_RECORD_OUT_OF_RANGE,
 
-        CDB2ERR_REJECTED                = -15,
-        CDB2ERR_STOPPED                 = -16,
-        CDB2ERR_BADREQ                  = -17,
-        CDB2ERR_DBCREATE_FAILED         = -18,
+        CDB2ERR_REJECTED,
+        CDB2ERR_STOPPED,
+        CDB2ERR_BADREQ,
+        CDB2ERR_DBCREATE_FAILED,
 
-        CDB2ERR_THREADPOOL_INTERNAL     = -20,  /* some error in threadpool code */
-        CDB2ERR_READONLY                = -21,
+        CDB2ERR_THREADPOOL_INTERNAL,  /* some error in threadpool code */
+        CDB2ERR_READONLY,
 
-        CDB2ERR_NOMASTER                = -101,
-        CDB2ERR_UNTAGGED_DATABASE       = -102,
-        CDB2ERR_CONSTRAINTS             = -103,
-        CDB2ERR_DEADLOCK                =  203,
+        CDB2ERR_NOMASTER,
+        CDB2ERR_UNTAGGED_DATABASE,
+        CDB2ERR_CONSTRAINTS,
+        CDB2ERR_DEADLOCK,
 
-        CDB2ERR_TRAN_IO_ERROR           = -105,
-        CDB2ERR_ACCESS                  = -106,
+        CDB2ERR_TRAN_IO_ERROR,
+        CDB2ERR_ACCESS,
 
-        CDB2ERR_TRAN_MODE_UNSUPPORTED   = -107,
+        CDB2ERR_TRAN_MODE_UNSUPPORTED,
 
-        CDB2ERR_VERIFY_ERROR            = 2,
-        CDB2ERR_FKEY_VIOLATION          = 3,
-        CDB2ERR_NULL_CONSTRAINT         = 4,
+        CDB2ERR_VERIFY_ERROR,
+        CDB2ERR_FKEY_VIOLATION,
+        CDB2ERR_NULL_CONSTRAINT,
 
-        CDB2ERR_CONV_FAIL               = 113,
-        CDB2ERR_NONKLESS                = 114,
-        CDB2ERR_MALLOC                  = 115,
-        CDB2ERR_NOTSUPPORTED            = 116,
+        CDB2ERR_CONV_FAIL,
+        CDB2ERR_NONKLESS,
+        CDB2ERR_MALLOC,
+        CDB2ERR_NOTSUPPORTED,
 
-        CDB2ERR_DUPLICATE               =  299,
-        CDB2ERR_TZNAME_FAIL             =  401,
+        CDB2ERR_DUPLICATE,
+        CDB2ERR_TZNAME_FAIL,
 
-        CDB2ERR_UNKNOWN                 =  300
-
+        CDB2ERR_UNKNOWN,
+        ...
     };
 
     /* New comdb2tm definition. */
@@ -135,15 +137,16 @@ ffi.cdef("""
     } cdb2_client_intv_dsus_t;
 
     typedef enum cdb2_coltype {
-        CDB2_INTEGER   = 1,
-        CDB2_REAL      = 2,
-        CDB2_CSTRING   = 3,
-        CDB2_BLOB      = 4,
-        CDB2_DATETIME  = 6,
-        CDB2_INTERVALYM= 7,
-        CDB2_INTERVALDS= 8,
-        CDB2_DATETIMEUS= 9,
-        CDB2_INTERVALDSUS=10
+        CDB2_INTEGER,
+        CDB2_REAL,
+        CDB2_CSTRING,
+        CDB2_BLOB,
+        CDB2_DATETIME,
+        CDB2_INTERVALYM,
+        CDB2_INTERVALDS,
+        CDB2_DATETIMEUS,
+        CDB2_INTERVALDSUS,
+        ...
     } cdb2_coltype;
 
     typedef struct cdb2_hndl cdb2_hndl_tp;
