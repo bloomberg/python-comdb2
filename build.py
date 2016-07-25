@@ -74,27 +74,27 @@ ffi.cdef("""
 
     enum cdb2_api_const
     {
-      CDB2_MAX_KEYS=28,
-      CDB2_MAX_SERVER_KEY_SIZE=512,
-      CDB2_MAX_CLIENT_KEY_SIZE=256,
-      CDB2_MAX_ASK_ARRAY=1024,
-      CDB2_MAX_ASK_SEGS=511, // (CDB2_MAX_ASK_ARRAY-2)/2,
-      CDB2_MAX_BLOB_FIELDS=15,
-      CDB2_MAX_TZNAME=36
+        CDB2_MAX_KEYS=28,
+        CDB2_MAX_SERVER_KEY_SIZE=512,
+        CDB2_MAX_CLIENT_KEY_SIZE=256,
+        CDB2_MAX_ASK_ARRAY=1024,
+        CDB2_MAX_ASK_SEGS=511, // (CDB2_MAX_ASK_ARRAY-2)/2,
+        CDB2_MAX_BLOB_FIELDS=15,
+        CDB2_MAX_TZNAME=36
     } ;
 
     /* New comdb2tm definition. */
     typedef struct cdb2_tm
     {
-      int tm_sec;
-      int tm_min;
-      int tm_hour;
-      int tm_mday;
-      int tm_mon;
-      int tm_year;
-      int tm_wday;
-      int tm_yday;
-      int tm_isdst;
+        int tm_sec;
+        int tm_min;
+        int tm_hour;
+        int tm_mday;
+        int tm_mon;
+        int tm_year;
+        int tm_wday;
+        int tm_yday;
+        int tm_isdst;
     }
     cdb2_tm_t;
 
@@ -108,16 +108,16 @@ ffi.cdef("""
 
     /* datetime type definition */
     typedef struct cdb2_client_datetime {
-            cdb2_tm_t           tm;
-            unsigned int        msec;
-            char                tzname[CDB2_MAX_TZNAME];
+        cdb2_tm_t           tm;
+        unsigned int        msec;
+        char                tzname[CDB2_MAX_TZNAME];
     } cdb2_client_datetime_t;
 
     /* microsecond-precision datetime type definition */
     typedef struct cdb2_client_datetimeus {
-            cdb2_tm_t           tm;
-            unsigned int        usec;
-            char                tzname[CDB2_MAX_TZNAME];
+        cdb2_tm_t           tm;
+        unsigned int        usec;
+        char                tzname[CDB2_MAX_TZNAME];
     } cdb2_client_datetimeus_t;
 
     /* interval types definition */
