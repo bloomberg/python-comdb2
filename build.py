@@ -16,13 +16,6 @@ ffi.cdef("""
         ...
     };
 
-    enum cdb2_request_type {
-        CDB2_REQUEST_CDB2QUERY,
-        CDB2_REQUEST_SQLQUERY,
-        CDB2_REQUEST_DBINFO,
-        ...
-    };
-
     enum cdb2_errors {
         CDB2_OK,
         CDB2_OK_DONE,
