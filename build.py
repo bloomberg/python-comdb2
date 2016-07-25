@@ -110,14 +110,14 @@ ffi.cdef("""
     typedef struct cdb2_client_datetime {
         cdb2_tm_t           tm;
         unsigned int        msec;
-        char                tzname[CDB2_MAX_TZNAME];
+        char                tzname[...];
     } cdb2_client_datetime_t;
 
     /* microsecond-precision datetime type definition */
     typedef struct cdb2_client_datetimeus {
         cdb2_tm_t           tm;
         unsigned int        usec;
-        char                tzname[CDB2_MAX_TZNAME];
+        char                tzname[...];
     } cdb2_client_datetimeus_t;
 
     /* interval types definition */
