@@ -240,16 +240,16 @@ class Handle(object):
                 effects.num_inserted)
 
     def column_names(self):
-        return tuple(ffi.string(lib.cdb2_column_name(self._hndl, i))
-                     for i in range(lib.cdb2_numcolumns(self._hndl)))
+        return [ffi.string(lib.cdb2_column_name(self._hndl, i))
+                for i in range(lib.cdb2_numcolumns(self._hndl))]
 
     def column_types(self):
-        return tuple(lib.cdb2_column_type(self._hndl, i)
-                     for i in range(lib.cdb2_numcolumns(self._hndl)))
+        return [lib.cdb2_column_type(self._hndl, i)
+                for i in range(lib.cdb2_numcolumns(self._hndl))]
 
     def _column_values(self):
-        return tuple(self._column_value(i)
-                     for i in range(lib.cdb2_numcolumns(self._hndl)))
+        return [self._column_value(i)
+                for i in range(lib.cdb2_numcolumns(self._hndl))]
 
     def _check_closed(self, func_name):
         if self._hndl is None:

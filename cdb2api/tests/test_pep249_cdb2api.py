@@ -75,7 +75,7 @@ def test_inserts():
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [(1,2)]
+    assert cursor.fetchall() == [[1,2]]
 
     # With params
     conn = connect('mattdb', 'dev')
@@ -85,7 +85,7 @@ def test_inserts():
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [(1,2),(3,4)]
+    assert cursor.fetchall() == [[1,2],[3,4]]
 
 
 def test_rollback():
@@ -129,7 +129,7 @@ def test_implicit_rollback_on_cursor_close():
 
     cursor = conn.cursor()
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [(1,2)]
+    assert cursor.fetchall() == [[1,2]]
 
 
 def test_implicit_rollback_on_connection_close():
@@ -142,7 +142,7 @@ def test_implicit_rollback_on_connection_close():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     rows = list(cursor.execute("select key, val from simple order by key"))
-    assert rows == [(1,2)]
+    assert rows == [[1,2]]
 
 
 def test_inserting_one_row_with_all_datatypes_without_parameters():
@@ -165,13 +165,13 @@ def test_inserting_one_row_with_all_datatypes_without_parameters():
         assert cursor.description[i][2:] == (None, None, None, None, None)
 
     row = cursor.fetchone()
-    assert row == (1, 2, 3, 4, 5, 0.5, 0.25,
+    assert row == [1, 2, 3, 4, 5, 0.5, 0.25,
                    Binary('\x01'), Binary('\x01\x02\x03\x04\x05'),
                    'hello', 'goodbye',
                    Binary('\x01\x02\x03\x04\x05\x06\x07'),
                    Datetime(2009, 2, 13, 18, 31, 30, 234000,
                             pytz.timezone("America/New_York")),
-                   "hello world")
+                   "hello world"]
     assert cursor.fetchone() == None
 
 
@@ -206,7 +206,7 @@ def test_all_datatypes_as_parameters():
 
     cursor.execute("select * from all_datatypes")
     row = cursor.fetchone()
-    assert row == tuple(v for k,v in params)
+    assert row == list(v for k,v in params)
     assert cursor.fetchone() == None
 
 
@@ -250,7 +250,7 @@ def test_retrieving_null():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     cursor.execute("select null, null")
-    assert cursor.fetchall() == [(None, None)]
+    assert cursor.fetchall() == [[None, None]]
 
 
 def test_retrieving_interval():
@@ -334,19 +334,19 @@ def test_fetchmany():
     cursor = conn.cursor()
 
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [(1,)]
-    assert cursor.fetchmany(2) == [(2,), (3,)]
+    assert cursor.fetchmany() == [[1,]]
+    assert cursor.fetchmany(2) == [[2,], [3,]]
     assert cursor.fetchmany(2) == []
     assert cursor.fetchmany(2) == []
 
     cursor.arraysize = 2
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [(1,), (2,)]
-    assert cursor.fetchmany() == [(3,)]
+    assert cursor.fetchmany() == [[1,], [2,]]
+    assert cursor.fetchmany() == [[3,]]
 
     cursor.arraysize = 4
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [(1,), (2,), (3,)]
+    assert cursor.fetchmany() == [[1,], [2,], [3,]]
 
 
 def test_consuming_result_sets_automatically():
@@ -369,4 +369,4 @@ def test_inserting_non_utf8_string():
         rows = list(cursor)
 
     rows = list(cursor.execute("select cast(foo as blob), bar from strings"))
-    assert rows == [(b'\x68\xeb\x6c\x6c\x6f', b'\x68\xeb\x6c\x6c\x6f')]
+    assert rows == [[b'\x68\xeb\x6c\x6c\x6f', b'\x68\xeb\x6c\x6c\x6f']]

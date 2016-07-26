@@ -54,7 +54,7 @@ def test_binding_parameters():
     assert hndl.get_effects()[0] == 1
 
     rows = list(hndl.execute("select key, val from simple order by key"))
-    assert rows == [(1,2),(3,4)]
+    assert rows == [[1,2],[3,4]]
 
 
 def test_commit_failures():
