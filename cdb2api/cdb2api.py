@@ -264,7 +264,6 @@ class Handle(object):
 
     def _column_value(self, i):
         val = lib.cdb2_column_value(self._hndl, i)
-        size = lib.cdb2_column_size(self._hndl, i)
         typecode = lib.cdb2_column_type(self._hndl, i)
 
         if val == ffi.NULL:
@@ -274,8 +273,10 @@ class Handle(object):
         if typecode == lib.CDB2_REAL:
             return ffi.cast("double *", val)[0]
         if typecode == lib.CDB2_BLOB:
+            size = lib.cdb2_column_size(self._hndl, i)
             return bytes(ffi.buffer(val, size))
         if typecode == lib.CDB2_CSTRING:
+            size = lib.cdb2_column_size(self._hndl, i)
             return unicode(ffi.buffer(val, size-1), "utf-8")
         if typecode == lib.CDB2_DATETIMEUS:
             return _datetimeus(ffi.cast("cdb2_client_datetimeus_t *", val))
