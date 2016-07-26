@@ -161,13 +161,20 @@ class Handle(object):
             self.close()
 
     def close(self):
-        self._check_closed('close')
+        self._more_rows_available = False
         lib.cdb2_close(self._hndl)
         self._hndl = None
         self._hndl_p = None
 
+        def closed_error(func_name):
+            raise Error(lib.CDB2ERR_NOTCONNECTED,
+                        "%s() called on closed connection" % func_name)
+
+        for func in ("close", "execute",
+                     "get_effects", "column_names", "column_types"):
+            setattr(self, func, lambda *a,**k: closed_error("close"))
+
     def execute(self, sql, parameters=None):
-        self._check_closed('execute')
         self._column_range = []
         self._consume_all_rows()
 
@@ -189,11 +196,9 @@ class Handle(object):
         return self
 
     def __iter__(self):
-        self._check_closed('__iter__')
         return self
 
     def __next__(self):
-        self._check_closed('__next__')
         if not self._more_rows_available:
             raise StopIteration()
 
@@ -230,11 +235,6 @@ class Handle(object):
     def column_types(self):
         return [lib.cdb2_column_type(self._hndl, i)
                 for i in self._column_range]
-
-    def _check_closed(self, func_name):
-        if self._hndl is None:
-            raise Error(lib.CDB2ERR_NOTCONNECTED,
-                        "%s() called on closed connection" % func_name)
 
     def _consume_all_rows(self):
         while self._more_rows_available:
