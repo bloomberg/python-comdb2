@@ -198,7 +198,7 @@ class Handle(object):
             raise StopIteration()
 
         try:
-            data = self._column_values()
+            data = [self._column_value(i) for i in self._column_range]
             self._next_record()
         except UnicodeDecodeError as e:
             # Allow _consume_all_rows to raise.  Its error code is relevant,
@@ -229,10 +229,6 @@ class Handle(object):
 
     def column_types(self):
         return [lib.cdb2_column_type(self._hndl, i)
-                for i in self._column_range]
-
-    def _column_values(self):
-        return [self._column_value(i)
                 for i in self._column_range]
 
     def _check_closed(self, func_name):
