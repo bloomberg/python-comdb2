@@ -154,6 +154,7 @@ class Handle(object):
             raise Error(rc, errstr)
 
         self._hndl = self._hndl_p[0]
+        self._column_range = []
 
     def __del__(self):
         if self._hndl is not None:
@@ -167,6 +168,7 @@ class Handle(object):
 
     def execute(self, sql, parameters=None):
         self._check_closed('execute')
+        self._column_range = []
         self._consume_all_rows()
 
         if not isinstance(sql, bytes):
@@ -183,6 +185,7 @@ class Handle(object):
 
         _check_rc(rc, self._hndl)
         self._next_record()
+        self._column_range = range(lib.cdb2_numcolumns(self._hndl))
         return self
 
     def __iter__(self):
@@ -222,15 +225,15 @@ class Handle(object):
 
     def column_names(self):
         return [ffi.string(lib.cdb2_column_name(self._hndl, i))
-                for i in range(lib.cdb2_numcolumns(self._hndl))]
+                for i in self._column_range]
 
     def column_types(self):
         return [lib.cdb2_column_type(self._hndl, i)
-                for i in range(lib.cdb2_numcolumns(self._hndl))]
+                for i in self._column_range]
 
     def _column_values(self):
         return [self._column_value(i)
-                for i in range(lib.cdb2_numcolumns(self._hndl))]
+                for i in self._column_range]
 
     def _check_closed(self, func_name):
         if self._hndl is None:
