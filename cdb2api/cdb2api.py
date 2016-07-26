@@ -70,25 +70,6 @@ def _datetimeus(ptr):
     return _construct_datetime(DatetimeUs, ptr.tm, ptr.usec, ptr.tzname)
 
 
-def _comdb2_to_py(typecode, val, size):
-    if val == ffi.NULL:
-        return None
-    if typecode == lib.CDB2_INTEGER:
-        return ffi.cast("int64_t *", val)[0]
-    if typecode == lib.CDB2_REAL:
-        return ffi.cast("double *", val)[0]
-    if typecode == lib.CDB2_BLOB:
-        return bytes(ffi.buffer(val, size))
-    if typecode == lib.CDB2_CSTRING:
-        return unicode(ffi.buffer(val, size-1), "utf-8")
-    if typecode == lib.CDB2_DATETIMEUS:
-        return _datetimeus(ffi.cast("cdb2_client_datetimeus_t *", val))
-    if typecode == lib.CDB2_DATETIME:
-        return _datetime(ffi.cast("cdb2_client_datetime_t *", val))
-    raise Error(lib.CDB2ERR_NOTSUPPORTED,
-                "Can't handle type %d returned by database!" % typecode)
-
-
 def _errstr(hndl):
     errstr = ffi.string(lib.cdb2_errstr(hndl))
     if not isinstance(errstr, str):
@@ -286,4 +267,20 @@ class Handle(object):
         val = lib.cdb2_column_value(self._hndl, i)
         size = lib.cdb2_column_size(self._hndl, i)
         typecode = lib.cdb2_column_type(self._hndl, i)
-        return _comdb2_to_py(typecode, val, size)
+
+        if val == ffi.NULL:
+            return None
+        if typecode == lib.CDB2_INTEGER:
+            return ffi.cast("int64_t *", val)[0]
+        if typecode == lib.CDB2_REAL:
+            return ffi.cast("double *", val)[0]
+        if typecode == lib.CDB2_BLOB:
+            return bytes(ffi.buffer(val, size))
+        if typecode == lib.CDB2_CSTRING:
+            return unicode(ffi.buffer(val, size-1), "utf-8")
+        if typecode == lib.CDB2_DATETIMEUS:
+            return _datetimeus(ffi.cast("cdb2_client_datetimeus_t *", val))
+        if typecode == lib.CDB2_DATETIME:
+            return _datetime(ffi.cast("cdb2_client_datetime_t *", val))
+        raise Error(lib.CDB2ERR_NOTSUPPORTED,
+                    "Can't handle type %d returned by database!" % typecode)
