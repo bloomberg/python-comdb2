@@ -5,6 +5,16 @@ ffi = FFI()
 ffi.set_source("_cdb2api",
     """
         #include <cdb2api.h>
+
+    /* Hacks for performance! For some reason these functions are much faster
+     * than, eg, ffi.cast("long long*", ptr)[0] */
+    long long integer_value(void *value) { return *(long long*)value; };
+    double real_value(void *value) { return *(double*)value; };
+    cdb2_client_datetime_t datetime_value(void *value) { return *(cdb2_client_datetime_t*)value; };
+    cdb2_client_intv_ym_t intervalym_value(void *value) { return *(cdb2_client_intv_ym_t*)value; };
+    cdb2_client_intv_ds_t intervalds_value(void *value) { return *(cdb2_client_intv_ds_t*)value; };
+    cdb2_client_datetimeus_t datetimeus_value(void *value) { return *(cdb2_client_datetimeus_t*)value; };
+    cdb2_client_intv_dsus_t intervaldsus_value(void *value) { return *(cdb2_client_intv_dsus_t*)value; };
     """,
     libraries=["cdb2api", "protobuf-c"])
 ffi.cdef("""
@@ -178,6 +188,16 @@ ffi.cdef("""
     void cdb2_socket_pool_donate_ext(const char* typestr, int fd, int ttl, int dbnum, int flags, void *destructor, void *voidargs);
 
     const char* cdb2_dbname(cdb2_hndl_tp* hndl);
+
+    /* Hacks for performance! For some reason these functions are much faster
+     * than, eg, ffi.cast("long long*", ptr)[0] */
+    long long integer_value(void *value);
+    double real_value(void *value);
+    cdb2_client_datetime_t datetime_value(void *value);
+    cdb2_client_intv_ym_t intervalym_value(void *value);
+    cdb2_client_intv_ds_t intervalds_value(void *value);
+    cdb2_client_datetimeus_t datetimeus_value(void *value);
+    cdb2_client_intv_dsus_t intervaldsus_value(void *value);
 """)
 
 if __name__ == '__main__':

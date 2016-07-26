@@ -269,9 +269,9 @@ class Handle(object):
         if val == ffi.NULL:
             return None
         if typecode == lib.CDB2_INTEGER:
-            return ffi.cast("int64_t *", val)[0]
+            return lib.integer_value(val)
         if typecode == lib.CDB2_REAL:
-            return ffi.cast("double *", val)[0]
+            return lib.real_value(val)
         if typecode == lib.CDB2_BLOB:
             size = lib.cdb2_column_size(self._hndl, i)
             return bytes(ffi.buffer(val, size))
@@ -279,8 +279,8 @@ class Handle(object):
             size = lib.cdb2_column_size(self._hndl, i)
             return unicode(ffi.buffer(val, size-1), "utf-8")
         if typecode == lib.CDB2_DATETIMEUS:
-            return _datetimeus(ffi.cast("cdb2_client_datetimeus_t *", val))
+            return _datetimeus(lib.datetimeus_value(val))
         if typecode == lib.CDB2_DATETIME:
-            return _datetime(ffi.cast("cdb2_client_datetime_t *", val))
+            return _datetime(lib.datetime_value(val))
         raise Error(lib.CDB2ERR_NOTSUPPORTED,
                     "Can't handle type %d returned by database!" % typecode)
