@@ -370,3 +370,12 @@ def test_inserting_non_utf8_string():
 
     rows = list(cursor.execute("select cast(foo as blob), bar from strings"))
     assert rows == [[b'\x68\xeb\x6c\x6c\x6f', b'\x68\xeb\x6c\x6c\x6f']]
+
+
+def test_cursor_connection_attribute():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    assert cursor.connection is conn
+    del conn
+    with pytest.raises(InterfaceError):
+        cursor.connection

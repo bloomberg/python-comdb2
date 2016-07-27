@@ -1,4 +1,5 @@
 import itertools
+import weakref
 import datetime
 import re
 
@@ -211,7 +212,7 @@ class Connection(object):
 class Cursor(object):
     def __init__(self, conn):
         self.arraysize = 1
-        self._conn = conn
+        self._conn = weakref.ref(conn)
         self._hndl = conn._hndl
         self._description = None
         self._closed = False
@@ -236,7 +237,7 @@ class Cursor(object):
     @property
     def connection(self):
         self._check_closed()
-        return self._conn
+        return self._conn()
 
     def close(self):
         self._check_closed()
