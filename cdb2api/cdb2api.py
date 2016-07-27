@@ -78,7 +78,7 @@ def _errstr(hndl):
 
 
 def _check_rc(rc, hndl):
-    if rc != lib.CDB2_OK:
+    if rc != 0:
         errstr = _errstr(hndl)
         raise Error(rc, errstr)
 
@@ -191,6 +191,7 @@ class Handle(object):
             lib.cdb2_clearbindings(self._hndl)
 
         _check_rc(rc, self._hndl)
+        self._more_rows_available = True
         self._next_record()
         self._column_range = range(lib.cdb2_numcolumns(self._hndl))
         return self
@@ -255,12 +256,16 @@ class Handle(object):
         return params_cdata
 
     def _next_record(self):
-        self._more_rows_available = False
-        rc = lib.cdb2_next_record(self._hndl)
-        if rc == lib.CDB2_OK:
-            self._more_rows_available = True
-        elif rc != lib.CDB2_OK_DONE:
-            _check_rc(rc, self._hndl)
+        try:
+            rc = lib.cdb2_next_record(self._hndl)
+        except:
+            self._more_rows_available = False
+            raise
+        else:
+            if rc != 0:
+                self._more_rows_available = False
+                if rc != lib.CDB2_OK_DONE:
+                    _check_rc(rc, self._hndl)
 
     def _column_value(self, i):
         val = lib.cdb2_column_value(self._hndl, i)
