@@ -163,6 +163,7 @@ def connect(*args, **kwargs):
 class Connection(object):
     def __init__(self, database_name, tier="default"):
         self._active_cursor = None
+        self._in_transaction = False
         try:
             self._hndl = cdb2api.Handle(database_name, tier)
         except cdb2api.Error as e:
@@ -225,7 +226,6 @@ class Cursor(object):
         self._hndl = conn._hndl
         self._description = None
         self._closed = False
-        self._in_transaction = False
         self._rowcount = -1
 
     def _check_closed(self):
@@ -250,14 +250,14 @@ class Cursor(object):
 
     def close(self):
         self._check_closed()
-        if self._in_transaction:
+        if self._conn._in_transaction:
             try:
                 self._execute("rollback")
             except DatabaseError:
                 # It's not useful to raise an exception if gracefully
                 # terminating the session fails.
                 pass
-            self._in_transaction = False
+            self._conn._in_transaction = False
         self._description = None
         self._closed = True
 
@@ -276,18 +276,18 @@ class Cursor(object):
     def _execute(self, sql, parameters=None):
         self._rowcount = -1
 
-        if not self._in_transaction and not _SET.match(sql):
+        if not self._conn._in_transaction and not _SET.match(sql):
             try:
                 self._hndl.execute("begin")
             except cdb2api.Error as e:
                 _raise_wrapped_exception(e)
-            self._in_transaction = True
+            self._conn._in_transaction = True
 
         if parameters is not None:
             sql = sql % {name: "@" + name for name in parameters}
 
         if sql == 'commit' or sql == 'rollback':
-            self._in_transaction = False
+            self._conn._in_transaction = False
 
         try:
             self._hndl.execute(sql, parameters)
