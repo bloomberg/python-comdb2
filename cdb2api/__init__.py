@@ -172,29 +172,38 @@ class Connection(object):
         if self._hndl is not None:
             self.close()
 
+    def _close_any_outstanding_cursor(self):
+        if self._active_cursor is not None:
+            cursor = self._active_cursor()
+            if cursor is not None and not cursor._closed:
+                cursor.close()
+
+    def _execute(self, sql):
+        cursor = None
+        if self._active_cursor is not None:
+            cursor = self._active_cursor()
+        if cursor is None:
+            cursor = self.cursor()
+        cursor._execute(sql)
+
     def close(self):
         if self._hndl is None:
             raise InterfaceError("close() called on already closed connection")
-        if self._active_cursor is not None:
-            if not self._active_cursor._closed:
-                self._active_cursor.close()
+        self._close_any_outstanding_cursor()
         self._hndl.close()
         self._hndl = None
 
     def commit(self):
-        if self._active_cursor is not None:  # Else no SQL was ever executed
-            self._active_cursor._execute("commit")
+        self._execute("commit")
 
     def rollback(self):
-        if self._active_cursor is not None:  # Else no SQL was ever executed
-            self._active_cursor._execute("rollback")
+        self._execute("rollback")
 
     def cursor(self):
-        if self._active_cursor is not None:
-            if not self._active_cursor._closed:
-                self._active_cursor.close()
-        self._active_cursor = Cursor(self)
-        return self._active_cursor
+        self._close_any_outstanding_cursor()
+        cursor = Cursor(self)
+        self._active_cursor = weakref.ref(cursor)
+        return cursor
 
     # Optional DB API Extension
     Error = Error
@@ -212,7 +221,7 @@ class Connection(object):
 class Cursor(object):
     def __init__(self, conn):
         self.arraysize = 1
-        self._conn = weakref.ref(conn)
+        self._conn = conn
         self._hndl = conn._hndl
         self._description = None
         self._closed = False
@@ -237,7 +246,7 @@ class Cursor(object):
     @property
     def connection(self):
         self._check_closed()
-        return self._conn()
+        return self._conn
 
     def close(self):
         self._check_closed()

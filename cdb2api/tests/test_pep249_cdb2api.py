@@ -372,10 +372,13 @@ def test_inserting_non_utf8_string():
     assert rows == [[b'\x68\xeb\x6c\x6c\x6f', b'\x68\xeb\x6c\x6c\x6f']]
 
 
-def test_cursor_connection_attribute():
+def test_cursor_connection_attribute_keeps_connection_alive():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
-    assert cursor.connection is conn
     del conn
-    with pytest.raises(InterfaceError):
-        cursor.connection
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    cursor.connection.commit()
+    assert cursor.rowcount == 1
+
+    cursor.execute("select key, val from simple order by key")
+    assert cursor.fetchall() == [[1,2]]
