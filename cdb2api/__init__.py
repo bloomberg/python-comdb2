@@ -256,8 +256,13 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         self._check_closed()
         if _TXN.match(sql):
-            raise InterfaceError("Transaction control must be done through "
-                                 "Connection.commit and Connection.rollback")
+            if "begin" in sql.lower():
+                errmsg = "Transactions may not be started explicitly"
+            elif "commit" in sql.lower():
+                errmsg = "Use Connection.commit to commit transactions"
+            elif "rollback" in sql.lower():
+                errmsg = "Use Connection.rollback to roll back transactions"
+            raise InterfaceError(errmsg)
         return self._execute(sql, parameters)
 
     def executemany(self, sql, seq_of_parameters):
