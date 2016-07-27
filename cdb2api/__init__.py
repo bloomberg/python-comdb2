@@ -318,26 +318,17 @@ class Cursor(object):
                                   for name, type in zip(names, types))
 
     def fetchone(self):
-        self._check_closed()
-        if not self._description:
-            raise InterfaceError("No result set exists")
         try:
             return next(self)
         except StopIteration:
             return None
 
     def fetchmany(self, n=None):
-        self._check_closed()
-        if not self._description:
-            raise InterfaceError("No result set exists")
         if n is None:
             n = self.arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
     def fetchall(self):
-        self._check_closed()
-        if not self._description:
-            raise InterfaceError("No result set exists")
         return [x for x in self]
 
     # Optional DB API Extension
@@ -347,6 +338,9 @@ class Cursor(object):
 
     # Optional DB API Extension
     def next(self):
+        self._check_closed()
+        if not self._description:
+            raise InterfaceError("No result set exists")
         try:
             return next(self._hndl)
         except cdb2api.Error as e:
