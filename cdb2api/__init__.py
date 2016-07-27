@@ -250,14 +250,6 @@ class Cursor(object):
 
     def close(self):
         self._check_closed()
-        if self._conn._in_transaction:
-            try:
-                self._execute("rollback")
-            except DatabaseError:
-                # It's not useful to raise an exception if gracefully
-                # terminating the session fails.
-                pass
-            self._conn._in_transaction = False
         self._description = None
         self._closed = True
 

@@ -120,16 +120,18 @@ def test_implicitly_closing_old_cursor_when_opening_a_new_one():
     assert cursor2.rowcount == -1
 
 
-def test_implicit_rollback_on_cursor_close():
+def test_commit_after_cursor_close():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.commit()
     cursor.execute("insert into simple(key, val) values(3, 4)")
+    cursor.close()
+    conn.commit()
 
     cursor = conn.cursor()
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [[1,2]]
+    assert cursor.fetchall() == [[1,2],[3,4]]
 
 
 def test_implicit_rollback_on_connection_close():
