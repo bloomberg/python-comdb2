@@ -256,8 +256,8 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         self._check_closed()
         if _TXN.match(sql):
-            raise InterfaceError("Transaction control SQL statements can only"
-                                 " be used on autocommit connections.")
+            raise InterfaceError("Transaction control must be done through "
+                                 "Connection.commit and Connection.rollback")
         return self._execute(sql, parameters)
 
     def executemany(self, sql, seq_of_parameters):
