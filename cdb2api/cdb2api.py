@@ -52,14 +52,15 @@ class Error(RuntimeError):
 
 
 def _construct_datetime(cls, tm, microseconds, tzname):
-    return cls(year=tm.tm_year + 1900,
-               month=tm.tm_mon + 1,
-               day=tm.tm_mday,
-               hour=tm.tm_hour,
-               minute=tm.tm_min,
-               second=tm.tm_sec,
-               microsecond=microseconds,
-               tzinfo=pytz.timezone(ffi.string(tzname)))
+    timezone = pytz.timezone(ffi.string(tzname))
+    timestamp = cls(year=tm.tm_year + 1900,
+                    month=tm.tm_mon + 1,
+                    day=tm.tm_mday,
+                    hour=tm.tm_hour,
+                    minute=tm.tm_min,
+                    second=tm.tm_sec,
+                    microsecond=microseconds)
+    return timezone.localize(timestamp, is_dst=tm.tm_isdst)
 
 
 def _datetime(ptr):
