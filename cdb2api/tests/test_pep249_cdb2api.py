@@ -231,21 +231,14 @@ def test_naive_datetime_as_parameter():
         ("datetime_col", Datetime(2009, 2, 13, 18, 31, 30, 234000)),
         ("vutf8_col", "foo"*50)
     )
-    cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
-                   " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
-                   " %(u_int_col)s, %(longlong_col)s, %(float_col)s,"
-                   " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
-                   " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
-                   " %(datetime_col)s, %(vutf8_col)s)", dict(params))
 
-    conn.commit()
-
-    cursor.execute("select * from all_datatypes")
-    row = list(cursor.fetchone())
-    assert row[12] == Datetime(2009, 2, 13, 18, 31, 30, 234000,
-                               pytz.timezone("America/New_York"))
-    row[12] = row[12].replace(tzinfo=None)
-    assert row == list(v for k,v in params)
+    with pytest.raises(NotSupportedError):
+        cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
+                       " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
+                       " %(u_int_col)s, %(longlong_col)s, %(float_col)s,"
+                       " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
+                       " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
+                       " %(datetime_col)s, %(vutf8_col)s)", dict(params))
 
 
 def test_retrieving_null():

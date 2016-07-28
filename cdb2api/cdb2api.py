@@ -85,6 +85,8 @@ def _check_rc(rc, hndl):
 
 
 def _cdb2_client_datetime_common(val, ptr):
+    if val.tzname() is None:
+        raise Error(lib.CDB2ERR_NOTSUPPORTED, "Parameter is a naive datetime")
     struct_time = val.timetuple()
     ptr.tm.tm_sec = struct_time.tm_sec
     ptr.tm.tm_min = struct_time.tm_min
@@ -95,8 +97,7 @@ def _cdb2_client_datetime_common(val, ptr):
     ptr.tm.tm_wday = struct_time.tm_wday
     ptr.tm.tm_yday = struct_time.tm_yday - 1
     ptr.tm.tm_isdst = struct_time.tm_isdst
-    if val.tzname() is not None:
-        ptr.tzname = val.tzname()
+    ptr.tzname = val.tzname()
 
 
 def _cdb2_client_datetime_t(val):
