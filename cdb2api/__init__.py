@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 import itertools
 import weakref
 import datetime
 import re
 
-import cdb2api
+from . import cdb2api
 
 __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'connect', 'Connection', 'Cursor',

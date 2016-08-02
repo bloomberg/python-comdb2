@@ -1,8 +1,10 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 
-from .. import *
+from cdb2api import *
+from cdb2api import cdb2api
 import pytest
 import pytz
+import functools
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
@@ -377,3 +379,45 @@ def test_cursor_connection_attribute_keeps_connection_alive():
 
     cursor.execute("select key, val from simple order by key")
     assert cursor.fetchall() == [[1,2]]
+
+from mock import patch
+
+def throw_on(expected_stmt, stmt, parameters=None):
+    if stmt == expected_stmt:
+        raise cdb2api.Error(42, 'Not supported error')
+
+@patch('cdb2api.cdb2api.Handle')
+def test_begin_throws_error(handle):
+
+    handle.return_value.execute.side_effect = functools.partial(throw_on, 'begin')
+
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+
+    with pytest.raises(OperationalError):
+        cursor.execute("insert into simple(key, val) values(1, 2)")
+
+@patch('cdb2api.cdb2api.Handle')
+def test_commit_throws_error(handle):
+
+    handle.return_value.execute.side_effect = functools.partial(throw_on, 'commit')
+
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+
+    with pytest.raises(OperationalError):
+        conn.commit()
+
+def raise_(ex):
+    raise ex
+
+@patch('cdb2api.cdb2api.Handle')
+def test_get_effect_throws_error(handle):
+
+    handle.return_value.get_effects.side_effect = lambda: raise_(cdb2api.Error(42, 'Not supported error'))
+
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.commit()
