@@ -1,6 +1,6 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 
-from .. import cdb2api
+from cdb2api import cdb2api
 import pytest
 import pytz
 
