@@ -20,28 +20,44 @@ class DatetimeUs(datetime):
     '''DatetimeUs parameters to Cursor.execute will give microsecond precision.
 
     This differs from datetime.datetime parameters, which only give millisecond
-    precision.  The behavior is otherwise identical to datetime.datetime.'''
+    precision.  The behavior is otherwise identical to datetime.datetime, with
+    the exception of a single extra classmethod, fromdatetime, for constructing
+    a DatetimeUs from a datetime.datetime.
+    '''
+    @classmethod
+    def fromdatetime(cls, dt):
+        return DatetimeUs(dt.year, dt.month, dt.day,
+                          dt.hour, dt.minute, dt.second, dt.microsecond,
+                          dt.tzinfo)
+
     def __add__(self, other):
         ret = super(DatetimeUs, self).__add__(other)
-        return self.combine(ret.date(), ret.timetz())
+        if isinstance(ret, datetime):
+            return DatetimeUs.fromdatetime(ret)
+        return ret  # must be a timedelta
 
     def __sub__(self, other):
         ret = super(DatetimeUs, self).__sub__(other)
-        return self.combine(ret.date(), ret.timetz())
+        if isinstance(ret, datetime):
+            return DatetimeUs.fromdatetime(ret)
+        return ret  # must be a timedelta
+
+    def __radd__(self, other):
+        return self + other
 
     @classmethod
     def now(cls, tz=None):
         ret = super(DatetimeUs, cls).now(tz)
-        return cls.combine(ret.date(), ret.timetz())
+        return DatetimeUs.fromdatetime(ret)
 
     @classmethod
     def fromtimestamp(cls, timestamp, tz=None):
         ret = super(DatetimeUs, cls).fromtimestamp(timestamp, tz)
-        return cls.combine(ret.date(), ret.timetz())
+        return DatetimeUs.fromdatetime(ret)
 
     def astimezone(self, tz):
         ret = super(DatetimeUs, self).astimezone(tz)
-        return self.combine(ret.date(), ret.timetz())
+        return DatetimeUs.fromdatetime(ret)
 
 
 class Error(RuntimeError):
