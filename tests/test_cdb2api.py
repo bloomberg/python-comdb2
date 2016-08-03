@@ -82,3 +82,20 @@ def test_iterating_newly_initialized_handle():
     hndl = cdb2.Handle('mattdb', 'dev')
     for row in hndl:
         assert False
+
+
+def test_timezone_handling():
+    hndl = cdb2.Handle('mattdb', 'dev')
+    rows = list(hndl.execute("select now()"))
+    assert len(rows) == 1
+    assert rows[0][0].tzname() == 'UTC'
+
+    hndl = cdb2.Handle('mattdb', 'dev', tz='GMT')
+    rows = list(hndl.execute("select now()"))
+    assert len(rows) == 1
+    assert rows[0][0].tzname() == 'GMT'
+
+    hndl.execute("set timezone UTC")
+    rows = list(hndl.execute("select now()"))
+    assert len(rows) == 1
+    assert rows[0][0].tzname() == 'UTC'

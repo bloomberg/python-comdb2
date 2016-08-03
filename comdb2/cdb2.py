@@ -154,7 +154,7 @@ def _bind_args(val):
 
 
 class Handle(object):
-    def __init__(self, database_name, tier="default", flags=0):
+    def __init__(self, database_name, tier="default", flags=0, tz='UTC'):
         self._more_rows_available = False
         self._hndl_p = None
         self._hndl = None
@@ -174,6 +174,12 @@ class Handle(object):
 
         self._hndl = self._hndl_p[0]
         self._column_range = []
+
+        if tz is not None:
+            # XXX This is technically SQL injectable, but
+            # a) SET statements don't go through a normal SQL parser anyway,
+            # b) DRQS 86887068 leaves us no choice.
+            self.execute("set timezone %s" % tz)
 
     def __del__(self):
         if self._hndl is not None:
