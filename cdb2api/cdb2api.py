@@ -1,5 +1,5 @@
 from ._cdb2api import ffi, lib
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import six
 
@@ -118,8 +118,9 @@ def _cdb2_client_datetime_common(val, ptr):
 
 def _cdb2_client_datetime_t(val):
     ptr = ffi.new("cdb2_client_datetime_t *")
+    val += timedelta(microseconds=500)  # For rounding to nearest millisecond
     _cdb2_client_datetime_common(val, ptr)
-    ptr.msec = val.microsecond // 1000
+    ptr.msec = val.microsecond // 1000  # For rounding to nearest millisecond
     return ptr
 
 

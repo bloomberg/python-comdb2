@@ -3,6 +3,7 @@ from __future__ import unicode_literals, absolute_import
 from cdb2api import *
 from cdb2api import cdb2api
 import pytest
+import datetime
 import pytz
 import functools
 
@@ -241,6 +242,22 @@ def test_naive_datetime_as_parameter():
                        " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
                        " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
                        " %(datetime_col)s, %(vutf8_col)s)", dict(params))
+
+
+def test_rounding_datetime_to_nearest_millisecond():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+
+    curr_microsecond = Datetime(2016, 2, 28, 23, 59, 59, 999499, pytz.UTC)
+    prev_millisecond = Datetime(2016, 2, 28, 23, 59, 59, 999000, pytz.UTC)
+    next_millisecond = Datetime(2016, 2, 29, 0, 0, 0, 0, pytz.UTC)
+
+    cursor.execute("select @date", {'date': curr_microsecond})
+    assert cursor.fetchall() == [[prev_millisecond]]
+
+    curr_microsecond += datetime.timedelta(microseconds=1)
+    cursor.execute("select @date", {'date': curr_microsecond})
+    assert cursor.fetchall() == [[next_millisecond]]
 
 
 def test_retrieving_null():
