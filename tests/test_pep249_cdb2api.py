@@ -300,6 +300,13 @@ def test_cursor_description():
     assert cursor.description is None
 
 
+def test_binding_number_that_overflows_long_long():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    with pytest.raises(DataError):
+        cursor.execute("select @i", dict(i=2**64+1))
+
+
 def test_retrieving_null():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()

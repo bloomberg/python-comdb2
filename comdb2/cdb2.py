@@ -135,7 +135,11 @@ def _bind_args(val):
     if val is None:
         return lib.CDB2_INTEGER, ffi.NULL, 0
     elif isinstance(val, six.integer_types):
-        return lib.CDB2_INTEGER, ffi.new("int64_t *", val), 8
+        try:
+            return lib.CDB2_INTEGER, ffi.new("int64_t *", val), 8
+        except OverflowError as e:
+            raise Error(lib.CDB2ERR_CONV_FAIL,
+                        "Can't bind value %s: %s" % (val, e))
     elif isinstance(val, float):
         return lib.CDB2_REAL, ffi.new("double *", val), 8
     elif isinstance(val, bytes):
