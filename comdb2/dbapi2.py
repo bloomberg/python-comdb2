@@ -257,6 +257,7 @@ class Cursor(object):
 
     def execute(self, sql, parameters=None):
         self._check_closed()
+        self._description = None
         if _TXN.match(sql):
             if "begin" in sql.lower():
                 errmsg = "Transactions may not be started explicitly"
@@ -265,7 +266,11 @@ class Cursor(object):
             elif "rollback" in sql.lower():
                 errmsg = "Use Connection.rollback to roll back transactions"
             raise InterfaceError(errmsg)
-        return self._execute(sql, parameters)
+        self._execute(sql, parameters)
+        self._load_description()
+        # Optional DB API Extension: execute's return value is unspecified.  We
+        # return an iterable over the rows, but this isn't portable across DBs.
+        return self
 
     def executemany(self, sql, seq_of_parameters):
         self._check_closed()
@@ -296,11 +301,6 @@ class Cursor(object):
         if sql == 'commit':
             self._update_rowcount()
 
-        self._load_description()
-        # Optional DB API Extension: execute's return value is unspecified.  We
-        # return an iterable over the rows, but this isn't portable across DBs.
-        return self
-
     def setinputsizes(self, sizes):
         self._check_closed()
 
@@ -318,6 +318,8 @@ class Cursor(object):
         types = self._hndl.column_types()
         self._description = tuple((name, type, None, None, None, None, None)
                                   for name, type in zip(names, types))
+        if not self._description:
+            self._description = None
 
     def fetchone(self):
         try:

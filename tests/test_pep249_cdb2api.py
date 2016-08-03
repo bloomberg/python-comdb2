@@ -260,6 +260,46 @@ def test_rounding_datetime_to_nearest_millisecond():
     assert cursor.fetchall() == [[next_millisecond]]
 
 
+def test_cursor_description():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    assert cursor.description is None
+
+    cursor.execute("select 1")
+    assert cursor.description == (("1", NUMBER, None, None, None, None, None),)
+
+    cursor.execute("select 1 where 1=0")
+    assert cursor.description == (("1", STRING, None, None, None, None, None),)
+    # ^ A bit weird that Comdb2 returns STRING here, but whatever.
+
+    cursor.execute("select '1' as foo, cast(1 as datetime) bar")
+    assert cursor.description == (
+        ("foo", STRING, None, None, None, None, None),
+        ("bar", DATETIME, None, None, None, None, None))
+
+    cursor.connection.commit()
+    assert cursor.description == (
+        ("foo", STRING, None, None, None, None, None),
+        ("bar", DATETIME, None, None, None, None, None))
+
+    cursor.execute("insert into simple(key, val) values(3, 4)")
+    assert cursor.description is None
+
+    cursor.execute("select key, val from simple")
+    assert cursor.description == (
+        ("key", NUMBER, None, None, None, None, None),
+        ("val", NUMBER, None, None, None, None, None))
+
+    cursor.connection.rollback()
+    assert cursor.description == (
+        ("key", NUMBER, None, None, None, None, None),
+        ("val", NUMBER, None, None, None, None, None))
+
+    with pytest.raises(ProgrammingError):
+        cursor.execute("select")
+    assert cursor.description is None
+
+
 def test_retrieving_null():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
