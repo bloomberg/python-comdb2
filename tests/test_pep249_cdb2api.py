@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, absolute_import
 
-from cdb2api import *
-from cdb2api import cdb2api
+from comdb2.dbapi2 import *
+from comdb2 import cdb2
 import pytest
 import datetime
 import pytz
@@ -401,9 +401,9 @@ from mock import patch
 
 def throw_on(expected_stmt, stmt, parameters=None):
     if stmt == expected_stmt:
-        raise cdb2api.Error(42, 'Not supported error')
+        raise cdb2.Error(42, 'Not supported error')
 
-@patch('cdb2api.cdb2api.Handle')
+@patch('comdb2.cdb2.Handle')
 def test_begin_throws_error(handle):
 
     handle.return_value.execute.side_effect = functools.partial(throw_on, 'begin')
@@ -414,7 +414,7 @@ def test_begin_throws_error(handle):
     with pytest.raises(OperationalError):
         cursor.execute("insert into simple(key, val) values(1, 2)")
 
-@patch('cdb2api.cdb2api.Handle')
+@patch('comdb2.cdb2.Handle')
 def test_commit_throws_error(handle):
 
     handle.return_value.execute.side_effect = functools.partial(throw_on, 'commit')
@@ -429,10 +429,10 @@ def test_commit_throws_error(handle):
 def raise_(ex):
     raise ex
 
-@patch('cdb2api.cdb2api.Handle')
+@patch('comdb2.cdb2.Handle')
 def test_get_effect_throws_error(handle):
 
-    handle.return_value.get_effects.side_effect = lambda: raise_(cdb2api.Error(42, 'Not supported error'))
+    handle.return_value.get_effects.side_effect = lambda: raise_(cdb2.Error(42, 'Not supported error'))
 
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()

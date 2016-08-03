@@ -5,7 +5,7 @@ import weakref
 import datetime
 import re
 
-from . import cdb2api
+from . import cdb2
 
 __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'connect', 'Connection', 'Cursor',
@@ -36,21 +36,21 @@ class _TypeObject(object):
         else:
             return -1
 
-STRING = _TypeObject(cdb2api.TYPE['CSTRING'])
-BINARY = _TypeObject(cdb2api.TYPE['BLOB'])
-NUMBER = _TypeObject(cdb2api.TYPE['INTEGER'], cdb2api.TYPE['REAL'])
-DATETIME = _TypeObject(cdb2api.TYPE['DATETIME'], cdb2api.TYPE['DATETIMEUS'])
+STRING = _TypeObject(cdb2.TYPE['CSTRING'])
+BINARY = _TypeObject(cdb2.TYPE['BLOB'])
+NUMBER = _TypeObject(cdb2.TYPE['INTEGER'], cdb2.TYPE['REAL'])
+DATETIME = _TypeObject(cdb2.TYPE['DATETIME'], cdb2.TYPE['DATETIMEUS'])
 ROWID = STRING
 
 # comdb2 doesn't support Date or Time, so I'm not defining them.
 Datetime = datetime.datetime
-DatetimeUs = cdb2api.DatetimeUs
+DatetimeUs = cdb2.DatetimeUs
 Binary = bytes
 Timestamp = Datetime
 TimestampUs = DatetimeUs
 
 DatetimeFromTicks = Datetime.fromtimestamp
-DatetimeUsFromTicks = cdb2api.DatetimeUs.fromtimestamp
+DatetimeUsFromTicks = cdb2.DatetimeUs.fromtimestamp
 TimestampFromTicks = DatetimeFromTicks
 
 try:
@@ -100,50 +100,50 @@ class NotSupportedError(DatabaseError):
 
 
 _EXCEPTION_BY_RC = {
-    cdb2api.ERROR_CODE['CONNECT_ERROR']         : OperationalError,
-    cdb2api.ERROR_CODE['NOTCONNECTED']          : ProgrammingError,
-    cdb2api.ERROR_CODE['PREPARE_ERROR']         : ProgrammingError,
-    cdb2api.ERROR_CODE['IO_ERROR']              : OperationalError,
-    cdb2api.ERROR_CODE['INTERNAL']              : InternalError,
-    cdb2api.ERROR_CODE['NOSTATEMENT']           : ProgrammingError,
-    cdb2api.ERROR_CODE['BADCOLUMN']             : ProgrammingError,
-    cdb2api.ERROR_CODE['BADSTATE']              : ProgrammingError,
-    cdb2api.ERROR_CODE['ASYNCERR']              : OperationalError,
+    cdb2.ERROR_CODE['CONNECT_ERROR']         : OperationalError,
+    cdb2.ERROR_CODE['NOTCONNECTED']          : ProgrammingError,
+    cdb2.ERROR_CODE['PREPARE_ERROR']         : ProgrammingError,
+    cdb2.ERROR_CODE['IO_ERROR']              : OperationalError,
+    cdb2.ERROR_CODE['INTERNAL']              : InternalError,
+    cdb2.ERROR_CODE['NOSTATEMENT']           : ProgrammingError,
+    cdb2.ERROR_CODE['BADCOLUMN']             : ProgrammingError,
+    cdb2.ERROR_CODE['BADSTATE']              : ProgrammingError,
+    cdb2.ERROR_CODE['ASYNCERR']              : OperationalError,
 
-    cdb2api.ERROR_CODE['INVALID_ID']            : InternalError,
-    cdb2api.ERROR_CODE['RECORD_OUT_OF_RANGE']   : OperationalError,
+    cdb2.ERROR_CODE['INVALID_ID']            : InternalError,
+    cdb2.ERROR_CODE['RECORD_OUT_OF_RANGE']   : OperationalError,
 
-    cdb2api.ERROR_CODE['REJECTED']              : OperationalError,
-    cdb2api.ERROR_CODE['STOPPED']               : OperationalError,
-    cdb2api.ERROR_CODE['BADREQ']                : OperationalError,
-    cdb2api.ERROR_CODE['DBCREATE_FAILED']       : OperationalError,
+    cdb2.ERROR_CODE['REJECTED']              : OperationalError,
+    cdb2.ERROR_CODE['STOPPED']               : OperationalError,
+    cdb2.ERROR_CODE['BADREQ']                : OperationalError,
+    cdb2.ERROR_CODE['DBCREATE_FAILED']       : OperationalError,
 
-    cdb2api.ERROR_CODE['THREADPOOL_INTERNAL']   : OperationalError,
-    cdb2api.ERROR_CODE['READONLY']              : NotSupportedError,
+    cdb2.ERROR_CODE['THREADPOOL_INTERNAL']   : OperationalError,
+    cdb2.ERROR_CODE['READONLY']              : NotSupportedError,
 
-    cdb2api.ERROR_CODE['NOMASTER']              : InternalError,
-    cdb2api.ERROR_CODE['UNTAGGED_DATABASE']     : NotSupportedError,
-    cdb2api.ERROR_CODE['CONSTRAINTS']           : IntegrityError,
-    cdb2api.ERROR_CODE['DEADLOCK']              : OperationalError,
+    cdb2.ERROR_CODE['NOMASTER']              : InternalError,
+    cdb2.ERROR_CODE['UNTAGGED_DATABASE']     : NotSupportedError,
+    cdb2.ERROR_CODE['CONSTRAINTS']           : IntegrityError,
+    cdb2.ERROR_CODE['DEADLOCK']              : OperationalError,
 
-    cdb2api.ERROR_CODE['TRAN_IO_ERROR']         : OperationalError,
-    cdb2api.ERROR_CODE['ACCESS']                : OperationalError,
+    cdb2.ERROR_CODE['TRAN_IO_ERROR']         : OperationalError,
+    cdb2.ERROR_CODE['ACCESS']                : OperationalError,
 
-    cdb2api.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
+    cdb2.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
 
-    cdb2api.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
-    cdb2api.ERROR_CODE['FKEY_VIOLATION']        : IntegrityError,
-    cdb2api.ERROR_CODE['NULL_CONSTRAINT']       : IntegrityError,
+    cdb2.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
+    cdb2.ERROR_CODE['FKEY_VIOLATION']        : IntegrityError,
+    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : IntegrityError,
 
-    cdb2api.ERROR_CODE['CONV_FAIL']             : DataError,
-    cdb2api.ERROR_CODE['NONKLESS']              : NotSupportedError,
-    cdb2api.ERROR_CODE['MALLOC']                : OperationalError,
-    cdb2api.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
+    cdb2.ERROR_CODE['CONV_FAIL']             : DataError,
+    cdb2.ERROR_CODE['NONKLESS']              : NotSupportedError,
+    cdb2.ERROR_CODE['MALLOC']                : OperationalError,
+    cdb2.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
 
-    cdb2api.ERROR_CODE['DUPLICATE']             : IntegrityError,
-    cdb2api.ERROR_CODE['TZNAME_FAIL']           : DataError,
+    cdb2.ERROR_CODE['DUPLICATE']             : IntegrityError,
+    cdb2.ERROR_CODE['TZNAME_FAIL']           : DataError,
 
-    cdb2api.ERROR_CODE['UNKNOWN']               : OperationalError,
+    cdb2.ERROR_CODE['UNKNOWN']               : OperationalError,
 
     # XXX This is returned for duplicates, despite not being an error code...
     1                                           : IntegrityError,
@@ -167,8 +167,8 @@ class Connection(object):
         self._active_cursor = None
         self._in_transaction = False
         try:
-            self._hndl = cdb2api.Handle(database_name, tier)
-        except cdb2api.Error as e:
+            self._hndl = cdb2.Handle(database_name, tier)
+        except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
     def __del__(self):
@@ -278,7 +278,7 @@ class Cursor(object):
         if not self._conn._in_transaction and not _SET.match(sql):
             try:
                 self._hndl.execute("begin")
-            except cdb2api.Error as e:
+            except cdb2.Error as e:
                 _raise_wrapped_exception(e)
             self._conn._in_transaction = True
 
@@ -290,7 +290,7 @@ class Cursor(object):
 
         try:
             self._hndl.execute(sql, parameters)
-        except cdb2api.Error as e:
+        except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
         if sql == 'commit':
@@ -310,7 +310,7 @@ class Cursor(object):
     def _update_rowcount(self):
         try:
             self._rowcount = self._hndl.get_effects()[0]
-        except cdb2api.Error:
+        except cdb2.Error:
             self._rowcount = -1
 
     def _load_description(self):
@@ -345,7 +345,7 @@ class Cursor(object):
             raise InterfaceError("No result set exists")
         try:
             return next(self._hndl)
-        except cdb2api.Error as e:
+        except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
     __next__ = next
