@@ -201,7 +201,7 @@ class Handle(object):
 
         for func in ("close", "execute",
                      "get_effects", "column_names", "column_types"):
-            setattr(self, func, lambda *a,**k: closed_error("close"))
+            setattr(self, func, lambda *a, **k: closed_error("close"))
 
     def execute(self, sql, parameters=None):
         self._column_range = []
@@ -311,7 +311,7 @@ class Handle(object):
             return bytes(ffi.buffer(val, size))
         if typecode == lib.CDB2_CSTRING:
             size = lib.cdb2_column_size(self._hndl, i)
-            return unicode(ffi.buffer(val, size-1), "utf-8")
+            return unicode(ffi.buffer(val, size - 1), "utf-8")
         if typecode == lib.CDB2_DATETIMEUS:
             return _datetimeus(lib.datetimeus_value(val))
         if typecode == lib.CDB2_DATETIME:
