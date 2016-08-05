@@ -8,5 +8,5 @@ setup(
     packages=['cdb2api'],
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["build.py:ffi"],
-    install_requires=["cffi>=1.0.0"]
+    install_requires=["cffi>=1.0.0", "six", "pytz"]
 )
