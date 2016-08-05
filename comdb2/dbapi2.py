@@ -287,8 +287,10 @@ class Cursor(object):
                 _raise_wrapped_exception(e)
             self._conn._in_transaction = True
 
-        if parameters is not None:
-            sql = sql % {name: "@" + name for name in parameters}
+        if parameters is None:
+            parameters = {}
+
+        sql = sql % {name: "@" + name for name in parameters}
 
         if sql == 'commit' or sql == 'rollback':
             self._conn._in_transaction = False
