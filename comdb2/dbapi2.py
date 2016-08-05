@@ -22,6 +22,7 @@ paramstyle = "pyformat"
 
 _SET = re.compile(r'^\s*set', re.I)
 _TXN = re.compile(r'^\s*(begin|commit|rollback)', re.I)
+_VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
 class _TypeObject(object):
@@ -254,6 +255,15 @@ class Cursor(object):
         self._check_closed()
         self._description = None
         self._closed = True
+
+    def callproc(self, procname, parameters):
+        if not _VALID_SP_NAME.match(procname):
+            raise NotSupportedError("Invalid procedure name '%s'" % procname)
+        params_as_dict = {str(i): e for i, e in enumerate(parameters)}
+        sql = ("exec procedure " + procname + "("
+              + ", ".join("%%(%d)s" % i for i in range(len(params_as_dict)))
+              + ")")
+        return self.execute(sql, params_as_dict)
 
     def execute(self, sql, parameters=None):
         self._check_closed()
