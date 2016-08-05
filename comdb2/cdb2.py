@@ -144,7 +144,7 @@ def _bind_args(val):
         return lib.CDB2_REAL, ffi.new("double *", val), 8
     elif isinstance(val, bytes):
         return lib.CDB2_BLOB, val, len(val)
-    elif isinstance(val, unicode):
+    elif isinstance(val, six.text_type):
         val = val.encode('utf-8')
         return lib.CDB2_CSTRING, val, len(val)
     elif isinstance(val, DatetimeUs):
@@ -311,7 +311,7 @@ class Handle(object):
             return bytes(ffi.buffer(val, size))
         if typecode == lib.CDB2_CSTRING:
             size = lib.cdb2_column_size(self._hndl, i)
-            return unicode(ffi.buffer(val, size - 1), "utf-8")
+            return six.text_type(ffi.buffer(val, size - 1), "utf-8")
         if typecode == lib.CDB2_DATETIMEUS:
             return _datetimeus(lib.datetimeus_value(val))
         if typecode == lib.CDB2_DATETIME:
