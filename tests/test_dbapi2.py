@@ -249,13 +249,18 @@ def test_naive_datetime_as_parameter():
         ("vutf8_col", "foo"*50)
     )
 
-    with pytest.raises(NotSupportedError):
-        cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
-                       " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
-                       " %(u_int_col)s, %(longlong_col)s, %(float_col)s,"
-                       " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
-                       " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
-                       " %(datetime_col)s, %(vutf8_col)s)", dict(params))
+    cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
+                   " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
+                   " %(u_int_col)s, %(longlong_col)s, %(float_col)s,"
+                   " %(double_col)s, %(byte_col)s, %(byte_array_col)s,"
+                   " %(cstring_col)s, %(pstring_col)s, %(blob_col)s,"
+                   " %(datetime_col)s, %(vutf8_col)s)", dict(params))
+
+    cursor.connection.commit()
+    cursor.execute("select datetime_col from all_datatypes")
+    row = cursor.fetchone()
+    assert row == [Datetime(2009, 2, 13, 18, 31, 30, 234000, pytz.UTC)]
+    assert cursor.fetchone() is None
 
 
 def test_rounding_datetime_to_nearest_millisecond():
