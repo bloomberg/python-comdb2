@@ -263,7 +263,8 @@ class Cursor(object):
         sql = ("exec procedure " + procname + "("
               + ", ".join("%%(%d)s" % i for i in range(len(params_as_dict)))
               + ")")
-        return self.execute(sql, params_as_dict)
+        self.execute(sql, params_as_dict)
+        return parameters[:]
 
     def execute(self, sql, parameters=None):
         self._check_closed()
