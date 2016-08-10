@@ -51,8 +51,8 @@ Timestamp = Datetime
 TimestampUs = DatetimeUs
 
 DatetimeFromTicks = Datetime.fromtimestamp
-DatetimeUsFromTicks = cdb2.DatetimeUs.fromtimestamp
-TimestampFromTicks = DatetimeFromTicks
+DatetimeUsFromTicks = DatetimeUs.fromtimestamp
+TimestampFromTicks = Timestamp.fromtimestamp
 
 try:
     UserException = StandardError  # Python 2
