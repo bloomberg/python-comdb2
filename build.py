@@ -2,7 +2,7 @@ from cffi import FFI
 
 ffi = FFI()
 
-ffi.set_source("cdb2api._cdb2api",
+ffi.set_source("comdb2._cdb2api",
     """
         #include <cdb2api.h>
 
