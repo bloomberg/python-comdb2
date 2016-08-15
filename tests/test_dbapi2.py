@@ -288,8 +288,8 @@ def test_cursor_description():
     assert cursor.description == (("1", NUMBER, None, None, None, None, None),)
 
     cursor.execute("select 1 where 1=0")
-    assert cursor.description == (("1", STRING, None, None, None, None, None),)
-    # ^ A bit weird that Comdb2 returns STRING here, but whatever.
+    assert len(cursor.description) == 1
+    assert cursor.description[0][0] == "1"
 
     cursor.execute("select '1' as foo, cast(1 as datetime) bar")
     assert cursor.description == (
@@ -302,6 +302,9 @@ def test_cursor_description():
         ("bar", DATETIME, None, None, None, None, None))
 
     cursor.execute("insert into simple(key, val) values(3, 4)")
+    assert cursor.description is None
+
+    cursor.connection.commit()
     assert cursor.description is None
 
     cursor.execute("select key, val from simple")
