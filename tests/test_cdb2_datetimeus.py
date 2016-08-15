@@ -70,3 +70,29 @@ def test_datetimeus_astimezone():
     dtu = cdb2.DatetimeUs.fromdatetime(loc_dt)
 
     assert type(dtu.astimezone(pytz.utc)) == cdb2.DatetimeUs
+
+def test_datetimeus_type_stickiness():
+    def check(obj):
+        assert isinstance(obj, cdb2.DatetimeUs)
+
+    new_york = pytz.timezone('America/New_York')
+    utc = pytz.UTC
+
+    check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456, new_york))
+    check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456))
+    check(cdb2.DatetimeUs.today())
+    check(cdb2.DatetimeUs.now())
+    check(cdb2.DatetimeUs.now(new_york))
+    check(cdb2.DatetimeUs.utcnow())
+    check(cdb2.DatetimeUs.fromtimestamp(0))
+    check(cdb2.DatetimeUs.fromtimestamp(0, new_york))
+    check(cdb2.DatetimeUs.utcfromtimestamp(0))
+    check(cdb2.DatetimeUs.fromordinal(1))
+    check(cdb2.DatetimeUs.combine(datetime.date.today(), datetime.time()))
+    check(cdb2.DatetimeUs.strptime("2015-01-01", "%Y-%m-%d"))
+    check(cdb2.DatetimeUs.now() - datetime.timedelta(0))
+    check(cdb2.DatetimeUs.now() + datetime.timedelta(0))
+    check(datetime.timedelta(0) + cdb2.DatetimeUs.now())
+    check(cdb2.DatetimeUs.now().replace(year=2015))
+    check(cdb2.DatetimeUs.now().replace(tzinfo=new_york))
+    check(cdb2.DatetimeUs.now(utc).astimezone(new_york))
