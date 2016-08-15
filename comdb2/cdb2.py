@@ -67,8 +67,15 @@ class Error(RuntimeError):
         super(Error, self).__init__(error_code, error_message)
 
 
+if six.PY2:
+    _ffi_string = ffi.string
+else:
+    def _ffi_string(cdata):
+        return ffi.string(cdata).decode('utf-8')
+
+
 def _construct_datetime(cls, tm, microseconds, tzname):
-    timezone = pytz.timezone(ffi.string(tzname))
+    timezone = pytz.timezone(_ffi_string(tzname))
     timestamp = cls(year=tm.tm_year + 1900,
                     month=tm.tm_mon + 1,
                     day=tm.tm_mday,
@@ -88,7 +95,7 @@ def _datetimeus(ptr):
 
 
 def _errstr(hndl):
-    errstr = ffi.string(lib.cdb2_errstr(hndl))
+    errstr = _ffi_string(lib.cdb2_errstr(hndl))
     if not isinstance(errstr, str):
         errstr = errstr.decode('utf-8')  # bytes to str for Python 3
     return errstr
@@ -258,7 +265,7 @@ class Handle(object):
                 effects.num_inserted)
 
     def column_names(self):
-        return [ffi.string(lib.cdb2_column_name(self._hndl, i))
+        return [_ffi_string(lib.cdb2_column_name(self._hndl, i))
                 for i in self._column_range]
 
     def column_types(self):
