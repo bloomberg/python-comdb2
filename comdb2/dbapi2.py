@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import functools
 import itertools
 import weakref
 import datetime
@@ -25,17 +26,16 @@ _TXN = re.compile(r'^\s*(begin|commit|rollback)', re.I)
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
+@functools.total_ordering
 class _TypeObject(object):
     def __init__(self, *values):
         self.values = values
 
-    def __cmp__(self, other):
-        if other in self.values:
-            return 0
-        if other < self.values:
-            return 1
-        else:
-            return -1
+    def __eq__(self, other):
+        return other in self.values
+
+    def __lt__(self, other):
+        return self != other and other < self.values
 
 STRING = _TypeObject(cdb2.TYPE['CSTRING'])
 BINARY = _TypeObject(cdb2.TYPE['BLOB'])
