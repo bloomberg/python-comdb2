@@ -466,7 +466,10 @@ def test_cursor_connection_attribute_keeps_connection_alive():
     cursor.execute("select key, val from simple order by key")
     assert cursor.fetchall() == [[1,2]]
 
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 def throw_on(expected_stmt, stmt, parameters=None):
     if stmt == expected_stmt:
