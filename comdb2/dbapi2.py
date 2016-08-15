@@ -5,6 +5,7 @@ import itertools
 import weakref
 import datetime
 import re
+import six
 
 from . import cdb2
 
@@ -37,6 +38,12 @@ class _TypeObject(object):
     def __lt__(self, other):
         return self != other and other < self.values
 
+
+def _binary(string):
+    if isinstance(string, six.text_type):
+        return string.encode('utf-8')
+    return bytes(string)
+
 STRING = _TypeObject(cdb2.TYPE['CSTRING'])
 BINARY = _TypeObject(cdb2.TYPE['BLOB'])
 NUMBER = _TypeObject(cdb2.TYPE['INTEGER'], cdb2.TYPE['REAL'])
@@ -46,7 +53,7 @@ ROWID = STRING
 # comdb2 doesn't support Date or Time, so I'm not defining them.
 Datetime = datetime.datetime
 DatetimeUs = cdb2.DatetimeUs
-Binary = bytes
+Binary = _binary
 Timestamp = Datetime
 TimestampUs = DatetimeUs
 
