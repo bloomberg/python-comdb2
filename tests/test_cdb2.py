@@ -66,9 +66,9 @@ def test_commit_failures():
     try:
         hndl.execute("commit")
     except cdb2.Error as exc:
-        pass
-
-    assert exc.error_code == cdb2.ERROR_CODE['PREPARE_ERROR']
+        assert exc.error_code == cdb2.ERROR_CODE['PREPARE_ERROR']
+    else:
+        assert False  # an assertion should have been raised!
 
 
 def test_error_from_closing_connection_twice():
