@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import functools
 import itertools
@@ -276,12 +276,13 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         self._check_closed()
         self._description = None
-        if _TXN.match(sql):
-            if "begin" in sql.lower():
+        match = _TXN.match(sql)
+        if match:
+            if re.match(match.group(1), 'begin', re.I):
                 errmsg = "Transactions may not be started explicitly"
-            elif "commit" in sql.lower():
+            elif re.match(match.group(1), 'commit', re.I):
                 errmsg = "Use Connection.commit to commit transactions"
-            elif "rollback" in sql.lower():
+            elif re.match(match.group(1), 'rollback', re.I):
                 errmsg = "Use Connection.rollback to roll back transactions"
             raise InterfaceError(errmsg)
         self._execute(sql, parameters)
