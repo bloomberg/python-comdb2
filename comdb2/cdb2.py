@@ -200,7 +200,7 @@ class Handle(object):
 
         for func in ("close", "execute",
                      "get_effects", "column_names", "column_types"):
-            setattr(self, func, lambda *a, **k: closed_error("close"))
+            setattr(self, func, lambda *a, **k: closed_error(func))
 
     def execute(self, sql, parameters=None):
         self._column_range = []
