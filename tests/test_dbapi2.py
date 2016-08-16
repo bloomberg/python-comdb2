@@ -5,6 +5,7 @@ from comdb2 import cdb2
 import pytest
 import datetime
 import pytz
+import six
 import functools
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
@@ -466,7 +467,21 @@ def test_cursor_connection_attribute_keeps_connection_alive():
     cursor.execute("select key, val from simple order by key")
     assert cursor.fetchall() == [[1,2]]
 
-from mock import patch
+def test_exceptions_containing_unicode_error_messages():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    with pytest.raises(ProgrammingError):
+        try:
+            cursor.execute("select")
+        except ProgrammingError as exc:
+            assert isinstance(exc.args[0], six.text_type)
+            raise
+
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 def throw_on(expected_stmt, stmt, parameters=None):
     if stmt == expected_stmt:

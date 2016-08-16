@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 from ._cdb2api import ffi, lib
 from datetime import datetime, timedelta
 import pytz
@@ -6,12 +8,12 @@ import six
 __all__ = ['Error', 'Handle', 'DatetimeUs', 'ERROR_CODE', 'TYPE']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
-ERROR_CODE = {k[len('CDB2ERR_'):]: v
+ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
               for k, v in ffi.typeof('enum cdb2_errors').relements.items()
               if k.startswith('CDB2ERR_')}
 
 # Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {k[len('CDB2_'):]: v
+TYPE = {six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
         if k.startswith('CDB2_')}
 
@@ -67,8 +69,12 @@ class Error(RuntimeError):
         super(Error, self).__init__(error_code, error_message)
 
 
+def _ffi_string(cdata):
+    return ffi.string(cdata).decode('utf-8')
+
+
 def _construct_datetime(cls, tm, microseconds, tzname):
-    timezone = pytz.timezone(ffi.string(tzname))
+    timezone = pytz.timezone(_ffi_string(tzname))
     timestamp = cls(year=tm.tm_year + 1900,
                     month=tm.tm_mon + 1,
                     day=tm.tm_mday,
@@ -88,7 +94,7 @@ def _datetimeus(ptr):
 
 
 def _errstr(hndl):
-    errstr = ffi.string(lib.cdb2_errstr(hndl))
+    errstr = _ffi_string(lib.cdb2_errstr(hndl))
     if not isinstance(errstr, str):
         errstr = errstr.decode('utf-8')  # bytes to str for Python 3
     return errstr
@@ -112,7 +118,10 @@ def _cdb2_client_datetime_common(val, ptr):
     ptr.tm.tm_yday = struct_time.tm_yday - 1
     ptr.tm.tm_isdst = struct_time.tm_isdst
     if val.tzname() is not None:
-        ptr.tzname = val.tzname()
+        tzname = val.tzname()
+        if not isinstance(tzname, bytes):
+            tzname = tzname.encode('utf-8')
+        ptr.tzname = tzname
 
 
 def _cdb2_client_datetime_t(val):
@@ -258,7 +267,7 @@ class Handle(object):
                 effects.num_inserted)
 
     def column_names(self):
-        return [ffi.string(lib.cdb2_column_name(self._hndl, i))
+        return [_ffi_string(lib.cdb2_column_name(self._hndl, i))
                 for i in self._column_range]
 
     def column_types(self):

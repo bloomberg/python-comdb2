@@ -1,9 +1,11 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
+import functools
 import itertools
 import weakref
 import datetime
 import re
+import six
 
 from . import cdb2
 
@@ -25,17 +27,22 @@ _TXN = re.compile(r'^\s*(begin|commit|rollback)', re.I)
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
+@functools.total_ordering
 class _TypeObject(object):
     def __init__(self, *values):
         self.values = values
 
-    def __cmp__(self, other):
-        if other in self.values:
-            return 0
-        if other < self.values:
-            return 1
-        else:
-            return -1
+    def __eq__(self, other):
+        return other in self.values
+
+    def __lt__(self, other):
+        return self != other and other < self.values
+
+
+def _binary(string):
+    if isinstance(string, six.text_type):
+        return string.encode('utf-8')
+    return bytes(string)
 
 STRING = _TypeObject(cdb2.TYPE['CSTRING'])
 BINARY = _TypeObject(cdb2.TYPE['BLOB'])
@@ -46,7 +53,7 @@ ROWID = STRING
 # comdb2 doesn't support Date or Time, so I'm not defining them.
 Datetime = datetime.datetime
 DatetimeUs = cdb2.DatetimeUs
-Binary = bytes
+Binary = _binary
 Timestamp = Datetime
 TimestampUs = DatetimeUs
 
@@ -269,12 +276,13 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         self._check_closed()
         self._description = None
-        if _TXN.match(sql):
-            if "begin" in sql.lower():
+        match = _TXN.match(sql)
+        if match:
+            if re.match(match.group(1), 'begin', re.I):
                 errmsg = "Transactions may not be started explicitly"
-            elif "commit" in sql.lower():
+            elif re.match(match.group(1), 'commit', re.I):
                 errmsg = "Use Connection.commit to commit transactions"
-            elif "rollback" in sql.lower():
+            elif re.match(match.group(1), 'rollback', re.I):
                 errmsg = "Use Connection.rollback to roll back transactions"
             raise InterfaceError(errmsg)
         self._execute(sql, parameters)
