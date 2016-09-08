@@ -179,10 +179,6 @@ class Connection(object):
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
-    def __del__(self):
-        if self._hndl is not None:
-            self.close()
-
     def _close_any_outstanding_cursor(self):
         if self._active_cursor is not None:
             cursor = self._active_cursor()
