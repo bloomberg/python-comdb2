@@ -152,9 +152,6 @@ _EXCEPTION_BY_RC = {
     cdb2.ERROR_CODE['TZNAME_FAIL']           : DataError,
 
     cdb2.ERROR_CODE['UNKNOWN']               : OperationalError,
-
-    # XXX This is returned for duplicates, despite not being an error code...
-    1                                           : IntegrityError,
 }
 
 
