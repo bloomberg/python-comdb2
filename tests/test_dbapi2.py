@@ -115,6 +115,16 @@ def test_commit_failures():
     assert cursor.fetchall() == []
 
 
+def test_unique_key_violation():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.commit()
+    cursor.execute("insert into simple(key, val) values(1, 3)")
+    with pytest.raises(IntegrityError):
+        conn.commit()
+
+
 def test_implicitly_closing_old_cursor_when_opening_a_new_one():
     conn = connect('mattdb', 'dev')
     cursor1 = conn.cursor()
