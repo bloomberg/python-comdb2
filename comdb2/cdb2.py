@@ -170,6 +170,7 @@ class Handle(object):
         self._more_rows_available = False
         self._hndl_p = None
         self._hndl = None
+        self._lib_cdb2_close = lib.cdb2_close  # DRQS 88746293
 
         if not isinstance(database_name, bytes):
             database_name = database_name.encode('utf-8')  # Python 3
@@ -195,7 +196,7 @@ class Handle(object):
 
     def __del__(self):
         if self._hndl is not None:
-            self.close()
+            self._lib_cdb2_close(self._hndl)
 
     def close(self):
         self._more_rows_available = False
