@@ -19,15 +19,16 @@ TYPE = {six.text_type(k[len('CDB2_'):]): v
 
 
 class DatetimeUs(datetime):
-    '''DatetimeUs parameters to Cursor.execute will give microsecond precision.
+    """DatetimeUs objects give microsecond precision when bound as parameters.
 
     This differs from datetime.datetime parameters, which only give millisecond
-    precision.  The behavior is otherwise identical to datetime.datetime, with
-    the exception of a single extra classmethod, fromdatetime, for constructing
-    a DatetimeUs from a datetime.datetime.
-    '''
+    precision.  The behavior of DatetimeUs is otherwise identical to
+    datetime.datetime, with the exception of a single extra classmethod,
+    fromdatetime, for constructing a DatetimeUs from a datetime.datetime.
+    """
     @classmethod
     def fromdatetime(cls, dt):
+        """Returns a DatetimeUs copied from a given datetime.datetime"""
         return DatetimeUs(dt.year, dt.month, dt.day,
                           dt.hour, dt.minute, dt.second, dt.microsecond,
                           dt.tzinfo)
@@ -63,6 +64,13 @@ class DatetimeUs(datetime):
 
 
 class Error(RuntimeError):
+    """Exception type raised for all failed operations.
+
+    Attributes:
+        error_code: The integer error code from the failed cdb2api call.
+        error_message: The string returned by cdb2api's cdb2_errstr after
+            the failed call.
+    """
     def __init__(self, error_code, error_message):
         self.error_code = error_code
         self.error_message = error_message
@@ -166,7 +174,39 @@ def _bind_args(val):
 
 
 class Handle(object):
+    """Low level Pythonic wrapper around Comdb2 connections using cdb2api."""
+
     def __init__(self, database_name, tier="default", flags=0, tz='UTC'):
+        """Creates a new connection to a given database.
+
+        By default, the connection will be made to the cluster configured as
+        the machine-wide default for the given database.  This is almost always
+        what you want.  If you need to connect to a database that's running on
+        your local machine rather than a cluster, you can pass "local" as the
+        tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
+        as the tier, but note that the firewall will block you from connecting
+        directly from a dev machine to a prod database.
+
+        By default, the connection will use UTC as its timezone.  This differs
+        from cdb2api's default behavior, where the timezone used by the query
+        differs depending on the machine that it is run from.  If for some
+        reason you need to have that machine-specific default timezone instead,
+        you can pass None for the tz argument.  Any other valid timezone name
+        may also be used instead of 'UTC'.
+
+        Note that Python does not guarantee that object finalizers will be
+        called when the interpreter exits, so to ensure that the handle is
+        cleanly released you should call the close() method when you're done
+        with it.  You can use contextlib.closing to guarantee the handle is
+        released when a block completes.
+
+        Args:
+            database_name: The name of the database to connect to.
+            tier: The cluster to connect to.
+            flags: An integer flags value passed directly through to cdb2_open.
+            tz: The timezone to be used by the new connection, or None to use
+                a machine-specific default.
+        """
         self._more_rows_available = False
         self._hndl_p = None
         self._hndl = None
@@ -199,6 +239,23 @@ class Handle(object):
             self._lib_cdb2_close(self._hndl)
 
     def close(self):
+        """Gracefully close the Comdb2 connection.
+
+        Once a Handle has been closed, no further operations may be performed
+        on it.
+
+        If a socket pool is running on the machine and the Handle was in
+        a clean state, this will turn over the connection to the socket pool.
+        This can only be done if the Handle was not in a transaction, nor in
+        the middle of a result set.  Other restrictions may apply as well.
+
+        You can ensure that this gets called at the end of a block using
+        something like:
+
+            with contextlib.closing(Handle('mattdb')) as hndl:
+                for row in hndl.execute("select 1"):
+                    print row
+        """
         self._more_rows_available = False
         lib.cdb2_close(self._hndl)
         self._hndl = None
@@ -208,11 +265,38 @@ class Handle(object):
             raise Error(lib.CDB2ERR_NOTCONNECTED,
                         "%s() called on closed connection" % func_name)
 
+        # FIXME message always says column_types
         for func in ("close", "execute",
                      "get_effects", "column_names", "column_types"):
             setattr(self, func, lambda *a, **k: closed_error(func))
 
     def execute(self, sql, parameters=None):
+        """Execute a SQL query, returning an iterator over its result set.
+
+        The provided SQL query may have placeholders for parameters to be
+        passed.  This should always be the prefered method of parameterizing
+        the SQL query, as it prevents SQL injection vulnerabilities and is
+        faster.  Placeholders for named parameters must be in Comdb2's native
+        format, @param_name.
+
+        Args:
+            sql: The SQL string to execute.
+            parameters: An optional mapping from parameter names to the values
+                to be bound for them.
+
+        Returns:
+            An iterator over the result set returned by the query.  The
+            iterator will yield one list per row in the result set, where the
+            elements in the list correspond to the result columns within the
+            row, in positional order.
+
+        Example:
+            >>> for row in hndl.execute('SELECT 1, 2 UNION select @x, @y',
+            ...                         {'x': 2, 'y': 4}):
+            ...     print row[1], row[0]
+            4 2
+            2 1
+        """
         self._column_range = []
         self._consume_all_rows()
 
@@ -256,6 +340,25 @@ class Handle(object):
     next = __next__
 
     def get_effects(self):
+        """Return counts of rows affected by executed queries.
+
+        Within a transaction, these counts are a running total from the start
+        of the transaction up through the last executed SQL statement.  Outside
+        of a transaction, these counts represent the rows affected by only the
+        last executed SQL statement.
+
+        Note that the results within a transaction are not necessarily reliable
+        unless the VERIFYRETRY setting is turned off.  All of the caveats of
+        the cdb2_get_effects call apply.
+
+        Returns:
+            tuple: A 5-tuple, whose elements are:
+                The total number of rows that were affected
+                The number of rows that were selected
+                The number of rows that were updated
+                The number of rows that were deleted
+                The number of rows that were inserted
+        """
         effects = ffi.new("cdb2_effects_tp *")
         self._more_rows_available = False
         # XXX cdb2_get_effects consumes any remaining rows implicitly
@@ -268,10 +371,22 @@ class Handle(object):
                 effects.num_inserted)
 
     def column_names(self):
+        """Returns the names of the columns of the current result set.
+
+        Returns:
+            A list of strings, one per column in the result set.
+        """
         return [_ffi_string(lib.cdb2_column_name(self._hndl, i))
                 for i in self._column_range]
 
     def column_types(self):
+        """Returns the type codes of the columns of the current result set.
+
+        Returns:
+            A list of integers, one per column in the result set.  Each
+            corresponds to one of the types in the TYPE global object exposed
+            by this module.
+        """
         return [lib.cdb2_column_type(self._hndl, i)
                 for i in self._column_range]
 
