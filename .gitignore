@@ -1,0 +1,10 @@
+/build
+/dist
+/python_comdb2.egg-info
+*.pyc
+*.so
+/.cache
+/.coverage
+/htmlcov
+__pycache__
+*.swp
