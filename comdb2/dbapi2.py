@@ -22,8 +22,7 @@ apilevel = "2.0"
 threadsafety = 1  # 2 threads can have different connections, but can't share 1
 paramstyle = "pyformat"
 
-_SET = re.compile(r'^\s*set', re.I)
-_TXN = re.compile(r'^\s*(begin|commit|rollback)', re.I)
+_FIRST_WORD_OF_LINE = re.compile(r'(\S+)')
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
@@ -163,6 +162,13 @@ def _raise_wrapped_exception(exc):
     raise _EXCEPTION_BY_RC.get(code, OperationalError)(msg)
 
 
+def _sql_operation(sql):
+    match = _FIRST_WORD_OF_LINE.search(sql)
+    if match:
+        return match.group(1).lower()
+    return None
+
+
 def connect(*args, **kwargs):
     return Connection(*args, **kwargs)
 
@@ -182,13 +188,13 @@ class Connection(object):
             if cursor is not None and not cursor._closed:
                 cursor.close()
 
-    def _execute(self, sql):
+    def _execute(self, operation):
         cursor = None
         if self._active_cursor is not None:
             cursor = self._active_cursor()
         if cursor is None:
             cursor = self.cursor()
-        cursor._execute(sql)
+        cursor._execute(operation, operation)
 
     def close(self):
         if self._hndl is None:
@@ -269,16 +275,19 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         self._check_closed()
         self._description = None
-        match = _TXN.match(sql)
-        if match:
-            if re.match(match.group(1), 'begin', re.I):
-                errmsg = "Transactions may not be started explicitly"
-            elif re.match(match.group(1), 'commit', re.I):
-                errmsg = "Use Connection.commit to commit transactions"
-            elif re.match(match.group(1), 'rollback', re.I):
-                errmsg = "Use Connection.rollback to roll back transactions"
+        operation = _sql_operation(sql)
+
+        errmsg = None
+        if operation == 'begin':
+            errmsg = "Transactions may not be started explicitly"
+        elif operation == 'commit':
+            errmsg = "Use Connection.commit to commit transactions"
+        elif operation == 'rollback':
+            errmsg = "Use Connection.rollback to roll back transactions"
+        if errmsg:
             raise InterfaceError(errmsg)
-        self._execute(sql, parameters)
+
+        self._execute(operation, sql, parameters)
         self._load_description()
         # Optional DB API Extension: execute's return value is unspecified.  We
         # return an iterable over the rows, but this isn't portable across DBs.
@@ -289,10 +298,10 @@ class Cursor(object):
         for parameters in seq_of_parameters:
             self.execute(sql, parameters)
 
-    def _execute(self, sql, parameters=None):
+    def _execute(self, operation, sql, parameters=None):
         self._rowcount = -1
 
-        if not self._conn._in_transaction and not _SET.match(sql):
+        if not self._conn._in_transaction and operation != "set":
             try:
                 self._hndl.execute("begin")
             except cdb2.Error as e:
@@ -304,7 +313,7 @@ class Cursor(object):
 
         sql = sql % {name: "@" + name for name in parameters}
 
-        if sql == 'commit' or sql == 'rollback':
+        if operation == 'commit' or operation == 'rollback':
             self._conn._in_transaction = False
 
         try:
@@ -312,7 +321,7 @@ class Cursor(object):
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
-        if sql == 'commit':
+        if operation == 'commit':
             self._update_rowcount()
 
     def setinputsizes(self, sizes):
