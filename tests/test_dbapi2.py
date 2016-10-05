@@ -532,3 +532,31 @@ def test_get_effect_throws_error(handle):
     cursor = conn.cursor()
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.commit()
+
+def test_autocommit_handles():
+    conn = connect('mattdb', 'dev', autocommit=True)
+    cursor = conn.cursor()
+
+    # Explicit transactions must work
+    cursor.execute("begin")
+    assert cursor.rowcount == -1
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    assert cursor.rowcount == -1
+    cursor.execute("insert into simple(key, val) values(3, 4)")
+    assert cursor.rowcount == -1
+    cursor.execute("commit")
+    assert cursor.rowcount == 2
+
+    # Outside of a transaction, operations are applied immediately
+    cursor.execute("delete from simple where key=1")
+    assert cursor.rowcount == 1
+
+    # Outside of a transaction, commit fails
+    with pytest.raises(ProgrammingError):
+        conn.commit()
+
+    # The rowcount isn't updated on rollback
+    cursor.execute("begin")
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.rollback()
+    assert cursor.rowcount == -1

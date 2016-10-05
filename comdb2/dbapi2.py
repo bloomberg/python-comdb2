@@ -174,9 +174,10 @@ def connect(*args, **kwargs):
 
 
 class Connection(object):
-    def __init__(self, database_name, tier="default"):
+    def __init__(self, database_name, tier="default", autocommit=False):
         self._active_cursor = None
         self._in_transaction = False
+        self._autocommit = autocommit
         try:
             self._hndl = cdb2.Handle(database_name, tier)
         except cdb2.Error as e:
@@ -278,12 +279,13 @@ class Cursor(object):
         operation = _sql_operation(sql)
 
         errmsg = None
-        if operation == 'begin':
-            errmsg = "Transactions may not be started explicitly"
-        elif operation == 'commit':
-            errmsg = "Use Connection.commit to commit transactions"
-        elif operation == 'rollback':
-            errmsg = "Use Connection.rollback to roll back transactions"
+        if not self._conn._autocommit:
+            if operation == 'begin':
+                errmsg = "Transactions may not be started explicitly"
+            elif operation == 'commit':
+                errmsg = "Use Connection.commit to commit transactions"
+            elif operation == 'rollback':
+                errmsg = "Use Connection.rollback to roll back transactions"
         if errmsg:
             raise InterfaceError(errmsg)
 
@@ -301,12 +303,13 @@ class Cursor(object):
     def _execute(self, operation, sql, parameters=None):
         self._rowcount = -1
 
-        if not self._conn._in_transaction and operation != "set":
-            try:
-                self._hndl.execute("begin")
-            except cdb2.Error as e:
-                _raise_wrapped_exception(e)
-            self._conn._in_transaction = True
+        if not self._conn._autocommit:
+            if not self._conn._in_transaction and operation != "set":
+                try:
+                    self._hndl.execute("begin")
+                except cdb2.Error as e:
+                    _raise_wrapped_exception(e)
+                self._conn._in_transaction = True
 
         if parameters is None:
             parameters = {}
@@ -321,7 +324,9 @@ class Cursor(object):
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
-        if operation == 'commit':
+        if operation == 'begin':
+            self._conn._in_transaction = True
+        elif not self._conn._in_transaction and operation != 'rollback':
             self._update_rowcount()
 
     def setinputsizes(self, sizes):
