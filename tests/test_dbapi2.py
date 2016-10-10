@@ -160,6 +160,19 @@ def test_implicit_rollback_on_connection_close():
     rows = list(cursor.execute("select key, val from simple order by key"))
     assert rows == [[1,2]]
 
+def test_extra_percent_arg():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    with pytest.raises(InterfaceError):
+        cursor.execute("insert into simple(key, val) values(%(k)s, %(v)s)",
+                       dict(k=3))
+
+def test_unescaped_percent():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    cursor.execute("select 1%%2" )  # Should work
+    with pytest.raises(InterfaceError):
+        cursor.execute("select 1%2")
 
 def test_reading_and_writing_datetimes():
     conn = connect('mattdb', 'dev')
