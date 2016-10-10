@@ -302,7 +302,14 @@ class Cursor(object):
         if parameters is None:
             parameters = {}
 
-        sql = sql % {name: "@" + name for name in parameters}
+        try:
+            # If variable interpolation fails, then translate the exception to
+            # an InterfaceError to signal that it's a client-side problem.
+            sql = sql % {name: "@" + name for name in parameters}
+        except KeyError as keyerr:
+            raise InterfaceError("No value provided for parameter %s" % keyerr)
+        except Exception:
+            raise InterfaceError("Invalid Python format string for query")
 
         if sql == 'commit' or sql == 'rollback':
             self._conn._in_transaction = False
