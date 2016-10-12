@@ -169,6 +169,10 @@ def _sql_operation(sql):
     return None
 
 
+def _operation_ends_transaction(operation):
+    return operation == 'commit' or operation == 'rollback'
+
+
 def connect(*args, **kwargs):
     return Connection(*args, **kwargs)
 
@@ -285,6 +289,7 @@ class Cursor(object):
         operation = _sql_operation(sql)
 
         if not self._conn._autocommit:
+            # Certain operations are forbidden when not in autocommit mode.
             errmsg = self.ErrorMessagesByOperation.get(operation)
             if errmsg:
                 raise InterfaceError(errmsg)
@@ -304,6 +309,7 @@ class Cursor(object):
         self._rowcount = -1
 
         if not self._conn._autocommit:
+            # Any non-SET operation starts a txn when not in autocommit mode.
             if not self._conn._in_transaction and operation != "set":
                 try:
                     self._hndl.execute("begin")
@@ -316,8 +322,8 @@ class Cursor(object):
 
         sql = sql % {name: "@" + name for name in parameters}
 
-        if operation == 'commit' or operation == 'rollback':
-            self._conn._in_transaction = False
+        if _operation_ends_transaction(operation):
+            self._conn._in_transaction = False  # txn ends, even on failure
 
         try:
             self._hndl.execute(sql, parameters)
@@ -325,9 +331,9 @@ class Cursor(object):
             _raise_wrapped_exception(e)
 
         if operation == 'begin':
-            self._conn._in_transaction = True
+            self._conn._in_transaction = True  # txn successfully started
         elif not self._conn._in_transaction and operation != 'rollback':
-            self._update_rowcount()
+            self._update_rowcount()  # in autocommit mode, or txn committed
 
     def setinputsizes(self, sizes):
         self._check_closed()
