@@ -230,6 +230,12 @@ class Connection(object):
 
 
 class Cursor(object):
+    ErrorMessagesByOperation = {
+        'begin': "Transactions may not be started explicitly",
+        'commit': "Use Connection.commit to commit transactions",
+        'rollback': "Use Connection.rollback to roll back transactions",
+    }
+
     def __init__(self, conn):
         self.arraysize = 1
         self._conn = conn
@@ -278,16 +284,10 @@ class Cursor(object):
         self._description = None
         operation = _sql_operation(sql)
 
-        errmsg = None
         if not self._conn._autocommit:
-            if operation == 'begin':
-                errmsg = "Transactions may not be started explicitly"
-            elif operation == 'commit':
-                errmsg = "Use Connection.commit to commit transactions"
-            elif operation == 'rollback':
-                errmsg = "Use Connection.rollback to roll back transactions"
-        if errmsg:
-            raise InterfaceError(errmsg)
+            errmsg = self.ErrorMessagesByOperation.get(operation)
+            if errmsg:
+                raise InterfaceError(errmsg)
 
         self._execute(operation, sql, parameters)
         self._load_description()
