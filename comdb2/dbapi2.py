@@ -173,6 +173,14 @@ def _operation_ends_transaction(operation):
     return operation == 'commit' or operation == 'rollback'
 
 
+def _modifies_rows(operation):
+    # These operations can modify the contents of the database.
+    # exec is deliberately excluded because it might return a result set, and
+    # this function is used to determine whether it's safe to call
+    # cdb2_get_effects after running the operation.
+    return operation in ('commit', 'insert', 'update', 'delete')
+
+
 def connect(*args, **kwargs):
     return Connection(*args, **kwargs)
 
@@ -332,8 +340,12 @@ class Cursor(object):
 
         if operation == 'begin':
             self._conn._in_transaction = True  # txn successfully started
-        elif not self._conn._in_transaction and operation != 'rollback':
-            self._update_rowcount()  # in autocommit mode, or txn committed
+        elif not self._conn._in_transaction and _modifies_rows(operation):
+            # We're not in a transaction, and the last statement could have
+            # modified rows.  Either we've just explicitly committed
+            # a transaction, or we're in autocommit mode and ran DML outside of
+            # an explicit transaction.  We can get the count of affected rows.
+            self._update_rowcount()
 
     def setinputsizes(self, sizes):
         self._check_closed()
