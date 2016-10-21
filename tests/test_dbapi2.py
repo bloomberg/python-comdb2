@@ -545,3 +545,49 @@ def test_get_effect_throws_error(handle):
     cursor = conn.cursor()
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.commit()
+
+def test_autocommit_handles():
+    conn = connect('mattdb', 'dev', autocommit=True)
+    cursor = conn.cursor()
+
+    # Explicit transactions must work
+    cursor.execute("begin")
+    assert cursor.rowcount == -1
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    assert cursor.rowcount == -1
+    cursor.execute("insert into simple(key, val) values(3, 4)")
+    assert cursor.rowcount == -1
+    cursor.execute("commit")
+    assert cursor.rowcount == 2
+
+    # Selects work, but don't affect the rowcount
+    cursor.execute("select key, val from simple order by key")
+    assert cursor.rowcount == -1
+    assert cursor.fetchall() == [[1,2],[3,4]]
+
+    cursor.execute("selectv key, val from simple order by key")
+    assert cursor.rowcount == -1
+    assert cursor.fetchall() == [[1,2],[3,4]]
+
+    # Outside of a transaction, operations are applied immediately
+    cursor.execute("insert into simple(key, val) values(7, 6)")
+    assert cursor.rowcount == 1
+
+    cursor.execute("update simple set key=5 where key=7")
+    assert cursor.rowcount == 1
+
+    cursor.execute("delete from simple where key in (1, 3, 5)")
+    assert cursor.rowcount == 3
+
+    cursor.execute("select count(*) from simple")
+    assert cursor.fetchall() == [[0]]
+
+    # Outside of a transaction, commit fails
+    with pytest.raises(ProgrammingError):
+        conn.commit()
+
+    # The rowcount isn't updated on rollback
+    cursor.execute("begin")
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.rollback()
+    assert cursor.rowcount == -1
