@@ -179,7 +179,7 @@ class Handle(object):
             tier = tier.encode('utf-8')  # Python 3
 
         self._hndl_p = ffi.new("struct cdb2_hndl **")
-        rc = lib.cdb2_open(self._hndl_p, database_name, tier, 0)
+        rc = lib.cdb2_open(self._hndl_p, database_name, tier, flags)
         if rc != lib.CDB2_OK:
             errstr = _errstr(self._hndl_p[0])
             lib.cdb2_close(self._hndl_p[0])
