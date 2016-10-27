@@ -176,7 +176,8 @@ def _bind_args(val):
 class Handle(object):
     """Low level Pythonic wrapper around Comdb2 connections using cdb2api."""
 
-    def __init__(self, database_name, tier="default", flags=0, tz='UTC'):
+    def __init__(self, database_name, tier="default", flags=0, tz='UTC',
+                 host=None):
         """Creates a new connection to a given database.
 
         By default, the connection will be made to the cluster configured as
@@ -186,6 +187,10 @@ class Handle(object):
         tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
         as the tier, but note that the firewall will block you from connecting
         directly from a dev machine to a prod database.
+
+        Alternately, you can pass a machine name as the host argument, to
+        connect directly to an instance of the given database on that host,
+        rather than on a cluster or the local machine.
 
         By default, the connection will use UTC as its timezone.  This differs
         from cdb2api's default behavior, where the timezone used by the query
@@ -203,10 +208,20 @@ class Handle(object):
         Args:
             database_name: The name of the database to connect to.
             tier: The cluster to connect to.
+            host: Alternately, a single remote host to connect to.
             flags: An integer flags value passed directly through to cdb2_open.
             tz: The timezone to be used by the new connection, or None to use
                 a machine-specific default.
         """
+        if host is not None:
+            if tier != "default":
+                raise Error(lib.CDB2ERR_NOTSUPPORTED,
+                            "Connecting to a host by name and to a "
+                            "cluster by tier are mutually exclusive")
+            else:
+                tier = host
+                flags |= 4
+
         self._more_rows_available = False
         self._hndl_p = None
         self._hndl = None
