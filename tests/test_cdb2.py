@@ -99,3 +99,21 @@ def test_timezone_handling():
     rows = list(hndl.execute("select now()"))
     assert len(rows) == 1
     assert rows[0][0].tzname() == 'UTC'
+
+
+def test_passing_flags():
+    # Bad SQL statements in a transaction fail early
+    flags = cdb2.HANDLE_FLAGS['READ_INTRANS_RESULTS']
+
+    # Test passing flags
+    hndl = cdb2.Handle('mattdb', 'dev', flags=flags)
+    hndl.execute('begin')
+    with pytest.raises(cdb2.Error):
+        hndl.execute('foobar')
+
+    # Default behavior, without any flags passed
+    hndl = cdb2.Handle('mattdb', 'dev', flags=0)
+    hndl.execute('begin')
+    hndl.execute('foobar')
+    with pytest.raises(cdb2.Error):
+        hndl.execute("select 1")

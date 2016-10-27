@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 import pytz
 import six
 
-__all__ = ['Error', 'Handle', 'DatetimeUs', 'ERROR_CODE', 'TYPE']
+__all__ = ['Error', 'Handle', 'DatetimeUs',
+           'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
 ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
@@ -15,6 +16,12 @@ ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
 # Pull comdb2 column types from cdb2api.h into our namespace
 TYPE = {six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
+        if k.startswith('CDB2_')}
+
+# Pull comdb2 handle flags from cdb2api.h into our namespace
+HANDLE_FLAGS = {
+        six.text_type(k[len('CDB2_'):]): v
+        for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
         if k.startswith('CDB2_')}
 
 
@@ -220,7 +227,7 @@ class Handle(object):
                             "cluster by tier are mutually exclusive")
             else:
                 tier = host
-                flags |= 4
+                flags |= HANDLE_FLAGS['DIRECT_CPU']
 
         self._more_rows_available = False
         self._hndl_p = None
