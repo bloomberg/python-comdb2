@@ -23,6 +23,7 @@ ffi.cdef("""
         CDB2_DIRECT_CPU,
         CDB2_RANDOM,
         CDB2_RANDOMROOM,
+        CDB2_ROOM,
         ...
     };
 
