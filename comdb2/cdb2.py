@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 import pytz
 import six
 
-__all__ = ['Error', 'Handle', 'DatetimeUs', 'ERROR_CODE', 'TYPE']
+__all__ = ['Error', 'Handle', 'DatetimeUs',
+           'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
 ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
@@ -15,6 +16,12 @@ ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
 # Pull comdb2 column types from cdb2api.h into our namespace
 TYPE = {six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
+        if k.startswith('CDB2_')}
+
+# Pull comdb2 handle flags from cdb2api.h into our namespace
+HANDLE_FLAGS = {
+        six.text_type(k[len('CDB2_'):]): v
+        for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
         if k.startswith('CDB2_')}
 
 
@@ -176,7 +183,8 @@ def _bind_args(val):
 class Handle(object):
     """Low level Pythonic wrapper around Comdb2 connections using cdb2api."""
 
-    def __init__(self, database_name, tier="default", flags=0, tz='UTC'):
+    def __init__(self, database_name, tier="default", flags=0, tz='UTC',
+                 host=None):
         """Creates a new connection to a given database.
 
         By default, the connection will be made to the cluster configured as
@@ -186,6 +194,10 @@ class Handle(object):
         tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
         as the tier, but note that the firewall will block you from connecting
         directly from a dev machine to a prod database.
+
+        Alternately, you can pass a machine name as the host argument, to
+        connect directly to an instance of the given database on that host,
+        rather than on a cluster or the local machine.
 
         By default, the connection will use UTC as its timezone.  This differs
         from cdb2api's default behavior, where the timezone used by the query
@@ -203,10 +215,20 @@ class Handle(object):
         Args:
             database_name: The name of the database to connect to.
             tier: The cluster to connect to.
+            host: Alternately, a single remote host to connect to.
             flags: An integer flags value passed directly through to cdb2_open.
             tz: The timezone to be used by the new connection, or None to use
                 a machine-specific default.
         """
+        if host is not None:
+            if tier != "default":
+                raise Error(lib.CDB2ERR_NOTSUPPORTED,
+                            "Connecting to a host by name and to a "
+                            "cluster by tier are mutually exclusive")
+            else:
+                tier = host
+                flags |= HANDLE_FLAGS['DIRECT_CPU']
+
         self._more_rows_available = False
         self._hndl_p = None
         self._hndl = None

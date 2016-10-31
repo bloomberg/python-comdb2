@@ -230,7 +230,8 @@ def connect(*args, **kwargs):
 
 
 class Connection(object):
-    def __init__(self, database_name, tier="default", autocommit=False):
+    def __init__(self, database_name, tier="default", autocommit=False,
+                 host=None):
         """Establish a connection to a Comdb2 database.
 
         By default, the connection will be made to the cluster configured as
@@ -240,6 +241,10 @@ class Connection(object):
         tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
         as the tier, but note that the firewall will block you from connecting
         directly from a dev machine to a prod database.
+
+        Alternately, you can pass a machine name as the host argument, to
+        connect directly to an instance of the given database on that host,
+        rather than on a cluster or the local machine.
 
         If the autocommit keyword argument is left at its default value of
         False, cursors created from this Connection will behave as mandated by
@@ -269,13 +274,18 @@ class Connection(object):
         Args:
             database_name: The name of the database to connect to.
             tier: The cluster to connect to.
+            host: Alternately, a single remote host to connect to.
             autocommit: Whether to automatically commit after DML statements.
         """
+        if host is not None and tier != "default":
+            raise InterfaceError("Connecting to a host by name and to a "
+                                 "cluster by tier are mutually exclusive")
+
         self._active_cursor = None
         self._in_transaction = False
         self._autocommit = autocommit
         try:
-            self._hndl = cdb2.Handle(database_name, tier)
+            self._hndl = cdb2.Handle(database_name, tier, host=host)
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
