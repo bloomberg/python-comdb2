@@ -161,8 +161,8 @@ def _bind_args(val):
         try:
             return lib.CDB2_INTEGER, ffi.new("int64_t *", val), 8
         except OverflowError as e:
-            raise Error(lib.CDB2ERR_CONV_FAIL,
-                        "Can't bind value %s: %s" % (val, e))
+            six.raise_from(Error(lib.CDB2ERR_CONV_FAIL,
+                                 "Can't bind value %s: %s" % (val, e)), e)
     elif isinstance(val, float):
         return lib.CDB2_REAL, ffi.new("double *", val), 8
     elif isinstance(val, bytes):
@@ -355,7 +355,7 @@ class Handle(object):
             # since it may indicate that the connection is no longer usable.
             self._consume_all_rows()
             # If it didn't, raise our own error for the failed UTF-8 decode.
-            raise Error(lib.CDB2ERR_CONV_FAIL, str(e))
+            six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, str(e)), e)
 
         return data
 

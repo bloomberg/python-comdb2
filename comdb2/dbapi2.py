@@ -195,8 +195,8 @@ def _raise_wrapped_exception(exc):
     code = exc.error_code
     msg = exc.error_message
     if "null constraint violation" in msg:
-        raise IntegrityError(msg)  # DRQS 86013831
-    raise _EXCEPTION_BY_RC.get(code, OperationalError)(msg)
+        six.raise_from(IntegrityError(msg), exc)  # DRQS 86013831
+    six.raise_from(_EXCEPTION_BY_RC.get(code, OperationalError)(msg), exc)
 
 
 def _sql_operation(sql):
@@ -557,9 +557,11 @@ class Cursor(object):
             # an InterfaceError to signal that it's a client-side problem.
             sql = sql % {name: "@" + name for name in parameters}
         except KeyError as keyerr:
-            raise InterfaceError("No value provided for parameter %s" % keyerr)
-        except Exception:
-            raise InterfaceError("Invalid Python format string for query")
+            msg = "No value provided for parameter %s" % keyerr
+            six.raise_from(InterfaceError(msg), keyerr)
+        except Exception as exc:
+            msg = "Invalid Python format string for query"
+            six.raise_from(InterfaceError(msg), exc)
 
         if _operation_ends_transaction(operation):
             self._conn._in_transaction = False  # txn ends, even on failure
