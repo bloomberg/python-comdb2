@@ -1,6 +1,8 @@
 from __future__ import unicode_literals, absolute_import
 
 from comdb2 import cdb2
+from comdb2.factories import dict_row_factory
+from comdb2.factories import namedtuple_row_factory
 import pytest
 import pytz
 
@@ -117,3 +119,49 @@ def test_passing_flags():
     hndl.execute('foobar')
     with pytest.raises(cdb2.Error):
         hndl.execute("select 1")
+
+
+def test_row_factories():
+    query = "select 1 as 'a', 2 as 'b' union select 3, 4 order by a"
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    assert list(hndl.execute(query)) == [[1, 2], [3, 4]]
+
+    hndl.row_factory = dict_row_factory
+    assert hndl.row_factory == dict_row_factory
+    assert list(hndl.execute(query)) == [{'a': 1, 'b': 2}, {'a': 3, 'b': 4}]
+
+    hndl.row_factory = namedtuple_row_factory
+    assert hndl.row_factory == namedtuple_row_factory
+    rows = [r._asdict() for r in hndl.execute(query)]
+    assert rows == [{'a': 1, 'b': 2}, {'a': 3, 'b': 4}]
+
+
+def test_row_factories_with_dup_col_names():
+    query = "select 1 as 'a', 2 as 'a'"
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    assert list(hndl.execute(query)) == [[1, 2]]
+
+    hndl.row_factory = namedtuple_row_factory
+    with pytest.raises(cdb2.Error):
+        hndl.execute(query)
+
+    hndl.row_factory = dict_row_factory
+    with pytest.raises(cdb2.Error):
+        hndl.execute(query)
+
+
+def test_failures_instantiating_row_class():
+    def factory(col_names):
+        def klass(col_values):
+            raise TypeError(col_values)
+        return klass
+
+    query = "select 1 as 'a', 2 as 'a'"
+
+    hndl = cdb2.Handle('mattdb', 'dev')
+    hndl.row_factory = factory
+    it = iter(hndl.execute(query))
+    with pytest.raises(cdb2.Error):
+        next(it)

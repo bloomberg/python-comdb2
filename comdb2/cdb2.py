@@ -230,6 +230,7 @@ class Handle(object):
                 flags |= HANDLE_FLAGS['DIRECT_CPU']
 
         self._more_rows_available = False
+        self._row_factory = None
         self._hndl_p = None
         self._hndl = None
         self._lib_cdb2_close = lib.cdb2_close  # DRQS 88746293
@@ -292,6 +293,21 @@ class Handle(object):
                      "get_effects", "column_names", "column_types"):
             setattr(self, func, lambda *a, **k: closed_error(func))
 
+    @property
+    def row_factory(self):
+        """Factory used when constructing result rows.
+
+        By default, or when set to None, rows are returned as lists of column
+        values.  If you'd prefer to receive rows as a dict or as a namedtuple,
+        you can set this property to one of the factories provided by the
+        `comdb2.factories` module.
+        """
+        return self._row_factory
+
+    @row_factory.setter
+    def row_factory(self, value):
+        self._row_factory = value
+
     def execute(self, sql, parameters=None):
         """Execute a SQL query, returning an iterator over its result set.
 
@@ -312,12 +328,21 @@ class Handle(object):
             elements in the list correspond to the result columns within the
             row, in positional order.
 
+            The `row_factory` property can be used to return rows as
+            a different type, instead.
+
         Example:
             >>> for row in hndl.execute('SELECT 1, 2 UNION select @x, @y',
             ...                         {'x': 2, 'y': 4}):
             ...     print row[1], row[0]
             4 2
             2 1
+
+            >>> from comdb2.factories import dict_row_factory
+            >>> hndl.row_factory = dict_row_factory
+            >>> for row in hndl.execute("SELECT 1 as 'foo', 2 as 'bar'"):
+            ...     print row
+            {'foo': 1, 'bar': 2}
         """
         self._column_range = []
         self._consume_all_rows()
@@ -338,6 +363,13 @@ class Handle(object):
         self._more_rows_available = True
         self._next_record()
         self._column_range = range(lib.cdb2_numcolumns(self._hndl))
+        try:
+            if self._row_factory is None:
+                self._row_class = None
+            else:
+                self._row_class = self._row_factory(self.column_names())
+        except Exception as e:
+            six.raise_from(Error(lib.CDB2ERR_UNKNOWN, str(e)), e)
         return self
 
     def __iter__(self):
@@ -356,6 +388,12 @@ class Handle(object):
             self._consume_all_rows()
             # If it didn't, raise our own error for the failed UTF-8 decode.
             six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, str(e)), e)
+
+        if self._row_class is not None:
+            try:
+                data = self._row_class(data)
+            except Exception as e:
+                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, str(e)), e)
 
         return data
 
