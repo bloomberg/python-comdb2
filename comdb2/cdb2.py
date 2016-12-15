@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from ._cdb2api import ffi, lib
 from datetime import datetime, timedelta
+from collections import namedtuple
 import pytz
 import six
 
@@ -23,6 +24,9 @@ HANDLE_FLAGS = {
         six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
         if k.startswith('CDB2_')}
+
+Effects = namedtuple('Effects',
+    "num_affected num_selected num_updated num_deleted num_inserted")
 
 
 class DatetimeUs(datetime):
@@ -424,11 +428,11 @@ class Handle(object):
         # XXX cdb2_get_effects consumes any remaining rows implicitly
         rc = lib.cdb2_get_effects(self._hndl, effects)
         _check_rc(rc, self._hndl)
-        return (effects.num_affected,
-                effects.num_selected,
-                effects.num_updated,
-                effects.num_deleted,
-                effects.num_inserted)
+        return Effects(effects.num_affected,
+                       effects.num_selected,
+                       effects.num_updated,
+                       effects.num_deleted,
+                       effects.num_inserted)
 
     def column_names(self):
         """Returns the names of the columns of the current result set.

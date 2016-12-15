@@ -165,3 +165,26 @@ def test_failures_instantiating_row_class():
     it = iter(hndl.execute(query))
     with pytest.raises(cdb2.Error):
         next(it)
+
+
+def test_get_effects():
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    hndl.execute("select 1 union all select 2")
+    assert hndl.get_effects() == (0, 2, 0, 0, 0)
+    assert hndl.get_effects().num_selected == 2
+
+    hndl.execute("insert into simple(key, val) values(@k, @v)", dict(v=2, k=1))
+    assert hndl.get_effects() == (1, 0, 0, 0, 1)
+    assert hndl.get_effects().num_affected == 1
+    assert hndl.get_effects().num_inserted == 1
+
+    hndl.execute("update simple set val=3 where key=1")
+    assert hndl.get_effects() == (1, 0, 1, 0, 0)
+    assert hndl.get_effects().num_affected == 1
+    assert hndl.get_effects().num_updated == 1
+
+    hndl.execute("delete from simple where 1=1")
+    assert hndl.get_effects() == (1, 0, 0, 1, 0)
+    assert hndl.get_effects().num_affected == 1
+    assert hndl.get_effects().num_deleted == 1
