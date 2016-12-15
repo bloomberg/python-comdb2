@@ -613,10 +613,10 @@ def test_row_factories():
 
 
 def test_row_factories_with_dup_col_names():
-    query = "select 1 as 'a', 2 as 'a'"
+    query = "select 1 as 'a', 2 as 'a', 3 as 'b', 4 as 'b', 5 as 'c'"
     hndl = connect('mattdb', 'dev')
 
-    assert list(hndl.cursor().execute(query)) == [[1, 2]]
+    assert list(hndl.cursor().execute(query)) == [[1, 2, 3, 4, 5]]
 
     hndl.row_factory = namedtuple_row_factory
     with pytest.raises(OperationalError):
