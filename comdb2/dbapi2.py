@@ -289,6 +289,21 @@ class Connection(object):
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
+    @property
+    def row_factory(self):
+        """Factory used when constructing result rows.
+
+        By default, or when set to None, rows are returned as lists of column
+        values.  If you'd prefer to receive rows as a dict or as a namedtuple,
+        you can set this property to one of the factories provided by the
+        `comdb2.factories` module.
+        """
+        return self._hndl.row_factory
+
+    @row_factory.setter
+    def row_factory(self, value):
+        self._hndl.row_factory = value
+
     def _close_any_outstanding_cursor(self):
         if self._active_cursor is not None:
             cursor = self._active_cursor()

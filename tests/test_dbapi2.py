@@ -2,6 +2,8 @@ from __future__ import unicode_literals, absolute_import
 
 from comdb2.dbapi2 import *
 from comdb2 import cdb2
+from comdb2.factories import dict_row_factory
+from comdb2.factories import namedtuple_row_factory
 import pytest
 import datetime
 import pytz
@@ -591,3 +593,49 @@ def test_autocommit_handles():
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.rollback()
     assert cursor.rowcount == -1
+
+
+def test_row_factories():
+    query = "select 1 as 'a', 2 as 'b' union select 3, 4 order by a"
+    hndl = connect('mattdb', 'dev')
+
+    assert list(hndl.cursor().execute(query)) == [[1, 2], [3, 4]]
+
+    hndl.row_factory = dict_row_factory
+    assert hndl.row_factory == dict_row_factory
+    rows = list(hndl.cursor().execute(query))
+    assert rows == [{'a': 1, 'b': 2}, {'a': 3, 'b': 4}]
+
+    hndl.row_factory = namedtuple_row_factory
+    assert hndl.row_factory == namedtuple_row_factory
+    rows = [r._asdict() for r in hndl.cursor().execute(query)]
+    assert rows == [{'a': 1, 'b': 2}, {'a': 3, 'b': 4}]
+
+
+def test_row_factories_with_dup_col_names():
+    query = "select 1 as 'a', 2 as 'a', 3 as 'b', 4 as 'b', 5 as 'c'"
+    hndl = connect('mattdb', 'dev')
+
+    assert list(hndl.cursor().execute(query)) == [[1, 2, 3, 4, 5]]
+
+    hndl.row_factory = namedtuple_row_factory
+    with pytest.raises(OperationalError):
+        hndl.cursor().execute(query)
+
+    hndl.row_factory = dict_row_factory
+    with pytest.raises(OperationalError):
+        hndl.cursor().execute(query)
+
+
+def test_row_factories_with_reserved_word_col_names():
+    query = "select 1 as 'def'"
+    hndl = connect('mattdb', 'dev')
+
+    assert list(hndl.cursor().execute(query)) == [[1]]
+
+    hndl.row_factory = namedtuple_row_factory
+    with pytest.raises(OperationalError):
+        hndl.cursor().execute(query)
+
+    hndl.row_factory = dict_row_factory
+    assert list(hndl.cursor().execute(query)) == [{'def': 1}]
