@@ -25,8 +25,21 @@ HANDLE_FLAGS = {
         for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
         if k.startswith('CDB2_')}
 
-Effects = namedtuple('Effects',
-    "num_affected num_selected num_updated num_deleted num_inserted")
+
+class Effects(namedtuple('Effects',
+    "num_affected num_selected num_updated num_deleted num_inserted")):
+    """Type used to represent the count of rows affected by a SQL query.
+
+    An object of this type is returned by `Handle.get_effects`.
+
+    Attributes:
+        num_affected (int): The total number of rows that were affected.
+        num_selected (int): The number of rows that were selected.
+        num_updated (int): The number of rows that were updated.
+        num_deleted (int): The number of rows that were deleted.
+        num_inserted (int): The number of rows that were inserted.
+    """
+    __slots__ = ()
 
 
 class DatetimeUs(datetime):
