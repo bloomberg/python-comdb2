@@ -380,7 +380,7 @@ class Connection(object):
 
 
 class Cursor(object):
-    ErrorMessagesByOperation = {
+    _ErrorMessagesByOperation = {
         'begin': "Transactions may not be started explicitly",
         'commit': "Use Connection.commit to commit transactions",
         'rollback': "Use Connection.rollback to roll back transactions",
@@ -527,7 +527,7 @@ class Cursor(object):
 
         if not self._conn._autocommit:
             # Certain operations are forbidden when not in autocommit mode.
-            errmsg = self.ErrorMessagesByOperation.get(operation)
+            errmsg = self._ErrorMessagesByOperation.get(operation)
             if errmsg:
                 raise InterfaceError(errmsg)
 
