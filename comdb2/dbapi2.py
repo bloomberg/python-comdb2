@@ -19,8 +19,26 @@ __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'IntegrityError', 'DataError', 'NotSupportedError']
 
 apilevel = "2.0"
-threadsafety = 1  # 2 threads can have different connections, but can't share 1
+"""This module conforms to the Python Database API Specification 2.0."""
+
+threadsafety = 1
+"""2 threads can both use this module, but they can't share 1 `Connection`."""
+
 paramstyle = "pyformat"
+"""The SQL placeholder format for this module is ``%(name)s``.
+
+Comdb2's native placeholder format is ``@name``, but that cannot be used by
+this module because it's not an acceptable DB-API 2.0 placeholder style.
+
+Note:
+    An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last
+    character is always ``s``.
+
+Note:
+    Because SQL strings for this module use the ``pyformat`` placeholder style,
+    any literal ``%`` characters in a query must be escaped by doubling them.
+    ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
+"""
 
 _FIRST_WORD_OF_LINE = re.compile(r'(\S+)')
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
@@ -48,9 +66,17 @@ def _binary(string):
     return bytes(string)
 
 STRING = _TypeObject('CSTRING')
+"""The type codes of TEXT result columns compare equal to this constant."""
+
 BINARY = _TypeObject('BLOB')
+"""The type codes of BLOB result columns compare equal to this constant."""
+
 NUMBER = _TypeObject('INTEGER', 'REAL')
+"""The type codes of numeric result columns compare equal to this constant."""
+
 DATETIME = _TypeObject('DATETIME', 'DATETIMEUS')
+"""The type codes of datetime result columns compare equal to this constant."""
+
 ROWID = STRING
 
 # comdb2 doesn't support Date or Time, so I'm not defining them.

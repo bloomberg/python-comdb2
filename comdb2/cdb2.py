@@ -13,17 +13,35 @@ __all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
 ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
               for k, v in ffi.typeof('enum cdb2_errors').relements.items()
               if k.startswith('CDB2ERR_')}
+"""This dict maps all known Comdb2 error names to their respective values.
+
+The value returned in `Error.error_code` will generally be the value
+corresponding to one of the keys in this dict, though that's not always
+guaranteed because new error codes can be added to the Comdb2 server at any
+time.
+"""
 
 # Pull comdb2 column types from cdb2api.h into our namespace
 TYPE = {six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
         if k.startswith('CDB2_')}
+"""This dict maps all known Comdb2 types to their enumeration value.
+
+Each value in the list returned by `Handle.column_types` will generally be the
+value corresponding to one of the keys in this dict, though that's not always
+guaranteed because new types can be added to the Comdb2 server at any time.
+"""
 
 # Pull comdb2 handle flags from cdb2api.h into our namespace
 HANDLE_FLAGS = {
         six.text_type(k[len('CDB2_'):]): v
         for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
         if k.startswith('CDB2_')}
+"""This dict maps all known Comdb2 flags to their enumeration value.
+
+These values can be passed directly to `Handle`, though values not in this dict
+can be passed as well (such as the bitwise OR of two different flags).
+"""
 
 
 class Effects(namedtuple('Effects',
