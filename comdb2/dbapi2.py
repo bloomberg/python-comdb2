@@ -28,8 +28,9 @@ _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 @functools.total_ordering
 class _TypeObject(object):
-    def __init__(self, *values):
-        self.values = values
+    def __init__(self, *value_names):
+        self.value_names = value_names
+        self.values = [cdb2.TYPE[v] for v in value_names]
 
     def __eq__(self, other):
         return other in self.values
@@ -37,16 +38,19 @@ class _TypeObject(object):
     def __lt__(self, other):
         return self != other and other < self.values
 
+    def __repr__(self):
+        return 'TypeObject' + str(self.value_names)
+
 
 def _binary(string):
     if isinstance(string, six.text_type):
         return string.encode('utf-8')
     return bytes(string)
 
-STRING = _TypeObject(cdb2.TYPE['CSTRING'])
-BINARY = _TypeObject(cdb2.TYPE['BLOB'])
-NUMBER = _TypeObject(cdb2.TYPE['INTEGER'], cdb2.TYPE['REAL'])
-DATETIME = _TypeObject(cdb2.TYPE['DATETIME'], cdb2.TYPE['DATETIMEUS'])
+STRING = _TypeObject('CSTRING')
+BINARY = _TypeObject('BLOB')
+NUMBER = _TypeObject('INTEGER', 'REAL')
+DATETIME = _TypeObject('DATETIME', 'DATETIMEUS')
 ROWID = STRING
 
 # comdb2 doesn't support Date or Time, so I'm not defining them.
