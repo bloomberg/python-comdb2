@@ -230,53 +230,54 @@ def connect(*args, **kwargs):
 
 
 class Connection(object):
+    """Establish a connection to a Comdb2 database.
+
+    By default, the connection will be made to the cluster configured as
+    the machine-wide default for the given database.  This is almost always
+    what you want.  If you need to connect to a database that's running on
+    your local machine rather than a cluster, you can pass "local" as the
+    tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
+    as the tier, but note that the firewall will block you from connecting
+    directly from a dev machine to a prod database.
+
+    Alternately, you can pass a machine name as the host argument, to
+    connect directly to an instance of the given database on that host,
+    rather than on a cluster or the local machine.
+
+    If the autocommit keyword argument is left at its default value of
+    False, cursors created from this Connection will behave as mandated by
+    the Python DB API: every statement to be executed is implicitly
+    considered to be part of a transaction, and that transaction must be
+    ended explicitly with a call to Connection.commit() (or
+    Connection.rollback()).  If, instead, the autocommit keyword argument
+    is passed as True, cursors created from this Connection will behave
+    more in line with Comdb2's traditional behavior: the side effects of
+    any given statement are immediately committed unless you explicitly
+    begin a transaction by executing a "begin" statement.  Note that using
+    autocommit=True will ease porting from code using SqlService, both
+    because SqlService implicitly committed after each statement in the
+    same way as an autocommit Connection will, and because there are
+    certain operations that a Comdb2 will implicitly retry outside of
+    a transaction but won't retry inside a transaction - meaning that
+    non-autocommit Connections have new failure modes.
+
+    The connection will use UTC as its timezone.
+
+    Note that Python does not guarantee that object finalizers will be
+    called when the interpreter exits, so to ensure that the connection is
+    cleanly released you should call the close() method when you're done
+    with it.  You can use contextlib.closing to guarantee the connection is
+    released when a block completes.
+
+    Args:
+        database_name: The name of the database to connect to.
+        tier: The cluster to connect to.
+        host: Alternately, a single remote host to connect to.
+        autocommit: Whether to automatically commit after DML statements.
+    """
+
     def __init__(self, database_name, tier="default", autocommit=False,
                  host=None):
-        """Establish a connection to a Comdb2 database.
-
-        By default, the connection will be made to the cluster configured as
-        the machine-wide default for the given database.  This is almost always
-        what you want.  If you need to connect to a database that's running on
-        your local machine rather than a cluster, you can pass "local" as the
-        tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
-        as the tier, but note that the firewall will block you from connecting
-        directly from a dev machine to a prod database.
-
-        Alternately, you can pass a machine name as the host argument, to
-        connect directly to an instance of the given database on that host,
-        rather than on a cluster or the local machine.
-
-        If the autocommit keyword argument is left at its default value of
-        False, cursors created from this Connection will behave as mandated by
-        the Python DB API: every statement to be executed is implicitly
-        considered to be part of a transaction, and that transaction must be
-        ended explicitly with a call to Connection.commit() (or
-        Connection.rollback()).  If, instead, the autocommit keyword argument
-        is passed as True, cursors created from this Connection will behave
-        more in line with Comdb2's traditional behavior: the side effects of
-        any given statement are immediately committed unless you explicitly
-        begin a transaction by executing a "begin" statement.  Note that using
-        autocommit=True will ease porting from code using SqlService, both
-        because SqlService implicitly committed after each statement in the
-        same way as an autocommit Connection will, and because there are
-        certain operations that a Comdb2 will implicitly retry outside of
-        a transaction but won't retry inside a transaction - meaning that
-        non-autocommit Connections have new failure modes.
-
-        The connection will use UTC as its timezone.
-
-        Note that Python does not guarantee that object finalizers will be
-        called when the interpreter exits, so to ensure that the connection is
-        cleanly released you should call the close() method when you're done
-        with it.  You can use contextlib.closing to guarantee the connection is
-        released when a block completes.
-
-        Args:
-            database_name: The name of the database to connect to.
-            tier: The cluster to connect to.
-            host: Alternately, a single remote host to connect to.
-            autocommit: Whether to automatically commit after DML statements.
-        """
         if host is not None and tier != "default":
             raise InterfaceError("Connecting to a host by name and to a "
                                  "cluster by tier are mutually exclusive")
