@@ -6,7 +6,7 @@ from collections import namedtuple
 import pytz
 import six
 
-__all__ = ['Error', 'Handle', 'DatetimeUs',
+__all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
            'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
