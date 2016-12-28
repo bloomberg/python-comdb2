@@ -63,6 +63,7 @@ TimestampUs = DatetimeUs
 DatetimeFromTicks = Datetime.fromtimestamp
 DatetimeUsFromTicks = DatetimeUs.fromtimestamp
 TimestampFromTicks = Timestamp.fromtimestamp
+TimestampUsFromTicks = TimestampUs.fromtimestamp
 
 try:
     UserException = StandardError  # Python 2
