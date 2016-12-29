@@ -1,10 +1,10 @@
-"""Factory functions for use with Comdb2.
+"""This module provides factory functions for use with Comdb2 handles.
 
-Both `comdb2.dbapi2.Connection` and `comdb2.cdb2.Handle` have a public
-`row_factory` property that can be used to control the type used for result
-rows.  By default, rows are returned as lists, but you can receive rows as
-namedtuples by using `namedtuple_row_factory` as a `row_factory`, and likewise
-you can receive rows as dicts by using `dict_row_factory`.
+Both `.dbapi2.Connection` and `.cdb2.Handle` have a public ``row_factory``
+property that can be used to control the type used for result rows.  By
+default, each row is returned as a `list`, but you can receive the row as
+a `collections.namedtuple` by using `namedtuple_row_factory` as a ``row_factory``.
+Likewise you can receive the row as a `dict` by using `dict_row_factory`.
 
 A factory function will be called with a list of column names, and must return
 a callable that will be called once per row with a list of column values.
@@ -15,7 +15,51 @@ from collections import Counter
 
 
 def namedtuple_row_factory(col_names):
-    """Return result rows as namedtuples."""
+    """Return each result row as a `collections.namedtuple`.
+
+    The fields of the `~collections.namedtuple` are set to the names of the
+    result set columns, in positional order.
+
+    Note:
+        You will not be able to use this factory if your result set includes
+        columns whose names aren't valid Python attribute names.  Make sure to
+        assign each column a name starting with a letter and containing only
+        alphanumeric characters and underscores.  Also make sure that column
+        names aren't Python reserved words.  You can control column names by
+        using ``AS`` in your SQL query, as in:
+
+        .. code-block:: sql
+
+            SELECT count(*) AS rowcount
+
+    Note:
+        You will not be able to use this factory if your result set includes
+        duplicated column names.  This can happen when joining across tables
+        that use the same name for a foreign key column, for instance.  To
+        avoid duplicating column names, avoid using ``SELECT *`` with joins.
+
+        You may also be able to use the ``USING`` clause on the join to avoid
+        duplicating column names.  This query would duplicate the ``id``
+        column:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b ON a.id = b.id
+
+        Whereas this one wouldn't:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b USING(id)
+
+    Example:
+        >>> conn.row_factory = namedtuple_row_factory
+        >>> row = conn.cursor().execute("select 1 as x, 2 as y").fetchone()
+        >>> print(row)
+        Row(x=1, y=2)
+        >>> print(row.x)
+        1
+    """
     try:
         return namedtuple('Row', col_names)._make
     except ValueError:
@@ -26,7 +70,36 @@ def namedtuple_row_factory(col_names):
 
 
 def dict_row_factory(col_names):
-    """Return result rows as dicts mapping column names to values."""
+    """Return each result row as a `dict` mapping column names to values.
+
+    Note:
+        You will not be able to use this factory if your result set includes
+        duplicated column names.  This can happen when joining across tables
+        that use the same name for a foreign key column, for instance.  To
+        avoid duplicating column names, avoid using ``SELECT *`` with joins.
+
+        You may also be able to use the ``USING`` clause on the join to avoid
+        duplicating column names.  This query would duplicate the ``id``
+        column:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b ON a.id = b.id
+
+        Whereas this one wouldn't:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b USING(id)
+
+    Example:
+        >>> conn.row_factory = dict_row_factory
+        >>> row = conn.cursor().execute("select 1 as x, 2 as y").fetchone()
+        >>> print(row)
+        {'y': 2, 'x': 1}
+        >>> print(row['x'])
+        1
+    """
     _raise_on_duplicate_column_names(col_names)
     def dict_row(col_vals):
         return dict(zip(col_names, col_vals))
