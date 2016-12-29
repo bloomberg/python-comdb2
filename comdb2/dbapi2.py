@@ -393,7 +393,7 @@ class Cursor(object):
     }
 
     def __init__(self, conn):
-        self.arraysize = 1
+        self._arraysize = 1
         self._conn = conn
         self._hndl = conn._hndl
         self._description = None
@@ -403,6 +403,19 @@ class Cursor(object):
     def _check_closed(self):
         if self._closed:
             raise InterfaceError("Attempted to use a closed cursor")
+
+    @property
+    def arraysize(self):
+        """Controls the number of rows to fetch at a time with `fetchmany`.
+
+        The default is ``1``, meaning that a single row will be fetched at
+        a time.
+        """
+        return self._arraysize
+
+    @arraysize.setter
+    def arraysize(self, value):
+        self._arraysize = value
 
     @property
     def description(self):
@@ -651,7 +664,7 @@ class Cursor(object):
             available, the returned sequence will have no elements.
         """
         if n is None:
-            n = self.arraysize
+            n = self._arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
     def fetchall(self):
