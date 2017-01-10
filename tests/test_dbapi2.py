@@ -392,11 +392,21 @@ def test_errors_being_swallowed_during_connection_close():
     conn.close()
 
 
-def test_error_from_closing_connection_twice():
+def test_public_connection_methods_after_close():
     conn = connect('mattdb', 'dev')
     conn.close()
     with pytest.raises(InterfaceError):
         conn.close()
+    with pytest.raises(InterfaceError):
+        conn.commit()
+    with pytest.raises(InterfaceError):
+        conn.cursor()
+    with pytest.raises(InterfaceError):
+        conn.rollback()
+    with pytest.raises(InterfaceError):
+        conn.row_factory
+    with pytest.raises(InterfaceError):
+        conn.row_factory = None
 
 
 def test_misusing_cursor_objects():
