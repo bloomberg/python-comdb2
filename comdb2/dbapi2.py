@@ -568,6 +568,10 @@ class Connection(object):
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
+    def _check_closed(self):
+        if self._hndl is None:
+            raise InterfaceError("Attempted to use a closed Connection")
+
     @property
     def row_factory(self):
         """Factory used when constructing result rows.
@@ -587,10 +591,12 @@ class Connection(object):
 
         .. versionadded:: 0.9
         """
+        self._check_closed()
         return self._hndl.row_factory
 
     @row_factory.setter
     def row_factory(self, value):
+        self._check_closed()
         self._hndl.row_factory = value
 
     def _close_any_outstanding_cursor(self):
@@ -638,6 +644,7 @@ class Connection(object):
         This method will fail if the `Connection` is in ``autocommit`` mode and
         no transaction was explicitly started.
         """
+        self._check_closed()
         self._execute("commit")
 
     def rollback(self):
@@ -653,6 +660,7 @@ class Connection(object):
             is available.  Because of this, an explicit rollback should be preferred when
             possible.
         """
+        self._check_closed()
         self._execute("rollback")
 
     def cursor(self):
@@ -669,6 +677,7 @@ class Connection(object):
         Returns:
             Cursor: A new cursor on this connection.
         """
+        self._check_closed()
         self._close_any_outstanding_cursor()
         cursor = Cursor(self)
         self._active_cursor = weakref.ref(cursor)
