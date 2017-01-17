@@ -1,8 +1,9 @@
 from setuptools import setup
+from comdb2 import __version__
 
 setup(
     name='python-comdb2',
-    version='1.0',
+    version=__version__,
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
