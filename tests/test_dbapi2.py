@@ -449,11 +449,13 @@ def test_fetchmany():
     assert cursor.fetchmany(2) == []
 
     cursor.arraysize = 2
+    assert cursor.arraysize == 2
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
     assert cursor.fetchmany() == [[1,], [2,]]
     assert cursor.fetchmany() == [[3,]]
 
     cursor.arraysize = 4
+    assert cursor.arraysize == 4
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
     assert cursor.fetchmany() == [[1,], [2,], [3,]]
 

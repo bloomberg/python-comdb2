@@ -1,3 +1,233 @@
+"""This module provides a DBAPI-2.0 compatible Comdb2 API.
+
+Overview
+========
+
+This module provides a Comdb2 interface that conforms to `the Python Database
+API Specification v2.0 <https://www.python.org/dev/peps/pep-0249/>`_.
+
+Basic Usage
+-----------
+
+The main class used for interacting with a Comdb2 is `Connection`, which you
+create by calling the `connect` factory function.  Any errors that are
+encountered when connecting to or querying the database are raised as instances
+of the `Error` class.
+
+A basic usage example looks like this::
+
+    from comdb2 import dbapi2
+    conn = dbapi2.connect('mattdb', autocommit=True)
+    cursor = conn.cursor()
+    cursor.execute("select 1, 'a' union all select 2, 'b'")
+    for row in cursor.fetchall():
+        print(row)
+
+The above would result in the following output::
+
+    [1, 'a']
+    [2, 'b']
+
+To reduce the amount of boilerplate required for fetching result sets, we
+implement 2 extensions to the interface required by the Python DB-API: `Cursor`
+objects are iterable, yielding one row of the result set per iteration, and
+`Cursor.execute` returns the `Cursor` itself.  By utilizing these extensions,
+the basic example can be shortened to::
+
+    from comdb2 import dbapi2
+    conn = dbapi2.connect('mattdb', autocommit=True)
+    for row in conn.cursor().execute("select 1, 'a' union all select 2, 'b'"):
+        print(row)
+
+Graceful Teardown and Error Handling
+------------------------------------
+
+Non-trivial applications should guarantee that the `Connection` is closed when
+it is no longer needed, preferably by using `contextlib.closing`.  They should
+also be prepared to handle any errors returned by the database.  So, a more
+thorough version of the example above would be::
+
+    from comdb2 import dbapi2
+    from contextlib import closing
+    try:
+        with closing(dbapi2.connect('mattdb', autocommit=True)) as conn:
+            query = "select 1, 'a' union all select 2, 'b'"
+            for row in conn.cursor().execute(query):
+                print(row)
+    except dbapi2.Error as exc:
+        print("Comdb2 exception encountered: %s" % exc)
+
+In this example, `contextlib.closing` is used to guarantee that
+`Connection.close` is called at the end of the ``with`` block, and an exception
+handler been added for exceptions of type `Error`.  All exceptions raised by
+this module are subclasses of `Error`.  See :ref:`Exceptions` for details on
+when each exception type is raised.
+
+Controlling the Type Used For Result Rows
+-----------------------------------------
+
+As you can see, rows are returned as a `list` of column values in positional
+order.  If you'd prefer to get the columns back as some other type, you can set
+`Connection.row_factory` to one of the factories provided by
+`comdb2.factories` - for example::
+
+    from comdb2 import dbapi2
+    from comdb2 import factories
+    conn = dbapi2.connect('mattdb', autocommit=True)
+    conn.row_factory = factories.dict_row_factory
+    c = conn.cursor()
+    for row in c.execute("select 1 as 'x', 2 as 'y' union all select 3, 4"):
+        print(row)
+
+This program will return each row as a `dict` rather than a `list`::
+
+    {'y': 2, 'x': 1}
+    {'y': 4, 'x': 3}
+
+Parameter Binding
+-----------------
+
+In real applications you'll often need to pass parameters into a SQL query.
+This is done using parameter binding - in the query, placeholders are specified
+using ``%(name)s``, and a mapping of ``name`` to parameter value is passed to
+`Cursor.execute` along with the query.  The ``%(`` and ``)s`` are fixed, and
+the ``name`` between them varies for each parameter.  For example:
+
+    >>> query = "select 25 between %(a)s and %(b)s"
+    >>> print(conn.cursor().execute(query, {'a': 20, 'b': 42}).fetchall())
+    [[1]]
+    >>> params = {'a': 20, 'b': 23}
+    >>> print(conn.cursor().execute(query, params).fetchall())
+    [[0]]
+
+In this example, we run the query with two different sets of
+parameters, producing different results.  First, we execute
+the query with ``@a`` bound to ``20`` and ``@b`` bound to ``42``.  In this
+case, because ``20 <= 25 <= 42``, the expression evaluates to true, and a ``1``
+is returned.
+
+When we run the same query with ``@b`` bound to ``23``, a ``0``
+is returned instead, because ``20 <= 25 <= 23`` is false.
+
+Note:
+    Because parameters are bound using ``%(name)s``, other ``%`` signs in
+    a query must be escaped.  For example, ``WHERE name like 'M%'`` becomes
+    ``WHERE name LIKE 'M%%'``.
+
+Types
+-----
+
+For all Comdb2 types, the same Python type is used for binding a parameter
+value as is returned for a SQL query result column of that type.  In brief, SQL
+types are mapped to Python types according to the following table:
+
+============   ================================================================
+SQL type       Python type
+============   ================================================================
+NULL           ``None``
+integer        `int`
+real           `float`
+blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)
+text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)
+datetime       `datetime.datetime`
+datetimeus     `DatetimeUs`
+============   ================================================================
+
+See :ref:`Comdb2 to Python Type Mappings` for a thorough explanation of these
+type mappings and their implications.
+
+Note:
+    This module uses byte strings to represent BLOB columns, and Unicode
+    strings to represent TEXT columns.  This is a very common source of
+    problems for new users.
+    Make sure to carefully read :ref:`String and Blob Types` on that page.
+
+.. _Autocommit Mode:
+
+Autocommit Mode
+---------------
+
+In all of the examples above, we gave the ``autocommit=True`` keyword argument
+when calling `connect`.  This opts out of DB-API compliant transaction
+handling, in order to use Comdb2's native transaction semantics.
+
+By default, DB-API cursors are always in a transaction.  You can commit that
+transaction using `Connection.commit`, or roll it back using
+`Connection.rollback`.  For example::
+
+    conn = dbapi2.connect('mattdb')
+    cursor = conn.cursor()
+    query = "insert into simple(key, val) values (%(key)s, %(val)s)"
+    cursor.execute(query, {'key': 1, 'val': 2})
+    cursor.execute(query, {'key': 3, 'val': 4})
+    cursor.execute(query, {'key': 5, 'val': 6})
+    conn.commit()
+
+There are several things to note here.  The first is that the insert statements
+that were sent to the database don't take effect immediately, because they are
+implicitly part of a transaction that must be explicitly completed.  This is
+different from other Comdb2 APIs, where you must execute a ``BEGIN`` statement
+to start a transaction, and where statements  otherwise take effect immediately.
+
+The second thing to note is that there are certain error conditions where
+a Comdb2 connection can automatically recover when outside of a transaction,
+but not within a transaction.  In other words, using transactions when they
+aren't needed can introduce new failure modes into your program.
+
+In order to provide greater compatibility with other Comdb2 interfaces and
+to eliminate the performance costs and extra error cases introduced by using
+transactions unnecessarily, we allow you to pass the non-standard
+``autocommit=True`` keyword argument when creating a new `Connection`. This
+results in the implicit transaction not being created. You can still start
+a transaction explicitly by passing a ``BEGIN`` statement to
+`Cursor.execute`.  For example::
+
+    conn = dbapi2.connect('mattdb', autocommit=True)
+    cursor = conn.cursor()
+    cursor.execute("delete from simple where 1=1")
+    cursor.execute("begin")
+    query = "insert into simple(key, val) values (%(key)s, %(val)s)"
+    cursor.execute(query, {'key': 1, 'val': 2})
+    cursor.execute(query, {'key': 3, 'val': 4})
+    cursor.execute(query, {'key': 5, 'val': 6})
+    cursor.execute("rollback")
+
+In this example, because we've used ``autocommit=True`` the delete statement
+takes effect immediately (that is, it is automatically committed).  We then
+explicitly create a transaction, insert 3 rows, then decide not to commit
+it, and instead explicitly roll back the transaction.
+
+To summarize: you cannot use ``autocommit`` mode if you intend to pass the
+`Connection` to a library that requires DB-API compliant connections.  You
+should prefer ``autocommit`` mode when you don't want to use transactions (for
+example, read-only queries where no particular consistency guarantees are
+required across queries).  If you do intend to use transactions but won't pass
+the `Connection` to a library that requires DB-API compliance, you can choose
+either mode.  It may be easier to port existing code if you use ``autocommit``
+mode, but avoiding ``autocommit`` mode may allow you to use 3rd party libraries
+in the future that require DB-API compliant connections.
+
+DB-API Compliance
+-----------------
+
+The interface this module provides fully conforms to `the Python Database API
+Specification v2.0 <https://www.python.org/dev/peps/pep-0249/>`_ with a few
+specific exceptions:
+
+1. DB-API requires `Date` and `DateFromTicks` constructors, which we don't
+   provide because Comdb2 has no type for representing a date without a time
+   component.
+
+2. DB-API requires `Time` and `TimeFromTicks` constructors, which we don't
+   provide because Comdb2 has no type for representing a time without a date
+   component.
+
+3. DB-API is unclear about the required behavior of multiple calls to
+   `Connection.cursor` on a connection.  Comdb2 does not have a concept of
+   cursors as distinct from connection handles, so each time
+   `Connection.cursor` is called, we call `Cursor.close` on any existing, open
+   cursor for that connection.
+"""
 from __future__ import absolute_import, unicode_literals
 
 import functools
@@ -19,8 +249,26 @@ __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'IntegrityError', 'DataError', 'NotSupportedError']
 
 apilevel = "2.0"
-threadsafety = 1  # 2 threads can have different connections, but can't share 1
+"""This module conforms to the Python Database API Specification 2.0."""
+
+threadsafety = 1
+"""Two threads can use this module, but can't share one `Connection`."""
+
 paramstyle = "pyformat"
+"""The SQL placeholder format for this module is ``%(name)s``.
+
+Comdb2's native placeholder format is ``@name``, but that cannot be used by
+this module because it's not an acceptable DB-API 2.0 placeholder style.
+
+Note:
+    An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last
+    character is always ``s``.
+
+Note:
+    Because SQL strings for this module use the ``pyformat`` placeholder style,
+    any literal ``%`` characters in a query must be escaped by doubling them.
+    ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
+"""
 
 _FIRST_WORD_OF_LINE = re.compile(r'(\S+)')
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
@@ -28,8 +276,9 @@ _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 @functools.total_ordering
 class _TypeObject(object):
-    def __init__(self, *values):
-        self.values = values
+    def __init__(self, *value_names):
+        self.value_names = value_names
+        self.values = [cdb2.TYPE[v] for v in value_names]
 
     def __eq__(self, other):
         return other in self.values
@@ -37,16 +286,27 @@ class _TypeObject(object):
     def __lt__(self, other):
         return self != other and other < self.values
 
+    def __repr__(self):
+        return 'TypeObject' + str(self.value_names)
+
 
 def _binary(string):
     if isinstance(string, six.text_type):
         return string.encode('utf-8')
     return bytes(string)
 
-STRING = _TypeObject(cdb2.TYPE['CSTRING'])
-BINARY = _TypeObject(cdb2.TYPE['BLOB'])
-NUMBER = _TypeObject(cdb2.TYPE['INTEGER'], cdb2.TYPE['REAL'])
-DATETIME = _TypeObject(cdb2.TYPE['DATETIME'], cdb2.TYPE['DATETIMEUS'])
+STRING = _TypeObject('CSTRING')
+"""The type codes of TEXT result columns compare equal to this constant."""
+
+BINARY = _TypeObject('BLOB')
+"""The type codes of BLOB result columns compare equal to this constant."""
+
+NUMBER = _TypeObject('INTEGER', 'REAL')
+"""The type codes of numeric result columns compare equal to this constant."""
+
+DATETIME = _TypeObject('DATETIME', 'DATETIMEUS')
+"""The type codes of datetime result columns compare equal to this constant."""
+
 ROWID = STRING
 
 # comdb2 doesn't support Date or Time, so I'm not defining them.
@@ -59,6 +319,7 @@ TimestampUs = DatetimeUs
 DatetimeFromTicks = Datetime.fromtimestamp
 DatetimeUsFromTicks = DatetimeUs.fromtimestamp
 TimestampFromTicks = Timestamp.fromtimestamp
+TimestampUsFromTicks = TimestampUs.fromtimestamp
 
 try:
     UserException = StandardError  # Python 2
@@ -71,7 +332,7 @@ class Error(UserException):
 
     In addition to being available at the module scope, this class and the
     other exception classes derived from it are exposed as attributes on
-    Connection objects, to simplify error handling in environments where
+    `Connection` objects, to simplify error handling in environments where
     multiple connections from different modules are used.
     """
     pass
@@ -221,62 +482,80 @@ def _modifies_rows(operation):
 def connect(*args, **kwargs):
     """Establish a connection to a Comdb2 database.
 
-    All arguments are passed directly through to the Connection constructor.
+    All arguments are passed directly through to the `Connection` constructor.
+
+    Note:
+        DB-API 2.0 requires the module to expose `connect`, but not
+        `Connection`.  If portability across database modules is a concern, you
+        should always use `connect` to create your connections rather than
+        calling the `Connection` constructor directly.
 
     Returns:
-        A Connection object representing the newly established connection.
+        Connection: A handle for the newly established connection.
     """
     return Connection(*args, **kwargs)
 
 
 class Connection(object):
-    def __init__(self, database_name, tier="default", autocommit=False,
-                 host=None):
-        """Establish a connection to a Comdb2 database.
+    """Represents a connection to a Comdb2 database.
 
-        By default, the connection will be made to the cluster configured as
-        the machine-wide default for the given database.  This is almost always
-        what you want.  If you need to connect to a database that's running on
-        your local machine rather than a cluster, you can pass "local" as the
-        tier.  It's also permitted to specify "dev", "alpha", "beta", or "prod"
-        as the tier, but note that the firewall will block you from connecting
-        directly from a dev machine to a prod database.
+    By default, the connection will be made to the cluster configured as the
+    machine-wide default for the given database.  This is almost always what
+    you want.  If you need to connect to a database that's running on your
+    local machine rather than a cluster, you can pass "local" as the ``tier``.
+    It's also permitted to specify "dev", "alpha", "beta", or "prod" as the
+    ``tier``, which will connect you directly to the tier you specify (firewall
+    permitting).
 
-        Alternately, you can pass a machine name as the host argument, to
-        connect directly to an instance of the given database on that host,
-        rather than on a cluster or the local machine.
+    Alternately, you can pass a machine name as the ``host`` argument, to
+    connect directly to an instance of the given database on that host, rather
+    than on a cluster or the local machine.
 
-        If the autocommit keyword argument is left at its default value of
-        False, cursors created from this Connection will behave as mandated by
-        the Python DB API: every statement to be executed is implicitly
-        considered to be part of a transaction, and that transaction must be
-        ended explicitly with a call to Connection.commit() (or
-        Connection.rollback()).  If, instead, the autocommit keyword argument
-        is passed as True, cursors created from this Connection will behave
-        more in line with Comdb2's traditional behavior: the side effects of
-        any given statement are immediately committed unless you explicitly
-        begin a transaction by executing a "begin" statement.  Note that using
-        autocommit=True will ease porting from code using SqlService, both
-        because SqlService implicitly committed after each statement in the
-        same way as an autocommit Connection will, and because there are
-        certain operations that a Comdb2 will implicitly retry outside of
-        a transaction but won't retry inside a transaction - meaning that
-        non-autocommit Connections have new failure modes.
+    The connection will use UTC as its timezone by default - you can change
+    this with a ``SET TIMEZONE`` statement if needed.
 
-        The connection will use UTC as its timezone.
+    By default, or if ``autocommit`` is ``False``, `cursor` will return cursors
+    that behave as mandated by the Python DB API: every statement to be
+    executed is implicitly considered to be part of a transaction, and that
+    transaction must be ended explicitly with a call to `commit` (or
+    `rollback`).  If ``autocommit`` is ``True``, `cursor` will instead return
+    cursors that behave more in line with Comdb2's traditional behavior: the
+    side effects of any given statement are immediately committed unless you
+    previously started a transaction by executing a ``begin`` statement.
 
-        Note that Python does not guarantee that object finalizers will be
-        called when the interpreter exits, so to ensure that the connection is
-        cleanly released you should call the close() method when you're done
-        with it.  You can use contextlib.closing to guarantee the connection is
+    Note:
+        Using ``autocommit=True`` will ease porting from code using other
+        Comdb2 APIs, both because other Comdb2 APIs implicitly commit after
+        each statement in the same way as an autocommit `Connection` will, and
+        because there are certain operations that Comdb2 will implicitly
+        retry when outside of a transaction but won't retry when inside
+        a transaction - meaning that a non-autocommit `Connection` has extra
+        failure modes.  You should strongly consider using ``autocommit=True``,
+        especially for read-only use cases.
+
+    Note:
+        Python does not guarantee that object finalizers will be called when
+        the interpreter exits, so to ensure that the connection is cleanly
+        released you should call the `close` method when you're done with it.
+        You can use `contextlib.closing` to guarantee the connection is
         released when a block completes.
 
-        Args:
-            database_name: The name of the database to connect to.
-            tier: The cluster to connect to.
-            host: Alternately, a single remote host to connect to.
-            autocommit: Whether to automatically commit after DML statements.
-        """
+    Note:
+        DB-API 2.0 requires the module to expose `connect`, but not
+        `Connection`.  If portability across database modules is a concern, you
+        should always use `connect` to create your connections rather than
+        instantiating this class directly.
+
+    Args:
+        database_name (str): The name of the database to connect to.
+        tier (str): The cluster to connect to.
+        host (str): Alternately, a single remote host to connect to.
+        autocommit (bool): Whether to automatically commit after DML
+            statements, disabling DB-API 2.0's automatic implicit transactions.
+    """
+
+    def __init__(self, database_name, tier="default", autocommit=False,
+                 host=None):
         if host is not None and tier != "default":
             raise InterfaceError("Connecting to a host by name and to a "
                                  "cluster by tier are mutually exclusive")
@@ -293,10 +572,20 @@ class Connection(object):
     def row_factory(self):
         """Factory used when constructing result rows.
 
-        By default, or when set to None, rows are returned as lists of column
-        values.  If you'd prefer to receive rows as a dict or as a namedtuple,
-        you can set this property to one of the factories provided by the
-        `comdb2.factories` module.
+        By default, or when set to ``None``, each row is returned as a `list`
+        of column values.  If you'd prefer to receive rows as a `dict` or as
+        a `collections.namedtuple`, you can set this property to one of the
+        factories provided by the `comdb2.factories` module.
+
+        Example:
+            >>> from comdb2.factories import dict_row_factory
+            >>> conn.row_factory = dict_row_factory
+            >>> cursor = conn.cursor()
+            >>> cursor.execute("SELECT 1 as 'foo', 2 as 'bar'")
+            >>> cursor.fetchone()
+            {'foo': 1, 'bar': 2}
+
+        .. versionadded:: 0.9
         """
         return self._hndl.row_factory
 
@@ -321,13 +610,21 @@ class Connection(object):
     def close(self):
         """Gracefully close the Comdb2 connection.
 
-        Once a Connection has been closed, no further operations may be performed
-        on it.
+        Once a `Connection` has been closed, no further operations may be
+        performed on it.
 
-        If a socket pool is running on the machine and the Connection was in
+        If a socket pool is running on the machine and the connection was in
         a clean state, this will turn over the connection to the socket pool.
-        This can only be done if the Connection was not in a transaction, nor in
-        the middle of a result set.  Other restrictions may apply as well.
+        This cannot be done if the connection was in a transaction or
+        in the middle of retrieving a result set.  Other restrictions may apply
+        as well.
+
+        You can ensure that this gets called at the end of a block using
+        something like:
+
+            >>> with contextlib.closing(connect('mattdb')) as conn:
+            >>>     for row in conn.cursor().execute("select 1"):
+            >>>         print(row)
         """
         if self._hndl is None:
             raise InterfaceError("close() called on already closed connection")
@@ -336,30 +633,41 @@ class Connection(object):
         self._hndl = None
 
     def commit(self):
-        """Commit any pending transaction to the database."""
+        """Commit any pending transaction to the database.
+
+        This method will fail if the `Connection` is in ``autocommit`` mode and
+        no transaction was explicitly started.
+        """
         self._execute("commit")
 
     def rollback(self):
-        """Rollback to the start of any pending transaction to the database.
+        """Rollback the current transaction.
 
-        Closing a connection without committing the changes first will cause an
-        implicit rollback to be performed, but will also prevent the underlying
-        connection from being contributed to the socket pool, if one is
-        available.
+        This method will fail if the `Connection` is in ``autocommit`` mode and
+        no transaction was explicitly started.
+
+        Note:
+            Closing a connection without committing the changes first will
+            cause an implicit rollback to be performed, but will also prevent
+            that connection from being contributed to the socket pool, if one
+            is available.  Because of this, an explicit rollback should be preferred when
+            possible.
         """
         self._execute("rollback")
 
     def cursor(self):
-        """Return a new Cursor object using this connection.
+        """Return a new `Cursor` for this connection.
 
-        Note that this invalidates any outstanding cursors; only one
-        outstanding cursor is allowed per connection.  Note also that although
-        outstanding cursors are invalidated any uncommitted transactions
-        started by them are not rolled back, so the new cursor will begin in
-        the middle of that uncommitted transaction.
+        This calls `Cursor.close` on any outstanding `Cursor`; only one
+        `Cursor` is allowed per `Connection` at a time.
+
+        Note:
+            Although outstanding cursors are closed, uncommitted transactions
+            started by them are not rolled back, so the new `Cursor` will begin
+            in the middle of that uncommitted transaction.
 
         Returns:
-            A new cursor on this connection.
+            Cursor: A new cursor on this connection.
         """
         self._close_any_outstanding_cursor()
         cursor = Cursor(self)
@@ -380,14 +688,30 @@ class Connection(object):
 
 
 class Cursor(object):
-    ErrorMessagesByOperation = {
+    """Class used to send requests through a database connection.
+
+    This class is not meant to be instantiated directly; it should always be
+    created using `Connection.cursor`.  It provides methods for sending
+    requests to the database and for reading back the result sets produced by
+    the database.
+
+    Queries are made using the `execute` and `callproc` methods.  Result sets
+    can be consumed with the `fetchone`, `fetchmany`, or `fetchall` methods, or
+    (as a nonstandard DB-API 2.0 extension) by iterating over the `Cursor`.
+
+    Note:
+        Only one `Cursor` per `Connection` can exist at a time.  Creating a new
+        one will `close` the previous one.
+    """
+
+    _ErrorMessagesByOperation = {
         'begin': "Transactions may not be started explicitly",
         'commit': "Use Connection.commit to commit transactions",
         'rollback': "Use Connection.rollback to roll back transactions",
     }
 
     def __init__(self, conn):
-        self.arraysize = 1
+        self._arraysize = 1
         self._conn = conn
         self._hndl = conn._hndl
         self._description = None
@@ -399,21 +723,49 @@ class Cursor(object):
             raise InterfaceError("Attempted to use a closed cursor")
 
     @property
+    def arraysize(self):
+        """Controls the number of rows to fetch at a time with `fetchmany`.
+
+        The default is ``1``, meaning that a single row will be fetched at
+        a time.
+        """
+        return self._arraysize
+
+    @arraysize.setter
+    def arraysize(self, value):
+        self._arraysize = value
+
+    @property
     def description(self):
         """Provides the name and type of each column in the latest result set.
 
         This read-only attribute will contain one element per column in the
-        result set.  Each of those elements will be a 7-item sequence whose
-        first item is the name of that column, whose second item is a type code
-        for that column, and whose five remaining items are None.
+        result set.  Each of those elements will be a 7-element sequence whose
+        first element is the name of that column, whose second element is
+        a type code for that column, and whose five remaining elements are
+        ``None``.
 
-        The type codes can be compared for equality against the STRING, NUMBER,
-        DATETIME, and BINARY objects exposed by this module.  If you need more
-        granularity (e.g. knowing whether the result is a REAL or an INTEGER)
-        you can compare the type code for equality against the members of the
-        TYPE dictionary exposed by the cdb2 module.  Or, of course, you can
-        just do an isinstance() check against the object returned as that
-        column's value.
+        The type codes can be compared for equality against the `STRING`,
+        `NUMBER`, `DATETIME`, and `BINARY` objects exposed by this module.  If
+        you need more granularity (e.g. knowing whether the result is
+        a ``REAL`` or an ``INTEGER``) you can compare the type code for
+        equality against the members of the `.cdb2.TYPE` dictionary.  Or, of
+        course, you can use `isinstance` to check the type of object returned
+        as that column's value.
+
+        Example:
+            >>> cursor = connect('mattdb').cursor()
+            >>> cursor.execute("select 1 as 'x', '2' as 'y', 3.0 as 'z'")
+            >>> cursor.description[0][:2] == ('x', NUMBER)
+            True
+            >>> cursor.description[1][:2] == ('y', STRING)
+            True
+            >>> cursor.description[2][:2] == ('z', NUMBER)
+            True
+            >>> cursor.description[2][:2] == ('z', TYPE['INTEGER'])
+            False
+            >>> cursor.description[2][:2] == ('z', TYPE['REAL'])
+            True
         """
         self._check_closed()
         return self._description
@@ -422,24 +774,26 @@ class Cursor(object):
     def rowcount(self):
         """Provides the count of rows modified by the last transaction.
 
-        For cursors that are not using autocommit mode, this count is updated
-        only after the transaction is committed with `Connection.commit()`.
-        For cursors that are using autocommit mode, this count is updated after
-        a successful COMMIT, or after an INSERT, UPDATE, or DELETE statement
-        run outside of an explicit transaction.
+        For `Cursor` objects on a `Connection` that is not using ``autocommit``
+        mode, this count is valid only after the transaction is committed with
+        `Connection.commit()`.  For `Cursor` objects on a `Connection` that is
+        using ``autocommit`` mode, this count is valid after a successful
+        ``COMMIT``, or after an ``INSERT``, ``UPDATE``, or ``DELETE`` statement
+        run outside of an explicit transaction.  At all other times, ``-1`` is
+        returned.
 
-        We don't update the rowcount property while we're still in
-        a transaction, because Comdb2 by default handles commit conflicts with
-        other transactions by retrying the entire transaction, meaning that any
-        counts obtained within the transaction may not reflect what is actually
-        changed by the time the transaction successfully commits.
+        In particular, ``-1`` is returned whenever a transaction is in
+        progress, because Comdb2 by default handles commit conflicts with other
+        transactions by rerunning each statement of the transaction.  As
+        a result, row counts obtained within a transaction are meaningless in
+        the default transaction level; either more or fewer rows may be
+        affected when the transaction eventually commits.
 
-        We don't update the rowcount property after SELECT or SELECTV, because
-        updating .rowcount requires calling `cdb2_get_effects`, which consumes
-        any outstanding result set.  This would consume the result set before
-        the user could iterate over it.  We also don't update the rowcount
-        property after EXEC PROCEDURE, because a stored procedure could emit
-        a result set.
+        Also, ``-1`` is returned after ``SELECT`` or ``SELECTV``, because
+        querying the row count requires calling ``cdb2_get_effects``, which
+        would consume the result set before the user could iterate over it.
+        Likewise, ``-1`` is returned after ``EXEC PROCEDURE``, because a stored
+        procedure could emit a result set.
         """
         self._check_closed()
         return self._rowcount
@@ -447,42 +801,45 @@ class Cursor(object):
     # Optional DB API Extension
     @property
     def connection(self):
-        """Returns a reference to the connection this cursor belongs to."""
+        """Return a reference to the `Connection` that this `Cursor` uses."""
         self._check_closed()
         return self._conn
 
     def close(self):
         """Close the cursor now.
 
-        The cursor will be unusable from this point forward; an InterfaceError
-        exception will be raised if any operation is attempted with the
-        cursor.
+        From this point forward an exception will be raised if any
+        operation is attempted with this `Cursor`.
 
-        Note that this does not roll back any uncommitted operations executed
-        by this cursor - a new cursor created off of this cursor's connection
-        will start off in the middle of that uncommitted transaction.
+        Note:
+            This does not rollback any uncommitted operations executed by this
+            `Cursor`.  A new `Cursor` created from the `Connection` that this
+            `Cursor` uses will start off in the middle of that uncommitted
+            transaction.
         """
         self._check_closed()
         self._description = None
         self._closed = True
 
     def callproc(self, procname, parameters):
-        """Call a stored database procedure with the given name.
+        """Call a stored procedure with the given name.
 
-        The sequence of parameters must contain one entry for each argument
-        that the procedure expects.
+        The ``parameters`` sequence must contain one entry for each argument
+        that the procedure requires.
 
-        If the called procedure emits a result set it is made available
-        through the fetch methods, or by iterating over the cursor, as though
-        it was returned by a select statement.
+        If the called procedure emits a result set, it is made available through
+        the fetch methods, or by iterating over the `Cursor`, as though it was
+        returned by a ``select`` statement.
 
         Args:
-            procname: The name of the stored procedure to be executed.
-            parameters: A sequence of strings to be passed, in order, as the
-                arguments to the stored procedure.
+            procname (str): The name of the stored procedure to be executed.
+            parameters (Sequence[T]): A sequence of values to be passed, in
+                order, as the parameters to the stored procedure.  Each element
+                must be an instance of one of the Python types listed in
+                :doc:`types`.
 
         Returns:
-            A copy of the input parameters.
+            List[T]: A copy of the input parameters.
         """
         if not _VALID_SP_NAME.match(procname):
             raise NotSupportedError("Invalid procedure name '%s'" % procname)
@@ -496,30 +853,37 @@ class Cursor(object):
     def execute(self, sql, parameters=None):
         """Execute a database operation (query or command).
 
-        Parameters must be provided as a mapping and will be bound to variables
-        in the operation.  The sql string must be provided as a Python format
-        string, with parameter names represented as `%(name)s` and all other
-        `%` signs escaped as `%%`.
+        The ``sql`` string must be provided as a Python format string, with
+        parameter placeholders represented as ``%(name)s`` and all other ``%``
+        signs escaped as ``%%``.
+
+        Note:
+            Using placeholders should always be the preferred method of
+            parameterizing the SQL query, as it prevents SQL injection
+            vulnerabilities, and is faster than dynamically building SQL
+            strings.
 
         Args:
-            sql: The SQL string to execute, as a Python format string.
-            parameters: An optional mapping from parameter names to the values
-                to be bound for them.
+            sql (str): The SQL string to execute, as a Python format string.
+            parameters (Mapping[str, T]): An optional mapping from parameter
+                names to the values to be bound for them.
 
         Returns:
-            This cursor, which can be used as an iterator over the result set
-            returned by the query.  When iterating over the cursor, one list
-            will be yielded per row in the result set, where the elements in
-            the list correspond to the result columns within the row, in
-            positional order.
+            Cursor: As a nonstandard DB-API 2.0 extension, this method returns
+            the `Cursor` that it was called on, which can be used as an
+            iterator over the result set returned by the query.  Iterating over
+            it will yield one ``list`` per row in the result set, where the
+            elements in the list correspond to the result columns within the
+            row, in positional order.
+
+            The `Connection.row_factory` property can be used to return rows as
+            a different type.
 
         Example:
-            >>> c = connection.cursor()
-            >>> for row in c.execute("select 1, 2 UNION select %(x)s, %(y)s",
-            ...                      {'x': 2, 'y': 4}):
-            ...     print row[1], row[0]
-            4 2
-            2 1
+            >>> cursor.execute("select 1, 2 UNION ALL select %(x)s, %(y)s",
+            ...                {'x': 2, 'y': 4})
+            >>> cursor.fetchall()
+            [[1, 2], [2, 4]]
         """
         self._check_closed()
         self._description = None
@@ -527,7 +891,7 @@ class Cursor(object):
 
         if not self._conn._autocommit:
             # Certain operations are forbidden when not in autocommit mode.
-            errmsg = self.ErrorMessagesByOperation.get(operation)
+            errmsg = self._ErrorMessagesByOperation.get(operation)
             if errmsg:
                 raise InterfaceError(errmsg)
 
@@ -538,15 +902,18 @@ class Cursor(object):
         return self
 
     def executemany(self, sql, seq_of_parameters):
-        """Execute the same sql statement repeatedly with different parameters.
+        """Execute the same SQL statement repeatedly with different parameters.
 
         This is currently equivalent to calling execute multiple times, once
-        for each mapping provided in seq_of_parameters.
+        for each element provided in ``seq_of_parameters``.
 
         Args:
-            sql: The SQL string to execute, as a Python format string.
-            parameters: An sequence of mappings from parameter names to the
-                values to be bound for them.
+            sql (str): The SQL string to execute, as a Python format string of
+                the format expected by `execute`.
+            seq_of_parameters (Sequence[Mapping[str, T]]): A sequence of mappings from
+                parameter names to the values to be bound for them.  The
+                ``sql`` statement will be run once per element in this
+                sequence.
         """
         self._check_closed()
         for parameters in seq_of_parameters:
@@ -621,9 +988,11 @@ class Cursor(object):
         """Fetch the next row of the current result set.
 
         Returns:
-            A list, where the elements in the list correspond to the result
-            columns within the next row in the result set in positional order.
-            If all rows have been consumed, None is returned.
+            Row: If no rows remain in the current result set, ``None`` is
+            returned, otherwise the next row of the result set is returned.  By
+            default the row is returned as a `list`, where the elements in the
+            list correspond to the result row's columns in positional order,
+            but this can be changed with the `Connection.row_factory` property.
         """
         try:
             return next(self)
@@ -635,29 +1004,53 @@ class Cursor(object):
 
         Args:
             n: Maximum number of rows to be returned.  If this argument is not
-                given, the cursor's arraysize property is used as the maximum.
+                given, `Cursor.arraysize` is used as the maximum.
 
         Returns:
-            A sequence of up to n lists, where the elements in each list
-            correspond to the result columns within the next row in the result
-            set in positional order.  If fewer than n rows are available, the
-            returned sequence will have fewer than n lists.  If no rows are
-            available, the returned sequence will have no elements.
+            List[Row]: Returns a `list` containing the next ``n`` rows of the
+            result set.  If fewer than ``n`` rows remain, the returned list
+            will contain fewer than ``n`` elements.  If no rows remain, the
+            list will be empty.  By default each row is
+            returned as a `list`, where the elements in the list correspond to
+            the result row's columns in positional order, but this can be
+            changed with the `Connection.row_factory` property.
         """
         if n is None:
-            n = self.arraysize
+            n = self._arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
     def fetchall(self):
         """Fetch all remaining rows of the current result set.
 
         Returns:
-            All remaining rows of the current result set, as a list of lists.
+            List[Row]: Returns a `list` containing all remaining rows of the
+            result set.  By default each row is returned as a `list`, where the
+            elements in the list correspond to the result row's columns in
+            positional order, but this can be changed with the
+            `Connection.row_factory` property.
         """
         return [x for x in self]
 
     # Optional DB API Extension
     def __iter__(self):
+        """Iterate over all rows in a result set.
+
+        By default each row is returned as a `list`, where the elements in the
+        list correspond to the result row's columns in positional order, but
+        this can be changed with the `Connection.row_factory` property.
+
+        Note:
+            This is not required by DB-API 2.0; for maximum portability
+            applications should prefer to use `fetchone` or `fetchmany` or
+            `fetchall` instead.
+
+        Example:
+            >>> cursor.execute("select 1, 2 UNION ALL select 3, 4")
+            >>> for row in cursor:
+            ...     print(row)
+            [1, 2]
+            [3, 4]
+        """
         self._check_closed()
         return self
 
