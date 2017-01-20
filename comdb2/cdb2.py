@@ -276,9 +276,16 @@ def _datetimeus(ptr):
 
 
 def _errstr(hndl):
-    errstr = _ffi_string(lib.cdb2_errstr(hndl))
-    if not isinstance(errstr, str):
-        errstr = errstr.decode('utf-8')  # bytes to str for Python 3
+    msg = ffi.string(lib.cdb2_errstr(hndl))
+    try:
+        errstr = msg.decode('utf-8')
+    except UnicodeDecodeError:
+        # The DB's error strings aren't necessarily UTF-8.
+        # If one isn't, it's preferable to mangle the error string than to
+        # raise a UnicodeDecodeError (which would obscure the root cause).
+        # Return a unicode string with \x escapes in place of non-ascii bytes.
+        errstr = msg.decode('latin1').encode('unicode_escape').decode('ascii')
+
     return errstr
 
 
