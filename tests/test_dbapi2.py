@@ -190,6 +190,20 @@ def test_reading_and_writing_datetimes():
     assert cursor.fetchall() == [[ts_str_out]]
 
 
+def test_reading_and_writing_datetimeus():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    ts_obj = TimestampUs(2015, 1, 2, 3, 4, 5, 123456, pytz.UTC)
+    ts_str_in = '2015-01-02T03:04:05.123456'
+    ts_str_out = '2015-01-02T030405.123456 UTC'
+
+    cursor.execute("select cast(%(x)s as date)", dict(x=ts_str_in))
+    assert cursor.fetchall() == [[ts_obj]]
+
+    cursor.execute("select %(x)s || ''", dict(x=ts_obj))
+    assert cursor.fetchall() == [[ts_str_out]]
+
+
 def test_inserting_one_row_with_all_datatypes_without_parameters():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
