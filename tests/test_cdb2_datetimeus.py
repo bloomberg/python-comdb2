@@ -1,10 +1,10 @@
 from __future__ import unicode_literals, absolute_import
 
 from comdb2 import cdb2
-import pytest
 import pytz
 import datetime
 import time
+
 
 def test_datetimeus_fromdatetime():
     dt = datetime.datetime(2016, 2, 24, 12, 0)
@@ -12,6 +12,7 @@ def test_datetimeus_fromdatetime():
 
     assert type(dtu) == cdb2.DatetimeUs
     assert dtu == dt
+
 
 def test_datetimeus_add():
     dt = datetime.datetime(2016, 2, 24, 12, 0)
@@ -28,6 +29,7 @@ def test_datetimeus_add():
     assert dtu2 == dtu1
     assert dtu3 == dtu1
 
+
 def test_datetimeus_sub_td():
     dt = datetime.datetime(2016, 2, 24, 12, 0)
     td = datetime.timedelta(minutes=32)
@@ -39,6 +41,7 @@ def test_datetimeus_sub_td():
     assert type(dtu2) == cdb2.DatetimeUs
 
     assert dtu2 == dtu1
+
 
 def test_datetimeus_sub_dt():
     dt = datetime.datetime(2016, 2, 24, 12, 0)
@@ -54,15 +57,18 @@ def test_datetimeus_sub_dt():
     assert td1 == td2
     assert td3 == td4
 
+
 def test_datetimeus_now():
     dtu = cdb2.DatetimeUs.now()
 
     assert type(dtu) == cdb2.DatetimeUs
 
+
 def test_datetimeus_fromtimestamp():
     dtu = cdb2.DatetimeUs.fromtimestamp(time.time())
 
     assert type(dtu) == cdb2.DatetimeUs
+
 
 def test_datetimeus_astimezone():
     eastern = pytz.timezone('US/Eastern')
@@ -70,6 +76,7 @@ def test_datetimeus_astimezone():
     dtu = cdb2.DatetimeUs.fromdatetime(loc_dt)
 
     assert type(dtu.astimezone(pytz.utc)) == cdb2.DatetimeUs
+
 
 def test_datetimeus_type_stickiness():
     def check(obj):

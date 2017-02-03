@@ -1,6 +1,20 @@
 from __future__ import unicode_literals, absolute_import
 
-from comdb2.dbapi2 import *
+from comdb2.dbapi2 import NUMBER
+from comdb2.dbapi2 import BINARY
+from comdb2.dbapi2 import STRING
+from comdb2.dbapi2 import DATETIME
+from comdb2.dbapi2 import connect
+from comdb2.dbapi2 import Binary
+from comdb2.dbapi2 import Datetime
+from comdb2.dbapi2 import Timestamp
+from comdb2.dbapi2 import TimestampUs
+from comdb2.dbapi2 import DataError
+from comdb2.dbapi2 import OperationalError
+from comdb2.dbapi2 import IntegrityError
+from comdb2.dbapi2 import InterfaceError
+from comdb2.dbapi2 import NotSupportedError
+from comdb2.dbapi2 import ProgrammingError
 from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
 from comdb2.factories import namedtuple_row_factory
@@ -8,7 +22,12 @@ import pytest
 import datetime
 import pytz
 import six
-import functools
+from functools import partial
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
@@ -44,12 +63,12 @@ def delete_all_rows():
 
 def test_invalid_cluster():
     with pytest.raises(OperationalError):
-        conn = connect('mattdb', 'foo')
+        connect('mattdb', 'foo')
 
 
 def test_invalid_dbname():
     with pytest.raises(OperationalError):
-        conn = connect('', 'dev')
+        connect('', 'dev')
 
 
 def test_closing_unused_connection():
@@ -81,17 +100,18 @@ def test_inserts():
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [[1,2]]
+    assert cursor.fetchall() == [[1, 2]]
 
     # With params
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
-    cursor.execute("insert into simple(key, val) values(%(k)s, %(v)s)", dict(k=3, v=4))
+    cursor.execute("insert into simple(key, val) values(%(k)s, %(v)s)",
+                   dict(k=3, v=4))
     conn.commit()
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [[1,2],[3,4]]
+    assert cursor.fetchall() == [[1, 2], [3, 4]]
 
 
 def test_rollback():
@@ -147,7 +167,7 @@ def test_commit_after_cursor_close():
 
     cursor = conn.cursor()
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [[1,2],[3,4]]
+    assert cursor.fetchall() == [[1, 2], [3, 4]]
 
 
 def test_implicit_rollback_on_connection_close():
@@ -160,7 +180,8 @@ def test_implicit_rollback_on_connection_close():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     rows = list(cursor.execute("select key, val from simple order by key"))
-    assert rows == [[1,2]]
+    assert rows == [[1, 2]]
+
 
 def test_extra_percent_arg():
     conn = connect('mattdb', 'dev')
@@ -169,12 +190,14 @@ def test_extra_percent_arg():
         cursor.execute("insert into simple(key, val) values(%(k)s, %(v)s)",
                        dict(k=3))
 
+
 def test_unescaped_percent():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     cursor.execute("select 1%%2" )  # Should work
     with pytest.raises(InterfaceError):
         cursor.execute("select 1%2")
+
 
 def test_reading_and_writing_datetimes():
     conn = connect('mattdb', 'dev')
@@ -231,7 +254,7 @@ def test_inserting_one_row_with_all_datatypes_without_parameters():
                    Datetime(2009, 2, 13, 18, 31, 30, 234000,
                             pytz.timezone("America/New_York")),
                    "hello world"]
-    assert cursor.fetchone() == None
+    assert cursor.fetchone() is None
 
 
 def test_all_datatypes_as_parameters():
@@ -252,7 +275,7 @@ def test_all_datatypes_as_parameters():
         ("blob_col", Binary('')),
         ("datetime_col", Datetime(2009, 2, 13, 18, 31, 30, 234000,
                                    pytz.timezone("America/New_York"))),
-        ("vutf8_col", "foo"*50)
+        ("vutf8_col", "foo" * 50)
     )
     cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
                    " values(%(short_col)s, %(u_short_col)s, %(int_col)s,"
@@ -265,8 +288,8 @@ def test_all_datatypes_as_parameters():
 
     cursor.execute("select * from all_datatypes")
     row = cursor.fetchone()
-    assert row == list(v for k,v in params)
-    assert cursor.fetchone() == None
+    assert row == list(v for k, v in params)
+    assert cursor.fetchone() is None
 
 
 def test_naive_datetime_as_parameter():
@@ -286,7 +309,7 @@ def test_naive_datetime_as_parameter():
         ("pstring_col", 'GOODBYE'),
         ("blob_col", Binary('')),
         ("datetime_col", Datetime(2009, 2, 13, 18, 31, 30, 234000)),
-        ("vutf8_col", "foo"*50)
+        ("vutf8_col", "foo" * 50)
     )
 
     cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
@@ -366,7 +389,7 @@ def test_binding_number_that_overflows_long_long():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     with pytest.raises(DataError):
-        cursor.execute("select @i", dict(i=2**64+1))
+        cursor.execute("select @i", dict(i=2**64 + 1))
 
 
 def test_retrieving_null():
@@ -458,7 +481,7 @@ def test_misusing_cursor_objects():
 def test_noop_methods():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
-    cursor.setinputsizes([1,2,3])
+    cursor.setinputsizes([1, 2, 3])
     cursor.setoutputsize(42)
 
 
@@ -467,21 +490,21 @@ def test_fetchmany():
     cursor = conn.cursor()
 
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [[1,]]
-    assert cursor.fetchmany(2) == [[2,], [3,]]
+    assert cursor.fetchmany() == [[1]]
+    assert cursor.fetchmany(2) == [[2], [3]]
     assert cursor.fetchmany(2) == []
     assert cursor.fetchmany(2) == []
 
     cursor.arraysize = 2
     assert cursor.arraysize == 2
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [[1,], [2,]]
-    assert cursor.fetchmany() == [[3,]]
+    assert cursor.fetchmany() == [[1], [2]]
+    assert cursor.fetchmany() == [[3]]
 
     cursor.arraysize = 4
     assert cursor.arraysize == 4
     cursor.execute("select 1 UNION select 2 UNION select 3 order by 1")
-    assert cursor.fetchmany() == [[1,], [2,], [3,]]
+    assert cursor.fetchmany() == [[1], [2], [3]]
 
 
 def test_consuming_result_sets_automatically():
@@ -516,7 +539,8 @@ def test_cursor_connection_attribute_keeps_connection_alive():
     assert cursor.rowcount == 1
 
     cursor.execute("select key, val from simple order by key")
-    assert cursor.fetchall() == [[1,2]]
+    assert cursor.fetchall() == [[1, 2]]
+
 
 def test_exceptions_containing_unicode_error_messages():
     conn = connect('mattdb', 'dev')
@@ -529,19 +553,14 @@ def test_exceptions_containing_unicode_error_messages():
             raise
 
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
 def throw_on(expected_stmt, stmt, parameters=None):
     if stmt == expected_stmt:
         raise cdb2.Error(42, 'Not supported error')
 
+
 @patch('comdb2.cdb2.Handle')
 def test_begin_throws_error(handle):
-
-    handle.return_value.execute.side_effect = functools.partial(throw_on, 'begin')
+    handle.return_value.execute.side_effect = partial(throw_on, 'begin')
 
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
@@ -549,10 +568,10 @@ def test_begin_throws_error(handle):
     with pytest.raises(OperationalError):
         cursor.execute("insert into simple(key, val) values(1, 2)")
 
+
 @patch('comdb2.cdb2.Handle')
 def test_commit_throws_error(handle):
-
-    handle.return_value.execute.side_effect = functools.partial(throw_on, 'commit')
+    handle.return_value.execute.side_effect = partial(throw_on, 'commit')
 
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
@@ -561,18 +580,19 @@ def test_commit_throws_error(handle):
     with pytest.raises(OperationalError):
         conn.commit()
 
-def raise_(ex):
-    raise ex
 
 @patch('comdb2.cdb2.Handle')
 def test_get_effect_throws_error(handle):
+    def raise_not_supported_error():
+        raise cdb2.Error(42, 'Not supported error')
 
-    handle.return_value.get_effects.side_effect = lambda: raise_(cdb2.Error(42, 'Not supported error'))
+    handle.return_value.get_effects.side_effect = raise_not_supported_error
 
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.commit()
+
 
 def test_autocommit_handles():
     conn = connect('mattdb', 'dev', autocommit=True)
@@ -591,11 +611,11 @@ def test_autocommit_handles():
     # Selects work, but don't affect the rowcount
     cursor.execute("select key, val from simple order by key")
     assert cursor.rowcount == -1
-    assert cursor.fetchall() == [[1,2],[3,4]]
+    assert cursor.fetchall() == [[1, 2], [3, 4]]
 
     cursor.execute("selectv key, val from simple order by key")
     assert cursor.rowcount == -1
-    assert cursor.fetchall() == [[1,2],[3,4]]
+    assert cursor.fetchall() == [[1, 2], [3, 4]]
 
     # Outside of a transaction, operations are applied immediately
     cursor.execute("insert into simple(key, val) values(7, 6)")

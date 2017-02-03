@@ -4,16 +4,11 @@ from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
 from comdb2.factories import namedtuple_row_factory
 import pytest
-import pytz
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
                " cstring_col pstring_col blob_col datetime_col vutf8_col"
                ).split()
-
-#COLUMN_TYPE = (NUMBER, NUMBER, NUMBER, NUMBER, NUMBER,
-#               NUMBER, NUMBER, BINARY, BINARY,
-#               STRING, STRING, BINARY, DATETIME, STRING)
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +26,7 @@ def delete_all_rows():
 
 
 def test_garbage_collecting_unused_handle():
-    hndl = cdb2.Handle('mattdb', 'dev').execute("select 1 union select 2")
+    cdb2.Handle('mattdb', 'dev').execute("select 1 union select 2")
 
 
 def test_commit_on_unused_connection():
@@ -56,7 +51,7 @@ def test_binding_parameters():
     assert hndl.get_effects()[0] == 1
 
     rows = list(hndl.execute("select key, val from simple order by key"))
-    assert rows == [[1,2],[3,4]]
+    assert rows == [[1, 2], [3, 4]]
 
 
 def test_commit_failures():
