@@ -694,3 +694,68 @@ def test_reusing_handle_after_unicode_decode_error():
         cursor.execute("select cast(X'C3' as text)").fetchall()
     row = cursor.execute("select cast(X'C3A4' as text)").fetchone()
     assert row == ['\xE4']
+
+
+def test_unicode_column_decode_exception():
+    query = "select cast(X'C3A4' as text) as a, cast(X'C3' as text) as b"
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+
+    cursor.execute(query)
+    with pytest.raises(DataError) as exc_info:
+        cursor.fetchall()
+
+    errmsg = "Failed to decode CDB2_CSTRING column 1 ('b'):"
+    assert errmsg in str(exc_info.value)
+
+    errmsg = "can't decode byte 0xc3 in position 0: unexpected end of data"
+    assert errmsg in str(exc_info.value)
+
+
+def test_date_column_decode_exception():
+    query = "select cast('0000-01-01 UTC' as date) as date"
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+
+    cursor.execute("SET TIMEZONE America/New_York")
+    cursor.execute(query)
+    with pytest.raises(DataError) as exc_info:
+        cursor.fetchall()
+
+    errmsg = ("Failed to decode CDB2_DATETIME column 0 ('date'):"
+              " year is out of range")
+    assert errmsg in str(exc_info.value)
+
+
+def test_unsupported_column_decode_exception():
+    query = "select now() - now() as delta"
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+
+    cursor.execute(query)
+    with pytest.raises(NotSupportedError) as exc_info:
+        cursor.fetchall()
+
+    errmsg = ("Failed to decode CDB2_INTERVALDS column 0 ('delta'):"
+              " Unsupported column type")
+    assert errmsg in str(exc_info.value)
+
+
+def test_unknown_column_type_decode_exception():
+    class EnumMock(object):
+        elements = {}
+
+    query = "select now() - now() as delta"
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+
+    cursor.execute(query)
+    with patch('comdb2.cdb2.ffi') as ffi:
+        ffi.typeof.return_value = EnumMock()
+        ffi.string.return_value = b'foo'
+        with pytest.raises(NotSupportedError) as exc_info:
+            cursor.fetchall()
+
+    errmsg = ("Failed to decode type 8 column 0 ('foo'):"
+              " Unsupported column type")
+    assert errmsg in str(exc_info.value)
