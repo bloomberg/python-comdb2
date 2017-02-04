@@ -373,8 +373,8 @@ class Handle(object):
     cdb2api's default behavior, where the timezone used by the query differs
     depending on the machine that it is run from.  If for some reason you need
     to have that machine-specific default timezone instead, you can pass
-    ``None`` for the ``tz`` argument.  Any other valid timezone name may also be
-    used instead of 'UTC'.
+    ``None`` for the ``tz`` argument.  Any other valid timezone name may also
+    be used instead of 'UTC'.
 
     Note that Python does not guarantee that object finalizers will be called
     when the interpreter exits, so to ensure that the handle is cleanly
