@@ -685,3 +685,12 @@ def test_row_factories_with_reserved_word_col_names():
 
     hndl.row_factory = dict_row_factory
     assert list(hndl.cursor().execute(query)) == [{'def': 1}]
+
+
+def test_reusing_handle_after_unicode_decode_error():
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+    with pytest.raises(DataError):
+        cursor.execute("select cast(X'C3' as text)").fetchall()
+    row = cursor.execute("select cast(X'C3A4' as text)").fetchone()
+    assert row == ['\xE4']

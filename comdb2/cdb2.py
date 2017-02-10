@@ -571,15 +571,8 @@ class Handle(object):
         if not self._more_rows_available:
             raise StopIteration()
 
-        try:
-            data = [self._column_value(i) for i in self._column_range]
-            self._next_record()
-        except UnicodeDecodeError as e:
-            # Allow _consume_all_rows to raise.  Its error code is relevant,
-            # since it may indicate that the connection is no longer usable.
-            self._consume_all_rows()
-            # If it didn't, raise our own error for the failed UTF-8 decode.
-            six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, str(e)), e)
+        data = [self._column_value(i) for i in self._column_range]
+        self._next_record()
 
         if self._row_class is not None:
             try:
