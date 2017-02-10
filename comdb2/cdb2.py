@@ -666,21 +666,43 @@ class Handle(object):
         val = lib.cdb2_column_value(self._hndl, i)
         typecode = lib.cdb2_column_type(self._hndl, i)
 
-        if val == ffi.NULL:
-            return None
-        if typecode == lib.CDB2_INTEGER:
-            return lib.integer_value(val)
-        if typecode == lib.CDB2_REAL:
-            return lib.real_value(val)
-        if typecode == lib.CDB2_BLOB:
-            size = lib.cdb2_column_size(self._hndl, i)
-            return bytes(ffi.buffer(val, size))
-        if typecode == lib.CDB2_CSTRING:
-            size = lib.cdb2_column_size(self._hndl, i)
-            return six.text_type(ffi.buffer(val, size - 1), "utf-8")
-        if typecode == lib.CDB2_DATETIMEUS:
-            return _datetimeus(lib.datetimeus_value(val))
-        if typecode == lib.CDB2_DATETIME:
-            return _datetime(lib.datetime_value(val))
-        raise Error(lib.CDB2ERR_NOTSUPPORTED,
-                    "Can't handle type %d returned by database!" % typecode)
+        try:
+            if val == ffi.NULL:
+                return None
+            if typecode == lib.CDB2_INTEGER:
+                return lib.integer_value(val)
+            if typecode == lib.CDB2_REAL:
+                return lib.real_value(val)
+            if typecode == lib.CDB2_BLOB:
+                size = lib.cdb2_column_size(self._hndl, i)
+                return bytes(ffi.buffer(val, size))
+            if typecode == lib.CDB2_CSTRING:
+                size = lib.cdb2_column_size(self._hndl, i)
+                return six.text_type(ffi.buffer(val, size - 1), "utf-8")
+            if typecode == lib.CDB2_DATETIMEUS:
+                return _datetimeus(lib.datetimeus_value(val))
+            if typecode == lib.CDB2_DATETIME:
+                return _datetime(lib.datetime_value(val))
+        except Exception as e:
+            from_exception = e
+            error_code = lib.CDB2ERR_CONV_FAIL
+            why = six.text_type(from_exception)
+        else:
+            from_exception = None
+            error_code = lib.CDB2ERR_NOTSUPPORTED
+            why = "Unsupported column type"
+
+        try:
+            typename = ffi.typeof('enum cdb2_coltype').elements[typecode]
+        except KeyError:
+            typename = "type %d" % typecode
+
+        col_name = self.column_names()[i]
+
+        to_raise = Error(error_code,
+                         "Failed to decode %s column %d ('%s'): %s" % (
+                             typename, i, col_name, why))
+
+        if from_exception is not None:
+            six.raise_from(to_raise, from_exception)
+        raise to_raise
