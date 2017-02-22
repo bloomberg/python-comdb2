@@ -167,7 +167,7 @@ There are several things to note here.  The first is that the insert statements
 that were sent to the database don't take effect immediately, because they are
 implicitly part of a transaction that must be explicitly completed.  This is
 different from other Comdb2 APIs, where you must execute a ``BEGIN`` statement
-to start a transaction, and where statements  otherwise take effect immediately.
+to start a transaction, and where statements otherwise take effect immediately.
 
 The second thing to note is that there are certain error conditions where
 a Comdb2 connection can automatically recover when outside of a transaction,
@@ -657,8 +657,8 @@ class Connection(object):
             Closing a connection without committing the changes first will
             cause an implicit rollback to be performed, but will also prevent
             that connection from being contributed to the socket pool, if one
-            is available.  Because of this, an explicit rollback should be preferred when
-            possible.
+            is available.  Because of this, an explicit rollback should be
+            preferred when possible.
         """
         self._check_closed()
         self._execute("rollback")
@@ -836,9 +836,9 @@ class Cursor(object):
         The ``parameters`` sequence must contain one entry for each argument
         that the procedure requires.
 
-        If the called procedure emits a result set, it is made available through
-        the fetch methods, or by iterating over the `Cursor`, as though it was
-        returned by a ``select`` statement.
+        If the called procedure emits a result set, it is made available
+        through the fetch methods, or by iterating over the `Cursor`, as though
+        it was returned by a ``select`` statement.
 
         Args:
             procname (str): The name of the stored procedure to be executed.
@@ -919,10 +919,10 @@ class Cursor(object):
         Args:
             sql (str): The SQL string to execute, as a Python format string of
                 the format expected by `execute`.
-            seq_of_parameters (Sequence[Mapping[str, T]]): A sequence of mappings from
-                parameter names to the values to be bound for them.  The
-                ``sql`` statement will be run once per element in this
-                sequence.
+            seq_of_parameters (Sequence[Mapping[str, T]]): A sequence of
+                mappings from parameter names to the values to be bound for
+                them.  The ``sql`` statement will be run once per element in
+                this sequence.
         """
         self._check_closed()
         for parameters in seq_of_parameters:
