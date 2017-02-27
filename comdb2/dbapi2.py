@@ -474,15 +474,15 @@ _EXCEPTION_BY_RC = {
     cdb2.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
 
     cdb2.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
-    cdb2.ERROR_CODE['FKEY_VIOLATION']        : IntegrityError,
-    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : IntegrityError,
+    cdb2.ERROR_CODE['FKEY_VIOLATION']        : ForeignKeyConstraintError,
+    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : NonNullConstraintError,
 
     cdb2.ERROR_CODE['CONV_FAIL']             : DataError,
     cdb2.ERROR_CODE['NONKLESS']              : NotSupportedError,
     cdb2.ERROR_CODE['MALLOC']                : OperationalError,
     cdb2.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
 
-    cdb2.ERROR_CODE['DUPLICATE']             : IntegrityError,
+    cdb2.ERROR_CODE['DUPLICATE']             : UniqueKeyConstraintError,
     cdb2.ERROR_CODE['TZNAME_FAIL']           : DataError,
 
     cdb2.ERROR_CODE['UNKNOWN']               : OperationalError,
@@ -493,7 +493,7 @@ def _raise_wrapped_exception(exc):
     code = exc.error_code
     msg = exc.error_message
     if "null constraint violation" in msg:
-        six.raise_from(IntegrityError(msg), exc)  # DRQS 86013831
+        six.raise_from(NonNullConstraintError(msg), exc)  # DRQS 86013831
     six.raise_from(_EXCEPTION_BY_RC.get(code, OperationalError)(msg), exc)
 
 
