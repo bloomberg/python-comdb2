@@ -246,7 +246,9 @@ __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'DatetimeFromTicks', 'DatetimeUsFromTicks', 'TimestampFromTicks',
            'Error', 'Warning', 'InterfaceError', 'DatabaseError',
            'InternalError', 'OperationalError', 'ProgrammingError',
-           'IntegrityError', 'DataError', 'NotSupportedError']
+           'IntegrityError', 'DataError', 'NotSupportedError',
+           'UniqueKeyConstraintError', 'ForeignKeyConstraintError',
+           'NonNullConstraintError']
 
 apilevel = "2.0"
 """This module conforms to the Python Database API Specification 2.0."""
@@ -382,9 +384,44 @@ class ProgrammingError(DatabaseError):
 class IntegrityError(DatabaseError):
     """Exception raised for integrity errors reported by the database.
 
-    For example, this will be raised if a foreign key constraint is violated,
-    or a constraint that a column may not be null, or that an index may not
-    have duplicates.
+    For example, a subclass of this will be raised if a foreign key constraint
+    would be violated, or a constraint that a column may not be null, or that
+    an index may not have duplicates.  Other types of constraint violations may
+    raise this type directly.
+    """
+    pass
+
+
+class UniqueKeyConstraintError(IntegrityError):
+    """Exception raised when a unique key constraint would be broken.
+
+    Committing after either an INSERT or an UPDATE could result in this being
+    raised, by either adding a new row that violates a unique (non-dup) key
+    constraint or modifying an existing row in a way that would violate one.
+    """
+    pass
+
+
+class ForeignKeyConstraintError(IntegrityError):
+    """Exception raised when a foreign key constraint would be broken.
+
+    This would be raised when committing if the changes being committed would
+    violate referential integrity according to a foreign key constraint
+    configured on the database.  For instance, deleting a row from a parent
+    table would raise this if rows corresponding to its key still exist in
+    a child table and the constraint doesn't have ON DELETE CASCADE.  Likewise,
+    inserting a row into a child table would raise this if there was no row in
+    the parent table matching the new row's key.
+    """
+    pass
+
+
+class NonNullConstraintError(IntegrityError):
+    """Exception raised when a non-null constraint would be broken.
+
+    Committing after either an INSERT or an UPDATE could result in this being
+    raised if it would result in a null being stored in a non-nullable column.
+    Note that columns in a Comdb2 are not nullable by default.
     """
     pass
 
