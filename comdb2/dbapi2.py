@@ -491,7 +491,7 @@ _EXCEPTION_BY_RC = {
 
 def _raise_wrapped_exception(exc):
     code = exc.error_code
-    msg = exc.error_message
+    msg = '%s (cdb2api rc %d)' % (exc.error_message, code)
     if "null constraint violation" in msg:
         six.raise_from(NonNullConstraintError(msg), exc)  # DRQS 86013831
     six.raise_from(_EXCEPTION_BY_RC.get(code, OperationalError)(msg), exc)
