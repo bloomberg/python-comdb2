@@ -12,6 +12,9 @@ from comdb2.dbapi2 import TimestampUs
 from comdb2.dbapi2 import DataError
 from comdb2.dbapi2 import OperationalError
 from comdb2.dbapi2 import IntegrityError
+from comdb2.dbapi2 import ForeignKeyConstraintError
+from comdb2.dbapi2 import NonNullConstraintError
+from comdb2.dbapi2 import UniqueKeyConstraintError
 from comdb2.dbapi2 import InterfaceError
 from comdb2.dbapi2 import NotSupportedError
 from comdb2.dbapi2 import ProgrammingError
@@ -144,6 +147,33 @@ def test_unique_key_violation():
     conn.commit()
     cursor.execute("insert into simple(key, val) values(1, 3)")
     with pytest.raises(IntegrityError):
+        conn.commit()
+
+
+def test_constraint_errors():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    with pytest.raises(UniqueKeyConstraintError):
+        conn.commit()
+
+    cursor.execute("insert into simple(key, val) values(null, 2)")
+    with pytest.raises(NonNullConstraintError):
+        conn.commit()
+
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.commit()
+
+    cursor.execute("selectv * from simple")
+    connect('mattdb', 'dev', autocommit=True).cursor().execute(
+        "update simple set key=2")
+    with pytest.raises(IntegrityError):
+        conn.commit()
+
+    cursor.execute("insert into child(key) values(1)")
+    with pytest.raises(ForeignKeyConstraintError):
         conn.commit()
 
 
