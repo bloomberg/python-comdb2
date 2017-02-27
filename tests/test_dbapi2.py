@@ -156,12 +156,16 @@ def test_constraint_errors():
 
     cursor.execute("insert into simple(key, val) values(1, 2)")
     cursor.execute("insert into simple(key, val) values(1, 2)")
-    with pytest.raises(UniqueKeyConstraintError):
+    with pytest.raises(UniqueKeyConstraintError) as exc_info:
         conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['DUPLICATE']
+    assert errcode in str(exc_info.value)
 
     cursor.execute("insert into simple(key, val) values(null, 2)")
-    with pytest.raises(NonNullConstraintError):
+    with pytest.raises(NonNullConstraintError) as exc_info:
         conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['NULL_CONSTRAINT']
+    assert errcode in str(exc_info.value)
 
     cursor.execute("insert into simple(key, val) values(1, 2)")
     conn.commit()
@@ -169,12 +173,16 @@ def test_constraint_errors():
     cursor.execute("selectv * from simple")
     connect('mattdb', 'dev', autocommit=True).cursor().execute(
         "update simple set key=2")
-    with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError) as exc_info:
         conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['CONSTRAINTS']
+    assert errcode in str(exc_info.value)
 
     cursor.execute("insert into child(key) values(1)")
-    with pytest.raises(ForeignKeyConstraintError):
+    with pytest.raises(ForeignKeyConstraintError) as exc_info:
         conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['FKEY_VIOLATION']
+    assert errcode in str(exc_info.value)
 
 
 def test_implicitly_closing_old_cursor_when_opening_a_new_one():
