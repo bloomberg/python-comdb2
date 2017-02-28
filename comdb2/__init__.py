@@ -17,4 +17,4 @@ anticipate a need to interact with libraries that require DB-API compliant
 connections, this module may be simpler to get started with.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
