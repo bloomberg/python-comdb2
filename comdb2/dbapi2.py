@@ -398,6 +398,8 @@ class UniqueKeyConstraintError(IntegrityError):
     Committing after either an INSERT or an UPDATE could result in this being
     raised, by either adding a new row that violates a unique (non-dup) key
     constraint or modifying an existing row in a way that would violate one.
+
+    .. versionadded:: 1.1
     """
     pass
 
@@ -412,6 +414,8 @@ class ForeignKeyConstraintError(IntegrityError):
     a child table and the constraint doesn't have ON DELETE CASCADE.  Likewise,
     inserting a row into a child table would raise this if there was no row in
     the parent table matching the new row's key.
+
+    .. versionadded:: 1.1
     """
     pass
 
@@ -422,6 +426,8 @@ class NonNullConstraintError(IntegrityError):
     Committing after either an INSERT or an UPDATE could result in this being
     raised if it would result in a null being stored in a non-nullable column.
     Note that columns in a Comdb2 are not nullable by default.
+
+    .. versionadded:: 1.1
     """
     pass
 
