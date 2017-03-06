@@ -129,19 +129,48 @@ Note:
 """
 from __future__ import absolute_import, unicode_literals
 
-from ._cdb2api import ffi, lib
-from datetime import datetime, timedelta
-from collections import namedtuple
-import pytz
-import six
+from ._cdb2_types import Error, Effects, DatetimeUs
+from ._ccdb2 import Handle as CHandle
 
 __all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
            'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
-ERROR_CODE = {six.text_type(k[len('CDB2ERR_'):]): v
-              for k, v in ffi.typeof('enum cdb2_errors').relements.items()
-              if k.startswith('CDB2ERR_')}
+ERROR_CODE = {u'CONNECT_ERROR'         : -1,
+              u'NOTCONNECTED'          : -2,
+              u'PREPARE_ERROR'         : -3,
+              u'IO_ERROR'              : -4,
+              u'INTERNAL'              : -5,
+              u'NOSTATEMENT'           : -6,
+              u'BADCOLUMN'             : -7,
+              u'BADSTATE'              : -8,
+              u'ASYNCERR'              : -9,
+              u'INVALID_ID'            : -12,
+              u'RECORD_OUT_OF_RANGE'   : -13,
+              u'REJECTED'              : -15,
+              u'STOPPED'               : -16,
+              u'BADREQ'                : -17,
+              u'DBCREATE_FAILED'       : -18,
+              u'THREADPOOL_INTERNAL'   : -20,
+              u'READONLY'              : -21,
+              u'NOMASTER'              : -101,
+              u'UNTAGGED_DATABASE'     : -102,
+              u'CONSTRAINTS'           : -103,
+              u'DEADLOCK'              : 203,
+              u'TRAN_IO_ERROR'         : -105,
+              u'ACCESS'                : -106,
+              u'TRAN_MODE_UNSUPPORTED' : -107,
+              u'VERIFY_ERROR'          : 2,
+              u'FKEY_VIOLATION'        : 3,
+              u'NULL_CONSTRAINT'       : 4,
+              u'CONV_FAIL'             : 113,
+              u'NONKLESS'              : 114,
+              u'MALLOC'                : 115,
+              u'NOTSUPPORTED'          : 116,
+              u'DUPLICATE'             : 299,
+              u'TZNAME_FAIL'           : 401,
+              u'UNKNOWN'               : 300,
+             }
 """This dict maps all known Comdb2 error names to their respective values.
 
 The value returned in `Error.error_code` will generally be the value
@@ -151,9 +180,16 @@ time.
 """
 
 # Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {six.text_type(k[len('CDB2_'):]): v
-        for k, v in ffi.typeof('enum cdb2_coltype').relements.items()
-        if k.startswith('CDB2_')}
+TYPE = {u'INTEGER'      : 1,
+        u'REAL'         : 2,
+        u'CSTRING'      : 3,
+        u'BLOB'         : 4,
+        u'DATETIME'     : 6,
+        u'INTERVALYM'   : 7,
+        u'INTERVALDS'   : 8,
+        u'DATETIMEUS'   : 9,
+        u'INTERVALDSUS' : 10,
+       }
 """This dict maps all known Comdb2 types to their enumeration value.
 
 Each value in the list returned by `Handle.column_types` will generally be the
@@ -162,215 +198,17 @@ guaranteed because new types can be added to the Comdb2 server at any time.
 """
 
 # Pull comdb2 handle flags from cdb2api.h into our namespace
-HANDLE_FLAGS = {
-        six.text_type(k[len('CDB2_'):]): v
-        for k, v in ffi.typeof('enum cdb2_hndl_alloc_flags').relements.items()
-        if k.startswith('CDB2_')}
+HANDLE_FLAGS = {u'READ_INTRANS_RESULTS' : 2,
+                u'DIRECT_CPU'           : 4,
+                u'RANDOM'               : 8,
+                u'RANDOMROOM'           : 16,
+                u'ROOM'                 : 32,
+               }
 """This dict maps all known Comdb2 flags to their enumeration value.
 
 These values can be passed directly to `Handle`, though values not in this dict
 can be passed as well (such as the bitwise OR of two different flags).
 """
-
-
-class Effects(namedtuple('Effects',
-    "num_affected num_selected num_updated num_deleted num_inserted")):
-    """Type used to represent the count of rows affected by a SQL query.
-
-    An object of this type is returned by `Handle.get_effects`.
-
-    Attributes:
-        num_affected (int): The total number of rows that were affected.
-        num_selected (int): The number of rows that were selected.
-        num_updated (int): The number of rows that were updated.
-        num_deleted (int): The number of rows that were deleted.
-        num_inserted (int): The number of rows that were inserted.
-    """
-    __slots__ = ()
-
-
-class DatetimeUs(datetime):
-    """Provides a distinct representation for Comdb2's DATETIMEUS type.
-
-    Historically, Comdb2 provided a DATETIME type with millisecond precision.
-    Comdb2 R6 added a DATETIMEUS type, which instead has microsecond precision.
-
-    This module represents each Comdb2 type with a distinct Python type.  For
-    backwards compatibility with older Comdb2 databases, `datetime.datetime` is
-    mapped to the DATETIME type, and this class to the DATETIMEUS type.
-    Because this is a subclass of `datetime.datetime`, you don't need to do
-    anything special when reading a DATETIMEUS type out of the database.  You
-    can use `isinstance` if you need to check whether you've been given
-    a `datetime.datetime` (meaning the column was of the DATETIME type) or
-    a `DatetimeUs` (meaning the column was of the DATETIMEUS type), but all the
-    same methods will work on either.
-
-    When binding a parameter of type DATETIMEUS, you must pass an instance of
-    this class, as a `datetime.datetime` would instead be bound as a DATETIME.
-    Instances of this class can be created using this constructor, or the
-    `.fromdatetime` alternate constructor, or any of the other alternate
-    constructors inherited from `datetime.datetime`.
-    """
-    @classmethod
-    def fromdatetime(cls, dt):
-        """Return a `DatetimeUs` copied from a given `datetime.datetime`"""
-        fold = getattr(dt, 'fold', None)
-        kwargs = {}
-        if fold is not None:
-            kwargs['fold'] = fold
-
-        return DatetimeUs(dt.year, dt.month, dt.day,
-                          dt.hour, dt.minute, dt.second, dt.microsecond,
-                          dt.tzinfo, **kwargs)
-
-    def __add__(self, other):
-        ret = super(DatetimeUs, self).__add__(other)
-        if isinstance(ret, datetime):
-            return DatetimeUs.fromdatetime(ret)
-        return ret  # must be a timedelta
-
-    def __sub__(self, other):
-        ret = super(DatetimeUs, self).__sub__(other)
-        if isinstance(ret, datetime):
-            return DatetimeUs.fromdatetime(ret)
-        return ret  # must be a timedelta
-
-    def __radd__(self, other):
-        return self + other
-
-    @classmethod
-    def now(cls, tz=None):
-        ret = super(DatetimeUs, cls).now(tz)
-        return DatetimeUs.fromdatetime(ret)
-
-    @classmethod
-    def fromtimestamp(cls, timestamp, tz=None):
-        ret = super(DatetimeUs, cls).fromtimestamp(timestamp, tz)
-        return DatetimeUs.fromdatetime(ret)
-
-    def astimezone(self, tz):
-        ret = super(DatetimeUs, self).astimezone(tz)
-        return DatetimeUs.fromdatetime(ret)
-
-    def replace(self, *args, **kwargs):
-        # Before Python 3.7, it is effectively implementation dependent whether
-        # this returns a DatetimeUs or a datetime.
-        dt = super(DatetimeUs, self).replace(*args, **kwargs)
-
-        return self.fromdatetime(dt)
-
-
-class Error(RuntimeError):
-    """Exception type raised for all failed operations.
-
-    Attributes:
-        error_code (int): The error code from the failed cdb2api call.
-        error_message (str): The string returned by cdb2api's ``cdb2_errstr``
-            after the failed call.
-    """
-    def __init__(self, error_code, error_message):
-        self.error_code = error_code
-        self.error_message = error_message
-        super(Error, self).__init__(error_code, error_message)
-
-
-def _ffi_string(cdata):
-    return ffi.string(cdata).decode('utf-8')
-
-
-def _construct_datetime(cls, tm, microseconds, tzname):
-    timezone = pytz.timezone(_ffi_string(tzname))
-    timestamp = cls(year=tm.tm_year + 1900,
-                    month=tm.tm_mon + 1,
-                    day=tm.tm_mday,
-                    hour=tm.tm_hour,
-                    minute=tm.tm_min,
-                    second=tm.tm_sec,
-                    microsecond=microseconds)
-    return timezone.localize(timestamp, is_dst=tm.tm_isdst)
-
-
-def _datetime(ptr):
-    return _construct_datetime(datetime, ptr.tm, ptr.msec * 1000, ptr.tzname)
-
-
-def _datetimeus(ptr):
-    return _construct_datetime(DatetimeUs, ptr.tm, ptr.usec, ptr.tzname)
-
-
-def _errstr(hndl):
-    msg = ffi.string(lib.cdb2_errstr(hndl))
-    try:
-        errstr = msg.decode('utf-8')
-    except UnicodeDecodeError:
-        # The DB's error strings aren't necessarily UTF-8.
-        # If one isn't, it's preferable to mangle the error string than to
-        # raise a UnicodeDecodeError (which would obscure the root cause).
-        # Return a unicode string with \x escapes in place of non-ascii bytes.
-        errstr = msg.decode('latin1').encode('unicode_escape').decode('ascii')
-
-    return errstr
-
-
-def _check_rc(rc, hndl):
-    if rc != 0:
-        errstr = _errstr(hndl)
-        raise Error(rc, errstr)
-
-
-def _cdb2_client_datetime_common(val, ptr):
-    struct_time = val.utctimetuple()
-    ptr.tm.tm_sec = struct_time.tm_sec
-    ptr.tm.tm_min = struct_time.tm_min
-    ptr.tm.tm_hour = struct_time.tm_hour
-    ptr.tm.tm_mday = struct_time.tm_mday
-    ptr.tm.tm_mon = struct_time.tm_mon - 1
-    ptr.tm.tm_year = struct_time.tm_year - 1900
-    ptr.tm.tm_wday = struct_time.tm_wday
-    ptr.tm.tm_yday = struct_time.tm_yday - 1
-    ptr.tm.tm_isdst = struct_time.tm_isdst
-    ptr.tzname = b'UTC'
-
-
-def _cdb2_client_datetime_t(val):
-    ptr = ffi.new("cdb2_client_datetime_t *")
-    val += timedelta(microseconds=500)  # For rounding to nearest millisecond
-    _cdb2_client_datetime_common(val, ptr)
-    ptr.msec = val.microsecond // 1000  # For rounding to nearest millisecond
-    return ptr
-
-
-def _cdb2_client_datetimeus_t(val):
-    ptr = ffi.new("cdb2_client_datetimeus_t *")
-    _cdb2_client_datetime_common(val, ptr)
-    ptr.usec = val.microsecond
-    return ptr
-
-
-def _bind_args(val):
-    if val is None:
-        return lib.CDB2_INTEGER, ffi.NULL, 0
-    elif isinstance(val, six.integer_types):
-        try:
-            return lib.CDB2_INTEGER, ffi.new("int64_t *", val), 8
-        except OverflowError as e:
-            six.raise_from(Error(lib.CDB2ERR_CONV_FAIL,
-                                 "Can't bind value %s: %s" % (val, e)), e)
-    elif isinstance(val, float):
-        return lib.CDB2_REAL, ffi.new("double *", val), 8
-    elif isinstance(val, bytes):
-        return lib.CDB2_BLOB, val, len(val)
-    elif isinstance(val, six.text_type):
-        val = val.encode('utf-8')
-        return lib.CDB2_CSTRING, val, len(val)
-    elif isinstance(val, DatetimeUs):
-        return (lib.CDB2_DATETIMEUS, _cdb2_client_datetimeus_t(val),
-                ffi.sizeof("cdb2_client_datetimeus_t"))
-    elif isinstance(val, datetime):
-        return (lib.CDB2_DATETIME, _cdb2_client_datetime_t(val),
-                ffi.sizeof("cdb2_client_datetime_t"))
-    raise Error(lib.CDB2ERR_NOTSUPPORTED,
-                "Can't map type %s to a comdb2 type" % val.__class__.__name__)
 
 
 class Handle(object):
@@ -414,44 +252,17 @@ class Handle(object):
                  host=None):
         if host is not None:
             if tier != "default":
-                raise Error(lib.CDB2ERR_NOTSUPPORTED,
+                raise Error(ERROR_CODE['NOTSUPPORTED'],
                             "Connecting to a host by name and to a "
                             "cluster by tier are mutually exclusive")
             else:
                 tier = host
                 flags |= HANDLE_FLAGS['DIRECT_CPU']
 
-        self._more_rows_available = False
-        self._row_factory = None
-        self._hndl_p = None
-        self._hndl = None
-        self._lib_cdb2_close = lib.cdb2_close  # DRQS 88746293
-
-        if not isinstance(database_name, bytes):
-            database_name = database_name.encode('utf-8')  # Python 3
-
-        if not isinstance(tier, bytes):
-            tier = tier.encode('utf-8')  # Python 3
-
-        self._hndl_p = ffi.new("struct cdb2_hndl **")
-        rc = lib.cdb2_open(self._hndl_p, database_name, tier, flags)
-        if rc != lib.CDB2_OK:
-            errstr = _errstr(self._hndl_p[0])
-            lib.cdb2_close(self._hndl_p[0])
-            raise Error(rc, errstr)
-
-        self._hndl = self._hndl_p[0]
-        self._column_range = []
-
+        self._hndl = CHandle(database_name, tier, flags)
         if tz is not None:
-            # XXX This is technically SQL injectable, but
-            # a) SET statements don't go through a normal SQL parser anyway,
-            # b) DRQS 86887068 leaves us no choice.
-            self.execute("set timezone %s" % tz)
-
-    def __del__(self):
-        if self._hndl is not None:
-            self._lib_cdb2_close(self._hndl)
+            self._hndl.execute("set timezone %s" % tz, {})
+        self._cursor = iter([])
 
     def close(self):
         """Gracefully close the Comdb2 connection.
@@ -473,19 +284,7 @@ class Handle(object):
             >>>         print(row)
             [1]
         """
-        self._more_rows_available = False
-        lib.cdb2_close(self._hndl)
-        self._hndl = None
-        self._hndl_p = None
-
-        def closed_error(func_name):
-            raise Error(lib.CDB2ERR_NOTCONNECTED,
-                        "%s() called on closed connection" % func_name)
-
-        # FIXME message always says column_types
-        for func in ("close", "execute",
-                     "get_effects", "column_names", "column_types"):
-            setattr(self, func, lambda *a, **k: closed_error(func))
+        self._hndl.close()
 
     @property
     def row_factory(self):
@@ -505,11 +304,11 @@ class Handle(object):
 
         .. versionadded:: 0.9
         """
-        return self._row_factory
+        return self._hndl.row_factory
 
     @row_factory.setter
     def row_factory(self, value):
-        self._row_factory = value
+        self._hndl.row_factory = value
 
     def execute(self, sql, parameters=None):
         """Execute a database operation (query or command).
@@ -542,32 +341,9 @@ class Handle(object):
             [1, 2]
             [2, 4]
         """
-        self._column_range = []
-        self._consume_all_rows()
-
-        if not isinstance(sql, bytes):
-            sql = sql.encode('utf-8')  # Python 3
-
-        try:
-            if parameters is not None:
-                params_cdata = self._bind_params(parameters)  # NOQA
-                # XXX params_cdata owns memory that has been bound to cdb2api,
-                # so must not be garbage collected before cdb2_run_statement
-            rc = lib.cdb2_run_statement(self._hndl, sql)
-        finally:
-            lib.cdb2_clearbindings(self._hndl)
-
-        _check_rc(rc, self._hndl)
-        self._more_rows_available = True
-        self._next_record()
-        self._column_range = range(lib.cdb2_numcolumns(self._hndl))
-        try:
-            if self._row_factory is None:
-                self._row_class = None
-            else:
-                self._row_class = self._row_factory(self.column_names())
-        except Exception as e:
-            six.raise_from(Error(lib.CDB2ERR_UNKNOWN, six.text_type(e)), e)
+        if parameters is None:
+            parameters = {}
+        self._cursor = iter(self._hndl.execute(sql, parameters))
         return self
 
     def __iter__(self):
@@ -584,23 +360,11 @@ class Handle(object):
             [1, 2]
             [3, 4]
         """
-        return self
+        return self._cursor
 
     def __next__(self):
-        if not self._more_rows_available:
-            raise StopIteration()
-
-        data = [self._column_value(i) for i in self._column_range]
-        self._next_record()
-
-        if self._row_class is not None:
-            try:
-                data = self._row_class(data)
-            except Exception as e:
-                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, six.text_type(e)), e)
-
-        return data
-
+        # Needed for strict backwards compatibility...
+        return next(self._cursor)
     next = __next__
 
     def get_effects(self):
@@ -624,25 +388,15 @@ class Handle(object):
             Effects: An count of rows that have been affected, selected,
             updated, deleted, or inserted.
         """
-        effects = ffi.new("cdb2_effects_tp *")
-        self._more_rows_available = False
-        # XXX cdb2_get_effects consumes any remaining rows implicitly
-        rc = lib.cdb2_get_effects(self._hndl, effects)
-        _check_rc(rc, self._hndl)
-        return Effects(effects.num_affected,
-                       effects.num_selected,
-                       effects.num_updated,
-                       effects.num_deleted,
-                       effects.num_inserted)
+        return self._hndl.get_effects()
 
     def column_names(self):
         """Returns the names of the columns of the current result set.
 
         Returns:
-            List[str]: A list of strings, one per column in the result set.
+            A list of unicode strings, one per column in the result set.
         """
-        return [_ffi_string(lib.cdb2_column_name(self._hndl, i))
-                for i in self._column_range]
+        return self._hndl.column_names()
 
     def column_types(self):
         """Returns the type codes of the columns of the current result set.
@@ -652,80 +406,4 @@ class Handle(object):
             Each generally corresponds to one of the types in the `TYPE` global
             object exposed by this module.
         """
-        return [lib.cdb2_column_type(self._hndl, i)
-                for i in self._column_range]
-
-    def _consume_all_rows(self):
-        while self._more_rows_available:
-            self._next_record()
-
-    def _bind_params(self, parameters):
-        params_cdata = []
-        for key, val in parameters.items():
-            if not isinstance(key, bytes):
-                key = key.encode('utf-8')  # str to bytes for Python 3
-
-            typecode, ptr, size = _bind_args(val)
-
-            params_cdata.append((key, ptr))
-            rc = lib.cdb2_bind_param(self._hndl, key, typecode, ptr, size)
-            _check_rc(rc, self._hndl)
-
-        return params_cdata
-
-    def _next_record(self):
-        try:
-            rc = lib.cdb2_next_record(self._hndl)
-        except:
-            self._more_rows_available = False
-            raise
-        else:
-            if rc != 0:
-                self._more_rows_available = False
-                if rc != lib.CDB2_OK_DONE:
-                    _check_rc(rc, self._hndl)
-
-    def _column_value(self, i):
-        val = lib.cdb2_column_value(self._hndl, i)
-        typecode = lib.cdb2_column_type(self._hndl, i)
-
-        try:
-            if val == ffi.NULL:
-                return None
-            if typecode == lib.CDB2_INTEGER:
-                return lib.integer_value(val)
-            if typecode == lib.CDB2_REAL:
-                return lib.real_value(val)
-            if typecode == lib.CDB2_BLOB:
-                size = lib.cdb2_column_size(self._hndl, i)
-                return bytes(ffi.buffer(val, size))
-            if typecode == lib.CDB2_CSTRING:
-                size = lib.cdb2_column_size(self._hndl, i)
-                return six.text_type(ffi.buffer(val, size - 1), "utf-8")
-            if typecode == lib.CDB2_DATETIMEUS:
-                return _datetimeus(lib.datetimeus_value(val))
-            if typecode == lib.CDB2_DATETIME:
-                return _datetime(lib.datetime_value(val))
-        except Exception as e:
-            from_exception = e
-            error_code = lib.CDB2ERR_CONV_FAIL
-            why = six.text_type(from_exception)
-        else:
-            from_exception = None
-            error_code = lib.CDB2ERR_NOTSUPPORTED
-            why = "Unsupported column type"
-
-        try:
-            typename = ffi.typeof('enum cdb2_coltype').elements[typecode]
-        except KeyError:
-            typename = "type %d" % typecode
-
-        col_name = self.column_names()[i]
-
-        to_raise = Error(error_code,
-                         "Failed to decode %s column %d ('%s'): %s" % (
-                             typename, i, col_name, why))
-
-        if from_exception is not None:
-            six.raise_from(to_raise, from_exception)
-        raise to_raise
+        return self._hndl.column_types()

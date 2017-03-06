@@ -8,9 +8,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from setuptools import setup
+from setuptools import setup, Extension
 from comdb2 import __version__
+import sys
+
+ccdb2 = Extension("comdb2._ccdb2",
+                  extra_compile_args=['-std=c99'],
+                  include_dirs=['/opt/bb/include'], # FIXME remove before merging
+                  library_dirs=['/opt/bb/lib64'],   # FIXME remove before merging
+                  libraries=['cdb2api', 'protobuf-c'],
+                  sources=["comdb2/_ccdb2.pyx"])
 
 setup(
     name='python-comdb2',
@@ -18,8 +25,8 @@ setup(
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
-    setup_requires=["cffi>=1.0.0"],
-    cffi_modules=["build.py:ffi"],
-    install_requires=["cffi>=1.0.0", "six", "pytz"],
-    tests_require=["python-dateutil>=2.6.0", "pytest"]
+   #setup_requires=['setuptools>=18.0', 'cython>=0.22'], # FIXME uncomment before merging
+    install_requires=["six", "pytz"],
+    tests_require=["python-dateutil>=2.6.0", "pytest"],
+    ext_modules=[ccdb2]
 )

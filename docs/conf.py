@@ -269,7 +269,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 viewcode_import = False
 
 import importlib.util
-spec = importlib.util.spec_from_file_location("comdb2._cdb2api", "_cdb2api.py")
-_cdb2api = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(_cdb2api)
-sys.modules['comdb2._cdb2api'] = _cdb2api
+spec = importlib.util.spec_from_file_location("comdb2._ccdb2", "_ccdb2.py")
+_ccdb2 = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(_ccdb2)
+sys.modules['comdb2._ccdb2'] = _ccdb2

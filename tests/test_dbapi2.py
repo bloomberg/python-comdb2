@@ -789,7 +789,7 @@ def test_date_column_decode_exception():
         cursor.fetchall()
 
     errmsg = ("Failed to decode CDB2_DATETIME column 0 ('date'):"
-              " year is out of range")
+              " OverflowError: date value out of range")
     assert errmsg in str(exc_info.value)
 
 
@@ -803,25 +803,5 @@ def test_unsupported_column_decode_exception():
         cursor.fetchall()
 
     errmsg = ("Failed to decode CDB2_INTERVALDS column 0 ('delta'):"
-              " Unsupported column type")
-    assert errmsg in str(exc_info.value)
-
-
-def test_unknown_column_type_decode_exception():
-    class EnumMock(object):
-        elements = {}
-
-    query = "select now() - now() as delta"
-    hndl = connect('mattdb', 'dev')
-    cursor = hndl.cursor()
-
-    cursor.execute(query)
-    with patch('comdb2.cdb2.ffi') as ffi:
-        ffi.typeof.return_value = EnumMock()
-        ffi.string.return_value = b'foo'
-        with pytest.raises(NotSupportedError) as exc_info:
-            cursor.fetchall()
-
-    errmsg = ("Failed to decode type 8 column 0 ('foo'):"
               " Unsupported column type")
     assert errmsg in str(exc_info.value)
