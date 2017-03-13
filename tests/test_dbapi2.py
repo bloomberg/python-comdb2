@@ -364,6 +364,23 @@ def test_naive_datetime_as_parameter():
     assert cursor.fetchone() is None
 
 
+def test_datetime_with_non_olson_tzname():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+    tz = pytz.timezone('America/New_York')
+    dt = datetime.datetime(2016, 11, 6, 1, 30, 0, 123000)
+    est_dt = tz.localize(dt, is_dst=False)
+    edt_dt = tz.localize(dt, is_dst=True)
+    assert est_dt.tzname() == 'EST'
+    assert edt_dt.tzname() == 'EDT'
+    params = {'est_dt': est_dt, 'edt_dt': edt_dt}
+    row = cursor.execute("select @est_dt, @edt_dt", params).fetchone()
+    assert row[0].tzname() == 'UTC'
+    assert row[0] == est_dt
+    assert row[1].tzname() == 'UTC'
+    assert row[1] == edt_dt
+
+
 def test_rounding_datetime_to_nearest_millisecond():
     conn = connect('mattdb', 'dev')
     cursor = conn.cursor()
