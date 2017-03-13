@@ -145,6 +145,12 @@ Exceptions
 
 .. autoexception:: IntegrityError
 
+.. autoexception:: UniqueKeyConstraintError
+
+.. autoexception:: ForeignKeyConstraintError
+
+.. autoexception:: NonNullConstraintError
+
 .. autoexception:: DataError
 
 .. autoexception:: NotSupportedError
@@ -152,20 +158,23 @@ Exceptions
 This is the exception inheritance layout::
 
     Exception
-    |__Warning
-    |__Error
-       |__InterfaceError
-       |__DatabaseError
-          |__DataError
-          |__OperationalError
-          |__IntegrityError
-          |__InternalError
-          |__ProgrammingError
-          |__NotSupportedError
+     +-- Warning
+     +-- Error
+          +-- InterfaceError
+          +-- DatabaseError
+               +-- DataError
+               +-- OperationalError
+               +-- IntegrityError
+               |    +-- UniqueKeyConstraintError
+               |    +-- ForeignKeyConstraintError
+               |    +-- NonNullConstraintError
+               +-- InternalError
+               +-- ProgrammingError
+               +-- NotSupportedError
 
 .. rubric:: Exceptions for Polymorphic Clients
 
-All exceptions types that can be raised by this module are also exposed as
+Most exceptions types that can be raised by this module are also exposed as
 attributes on the `Connection` class:
 
 .. attribute::

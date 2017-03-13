@@ -12,6 +12,9 @@ from comdb2.dbapi2 import TimestampUs
 from comdb2.dbapi2 import DataError
 from comdb2.dbapi2 import OperationalError
 from comdb2.dbapi2 import IntegrityError
+from comdb2.dbapi2 import ForeignKeyConstraintError
+from comdb2.dbapi2 import NonNullConstraintError
+from comdb2.dbapi2 import UniqueKeyConstraintError
 from comdb2.dbapi2 import InterfaceError
 from comdb2.dbapi2 import NotSupportedError
 from comdb2.dbapi2 import ProgrammingError
@@ -145,6 +148,41 @@ def test_unique_key_violation():
     cursor.execute("insert into simple(key, val) values(1, 3)")
     with pytest.raises(IntegrityError):
         conn.commit()
+
+
+def test_constraint_errors():
+    conn = connect('mattdb', 'dev')
+    cursor = conn.cursor()
+
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    with pytest.raises(UniqueKeyConstraintError) as exc_info:
+        conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['DUPLICATE']
+    assert errcode in str(exc_info.value)
+
+    cursor.execute("insert into simple(key, val) values(null, 2)")
+    with pytest.raises(NonNullConstraintError) as exc_info:
+        conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['NULL_CONSTRAINT']
+    assert errcode in str(exc_info.value)
+
+    cursor.execute("insert into simple(key, val) values(1, 2)")
+    conn.commit()
+
+    cursor.execute("selectv * from simple")
+    connect('mattdb', 'dev', autocommit=True).cursor().execute(
+        "update simple set key=2")
+    with pytest.raises(IntegrityError) as exc_info:
+        conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['CONSTRAINTS']
+    assert errcode in str(exc_info.value)
+
+    cursor.execute("insert into child(key) values(1)")
+    with pytest.raises(ForeignKeyConstraintError) as exc_info:
+        conn.commit()
+    errcode = ' (cdb2api rc %d)' % cdb2.ERROR_CODE['FKEY_VIOLATION']
+    assert errcode in str(exc_info.value)
 
 
 def test_implicitly_closing_old_cursor_when_opening_a_new_one():

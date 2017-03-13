@@ -4,6 +4,7 @@ from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
 from comdb2.factories import namedtuple_row_factory
 import pytest
+import six
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
@@ -139,12 +140,14 @@ def test_row_factories_with_dup_col_names():
     assert list(hndl.execute(query)) == [[1, 2]]
 
     hndl.row_factory = namedtuple_row_factory
-    with pytest.raises(cdb2.Error):
+    with pytest.raises(cdb2.Error) as exc_info:
         hndl.execute(query)
+    assert isinstance(exc_info.value.args[1], six.text_type)
 
     hndl.row_factory = dict_row_factory
-    with pytest.raises(cdb2.Error):
+    with pytest.raises(cdb2.Error) as exc_info:
         hndl.execute(query)
+    assert isinstance(exc_info.value.args[1], six.text_type)
 
 
 def test_failures_instantiating_row_class():
@@ -158,8 +161,9 @@ def test_failures_instantiating_row_class():
     hndl = cdb2.Handle('mattdb', 'dev')
     hndl.row_factory = factory
     it = iter(hndl.execute(query))
-    with pytest.raises(cdb2.Error):
+    with pytest.raises(cdb2.Error) as exc_info:
         next(it)
+    assert isinstance(exc_info.value.args[1], six.text_type)
 
 
 def test_get_effects():

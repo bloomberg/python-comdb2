@@ -246,7 +246,9 @@ __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'DatetimeFromTicks', 'DatetimeUsFromTicks', 'TimestampFromTicks',
            'Error', 'Warning', 'InterfaceError', 'DatabaseError',
            'InternalError', 'OperationalError', 'ProgrammingError',
-           'IntegrityError', 'DataError', 'NotSupportedError']
+           'IntegrityError', 'DataError', 'NotSupportedError',
+           'UniqueKeyConstraintError', 'ForeignKeyConstraintError',
+           'NonNullConstraintError']
 
 apilevel = "2.0"
 """This module conforms to the Python Database API Specification 2.0."""
@@ -382,9 +384,50 @@ class ProgrammingError(DatabaseError):
 class IntegrityError(DatabaseError):
     """Exception raised for integrity errors reported by the database.
 
-    For example, this will be raised if a foreign key constraint is violated,
-    or a constraint that a column may not be null, or that an index may not
-    have duplicates.
+    For example, a subclass of this will be raised if a foreign key constraint
+    would be violated, or a constraint that a column may not be null, or that
+    an index may not have duplicates.  Other types of constraint violations may
+    raise this type directly.
+    """
+    pass
+
+
+class UniqueKeyConstraintError(IntegrityError):
+    """Exception raised when a unique key constraint would be broken.
+
+    Committing after either an INSERT or an UPDATE could result in this being
+    raised, by either adding a new row that violates a unique (non-dup) key
+    constraint or modifying an existing row in a way that would violate one.
+
+    .. versionadded:: 1.1
+    """
+    pass
+
+
+class ForeignKeyConstraintError(IntegrityError):
+    """Exception raised when a foreign key constraint would be broken.
+
+    This would be raised when committing if the changes being committed would
+    violate referential integrity according to a foreign key constraint
+    configured on the database.  For instance, deleting a row from a parent
+    table would raise this if rows corresponding to its key still exist in
+    a child table and the constraint doesn't have ON DELETE CASCADE.  Likewise,
+    inserting a row into a child table would raise this if there was no row in
+    the parent table matching the new row's key.
+
+    .. versionadded:: 1.1
+    """
+    pass
+
+
+class NonNullConstraintError(IntegrityError):
+    """Exception raised when a non-null constraint would be broken.
+
+    Committing after either an INSERT or an UPDATE could result in this being
+    raised if it would result in a null being stored in a non-nullable column.
+    Note that columns in a Comdb2 are not nullable by default.
+
+    .. versionadded:: 1.1
     """
     pass
 
@@ -437,15 +480,15 @@ _EXCEPTION_BY_RC = {
     cdb2.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
 
     cdb2.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
-    cdb2.ERROR_CODE['FKEY_VIOLATION']        : IntegrityError,
-    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : IntegrityError,
+    cdb2.ERROR_CODE['FKEY_VIOLATION']        : ForeignKeyConstraintError,
+    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : NonNullConstraintError,
 
     cdb2.ERROR_CODE['CONV_FAIL']             : DataError,
     cdb2.ERROR_CODE['NONKLESS']              : NotSupportedError,
     cdb2.ERROR_CODE['MALLOC']                : OperationalError,
     cdb2.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
 
-    cdb2.ERROR_CODE['DUPLICATE']             : IntegrityError,
+    cdb2.ERROR_CODE['DUPLICATE']             : UniqueKeyConstraintError,
     cdb2.ERROR_CODE['TZNAME_FAIL']           : DataError,
 
     cdb2.ERROR_CODE['UNKNOWN']               : OperationalError,
@@ -454,9 +497,9 @@ _EXCEPTION_BY_RC = {
 
 def _raise_wrapped_exception(exc):
     code = exc.error_code
-    msg = exc.error_message
+    msg = '%s (cdb2api rc %d)' % (exc.error_message, code)
     if "null constraint violation" in msg:
-        six.raise_from(IntegrityError(msg), exc)  # DRQS 86013831
+        six.raise_from(NonNullConstraintError(msg), exc)  # DRQS 86013831
     six.raise_from(_EXCEPTION_BY_RC.get(code, OperationalError)(msg), exc)
 
 

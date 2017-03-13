@@ -548,7 +548,7 @@ class Handle(object):
             else:
                 self._row_class = self._row_factory(self.column_names())
         except Exception as e:
-            six.raise_from(Error(lib.CDB2ERR_UNKNOWN, str(e)), e)
+            six.raise_from(Error(lib.CDB2ERR_UNKNOWN, six.text_type(e)), e)
         return self
 
     def __iter__(self):
@@ -578,7 +578,7 @@ class Handle(object):
             try:
                 data = self._row_class(data)
             except Exception as e:
-                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, str(e)), e)
+                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, six.text_type(e)), e)
 
         return data
 
