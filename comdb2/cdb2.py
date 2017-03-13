@@ -296,7 +296,7 @@ def _check_rc(rc, hndl):
 
 
 def _cdb2_client_datetime_common(val, ptr):
-    struct_time = val.timetuple()
+    struct_time = val.utctimetuple()
     ptr.tm.tm_sec = struct_time.tm_sec
     ptr.tm.tm_min = struct_time.tm_min
     ptr.tm.tm_hour = struct_time.tm_hour
@@ -306,11 +306,7 @@ def _cdb2_client_datetime_common(val, ptr):
     ptr.tm.tm_wday = struct_time.tm_wday
     ptr.tm.tm_yday = struct_time.tm_yday - 1
     ptr.tm.tm_isdst = struct_time.tm_isdst
-    if val.tzname() is not None:
-        tzname = val.tzname()
-        if not isinstance(tzname, bytes):
-            tzname = tzname.encode('utf-8')
-        ptr.tzname = tzname
+    ptr.tzname = b'UTC'
 
 
 def _cdb2_client_datetime_t(val):
