@@ -588,6 +588,10 @@ class Handle(object):
         of a transaction, these counts represent the rows affected by only the
         last executed SQL statement.
 
+        Warning:
+            Calling this method consumes all remaining rows in the current
+            result set.
+
         Note:
             The results within a transaction are not necessarily reliable
             unless the ``VERIFYRETRY`` setting is turned off.  All of the
