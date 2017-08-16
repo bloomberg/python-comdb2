@@ -317,6 +317,7 @@ cdef class Handle(object):
     def execute(self, sql, parameters=None):
         """execute(sql, params) -> Cursor over a SQL statement's result set"""
         if not self.hndl: raise _closed_connection_error('execute')
+        self.cursor = NULL
         sql = _string_as_bytes(sql)
         cdef char *c_sql = sql
 
@@ -358,6 +359,7 @@ cdef class Handle(object):
     def get_effects(self):
         """get_effects() -> Effects of the current or last transaction"""
         if not self.hndl: raise _closed_connection_error('get_effects')
+        self.cursor = NULL
         cdef lib.cdb2_effects_tp effects
         with nogil:
             rc = lib.cdb2_get_effects(self.hndl, &effects)
