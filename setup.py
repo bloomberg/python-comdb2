@@ -8,9 +8,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from setuptools import setup, Extension
-from comdb2 import __version__
 import sys
+
+from setuptools import setup, Extension
+
+from comdb2 import __version__
 
 ccdb2 = Extension("comdb2._ccdb2",
                   extra_compile_args=['-std=c99'],

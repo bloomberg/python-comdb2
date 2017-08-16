@@ -1,20 +1,26 @@
 # cython: c_string_type=str, c_string_encoding=utf-8
 """Thin Python wrapper over libcdb2api"""
-from pytz import timezone, UTC
-from comdb2._cdb2_types import Error, Effects, DatetimeUs
-import datetime
-import six
-from . cimport _cdb2api as lib
+
 from libc.string cimport strcmp, strcpy
 from cpython.datetime cimport (import_datetime, PyTypeObject, timedelta_new,
                                PyDateTimeAPI)
 from cpython.ref cimport Py_TYPE, PyObject
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
+import datetime
+
+from pytz import timezone, UTC
+import six
+
+from ._cdb2_types import Error, Effects, DatetimeUs
+from . cimport _cdb2api as lib
+
 import_datetime()
+
 
 # XXX Hack to get a PyTypeObject for DatetimeUs
 cdef PyTypeObject *DatetimeUsType = Py_TYPE(DatetimeUs(1, 1, 1))
+
 
 # Template type to reduce code duplication for the two datetime types
 ctypedef fused client_datetime:
