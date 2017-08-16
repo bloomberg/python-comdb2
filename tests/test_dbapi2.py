@@ -18,6 +18,7 @@ from comdb2.dbapi2 import DATETIME
 from comdb2.dbapi2 import connect
 from comdb2.dbapi2 import Binary
 from comdb2.dbapi2 import Datetime
+from comdb2.dbapi2 import DatetimeUs
 from comdb2.dbapi2 import Timestamp
 from comdb2.dbapi2 import TimestampUs
 from comdb2.dbapi2 import DataError
@@ -805,3 +806,15 @@ def test_unsupported_column_decode_exception():
     errmsg = ("Failed to decode CDB2_INTERVALDS column 0 ('delta'):"
               " Unsupported column type")
     assert errmsg in str(exc_info.value)
+
+
+def test_datetimeus():
+    query = "select %(date)s + cast(30 as days)"
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor()
+
+    sent = DatetimeUs(2017, 8, 16, 19, 32, 2, 825022, tzinfo=pytz.UTC)
+    cursor.execute(query, dict(date=sent))
+    rcvd = cursor.fetchall()[0][0]
+
+    assert sent + datetime.timedelta(days=30) == rcvd
