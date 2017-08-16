@@ -14,8 +14,6 @@ import sys
 
 ccdb2 = Extension("comdb2._ccdb2",
                   extra_compile_args=['-std=c99'],
-                  include_dirs=['/opt/bb/include'], # FIXME remove before merging
-                  library_dirs=['/opt/bb/lib64'],   # FIXME remove before merging
                   libraries=['cdb2api', 'protobuf-c'],
                   sources=["comdb2/_ccdb2.pyx"])
 
@@ -25,7 +23,7 @@ setup(
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
-   #setup_requires=['setuptools>=18.0', 'cython>=0.22'], # FIXME uncomment before merging
+    setup_requires=['setuptools>=18.0', 'cython>=0.22'],
     install_requires=["six", "pytz"],
     tests_require=["python-dateutil>=2.6.0", "pytest"],
     ext_modules=[ccdb2]
