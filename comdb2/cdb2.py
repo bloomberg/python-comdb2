@@ -363,7 +363,9 @@ class Handle(object):
         return self._cursor
 
     def __next__(self):
-        # Needed for strict backwards compatibility...
+        # Allow using `Handle` as an iterator, to avoid breaking backwards
+        # compatibility for a user who did something like:
+        #   next(handle.execute("select 1"))
         return next(self._cursor)
     next = __next__
 

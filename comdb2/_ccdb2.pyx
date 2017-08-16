@@ -81,7 +81,8 @@ cdef _bind_datetime(obj, client_datetime *val):
     if client_datetime is lib.cdb2_client_datetimeus_t:
         val.usec = obj.microsecond
     else:
-        # Round to nearest millisecond
+        # Round to the nearest millisecond (this was an arbitrary decision
+        # but is now needed for backwards compatibility).
         obj += timedelta_new(0, 0, 500)
         val.msec = obj.microsecond // 1000
 
