@@ -788,9 +788,9 @@ def test_date_column_decode_exception():
     with pytest.raises(DataError) as exc_info:
         cursor.fetchall()
 
-    errmsg = ("Failed to decode CDB2_DATETIME column 0 ('date'):"
-              " OverflowError: date value out of range")
-    assert errmsg in str(exc_info.value)
+    exc_str = str(exc_info.value)
+    assert "Failed to decode CDB2_DATETIME column 0 ('date'):" in exc_str
+    assert " out of range" in exc_str
 
 
 def test_unsupported_column_decode_exception():
