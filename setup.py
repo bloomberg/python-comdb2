@@ -11,6 +11,7 @@
 import sys
 
 from setuptools import setup, Extension
+from Cython.Build import cythonize
 
 from comdb2 import __version__
 
@@ -28,5 +29,5 @@ setup(
     setup_requires=['setuptools>=18.0', 'cython>=0.22'],
     install_requires=["six", "pytz"],
     tests_require=["python-dateutil>=2.6.0", "pytest"],
-    ext_modules=[ccdb2]
+    ext_modules=cythonize([ccdb2]),
 )
