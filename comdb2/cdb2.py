@@ -247,6 +247,13 @@ class DatetimeUs(datetime):
         ret = super(DatetimeUs, self).astimezone(tz)
         return DatetimeUs.fromdatetime(ret)
 
+    def replace(self, *args, **kwargs):
+        # Before Python 3.7, it is effectively implementation dependent whether
+        # this returns a DatetimeUs or a datetime.
+        dt = super(DatetimeUs, self).replace(*args, **kwargs)
+
+        return self.fromdatetime(dt)
+
 
 class Error(RuntimeError):
     """Exception type raised for all failed operations.
