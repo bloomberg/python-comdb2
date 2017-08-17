@@ -18,6 +18,18 @@ The user interacts with the database using `Handle` objects.
 
     .. automethod:: __iter__
 
+.. autoclass:: ClosingHandle
+    :members:
+
+    .. automethod:: __enter__
+    .. automethod:: __exit__
+
+.. autoclass:: TransactionHandle
+    :members:
+
+    .. automethod:: __enter__
+    .. automethod:: __exit__
+
 Exceptions
 ----------
 

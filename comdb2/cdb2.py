@@ -717,3 +717,85 @@ class Handle(object):
         if from_exception is not None:
             six.raise_from(to_raise, from_exception)
         raise to_raise
+
+
+class ClosingHandle(object):
+    """This class is equivalent to using `contextmanager.closing`, except that
+    constructing the handle is done by the context manager by forwarding
+    all of the arguments to its constructor.
+    On exiting the context, this class will close the database handle.
+    Any exceptions thrown will be re-raised after the handle is closed.
+    Using this contextmanager and closing the handle manually is illegal,
+    and will cause Handle to raise.
+
+    Args:
+        *args (list): See `Handle`, all arguments are forwarded.
+        **kwargs (dict): See `Handle`, all keyword arguments are forwarded.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self._handle = Handle(*args, **kwargs)
+
+    def __enter__(self):
+        """Magic method called upon entering ``with`` block.
+
+        Returns:
+            Handle: The handle constructed using the parameters supplied
+            to the instance.
+
+        """
+        return self._handle
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Magic method called upon leaving the ``with`` block, either by
+        raising or cleanly.
+        Calls `Handle.close`.
+
+        Returns:
+            None: ``None``, which signals to the interpreter to
+            re-raise any caught exceptions.
+
+        """
+        self._handle.close()
+
+
+class TransactionHandle(object):
+    """Same semantics as `ClosingHandle`.
+    This class additionally manages a transaction, so any operations done
+    within a ``with`` block will be rolled back in the event of an exception.
+
+    Args:
+        *args (list): See `Handle`, all arguments are forwarded.
+        **kwargs (dict): See `Handle`, all keyword arguments are forwarded.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self._handle = Handle(*args, **kwargs)
+
+    def __enter__(self):
+        """Magic method called upon entering ``with`` block.
+
+        Returns:
+            Handle: The handle constructed using the parameters supplied
+            to the instance.
+
+        """
+        self._handle.execute("BEGIN")
+        return self._handle
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Magic method called upon leaving the ``with`` block, either by
+        raising or cleanly.
+        If there was an exception, this calls ``Handle.execute("ROLLBACK")``,
+        otherwise this will call ``Handle.execute("COMMIT")``.
+
+        Returns:
+            None: ``None``, which signals to the interpreter to
+            re-raise any caught exceptions.
+
+        """
+        if exc_type:
+            self._handle.execute("ROLLBACK")
+        else:
+            self._handle.execute("COMMIT")
+        self._handle.close()
