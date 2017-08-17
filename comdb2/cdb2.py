@@ -214,9 +214,14 @@ class DatetimeUs(datetime):
     @classmethod
     def fromdatetime(cls, dt):
         """Return a `DatetimeUs` copied from a given `datetime.datetime`"""
+        fold = getattr(dt, 'fold', None)
+        kwargs = {}
+        if fold is not None:
+            kwargs['fold'] = fold
+
         return DatetimeUs(dt.year, dt.month, dt.day,
                           dt.hour, dt.minute, dt.second, dt.microsecond,
-                          dt.tzinfo)
+                          dt.tzinfo, **kwargs)
 
     def __add__(self, other):
         ret = super(DatetimeUs, self).__add__(other)
