@@ -20,5 +20,6 @@ setup(
     packages=['comdb2'],
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["build.py:ffi"],
-    install_requires=["cffi>=1.0.0", "six", "pytz"]
+    install_requires=["cffi>=1.0.0", "six", "pytz"],
+    tests_require=["python-dateutil>=2.6.0", "pytest"]
 )

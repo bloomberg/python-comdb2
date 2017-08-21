@@ -13,6 +13,9 @@ from __future__ import unicode_literals, absolute_import
 
 from comdb2 import cdb2
 import pytz
+import dateutil.tz
+import pytest
+
 import datetime
 import time
 
@@ -114,3 +117,18 @@ def test_datetimeus_type_stickiness():
     check(cdb2.DatetimeUs.now().replace(year=2015))
     check(cdb2.DatetimeUs.now().replace(tzinfo=new_york))
     check(cdb2.DatetimeUs.now(utc).astimezone(new_york))
+
+
+@pytest.mark.skipif(not hasattr(datetime.datetime, 'fold'),
+                    reason='Skipped before PEP 495')
+def test_datetimeus_fold():
+    NYC = dateutil.tz.gettz('America/New_York')
+    dt = datetime.datetime(2004, 10, 31, 1, 30, fold=1, tzinfo=NYC)
+
+    dtus = cdb2.DatetimeUs.fromdatetime(dt)
+
+    assert dtus.fold == 1    # Check that it handles fold correctly
+
+    # Make sure that the time is correctly disambiguating
+    assert dt.tzname() == "EST"     # Just in case it's not a DatetimeUs problem
+    assert dtus.tzname() == "EST"
