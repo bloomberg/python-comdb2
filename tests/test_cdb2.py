@@ -237,3 +237,17 @@ def test_nonascii_error_messages():
     errmsg_utf8 = exc_info.value.error_message.encode('utf-8')
     assert teststr not in errmsg_utf8
     assert teststr.decode('latin1').encode('unicode_escape') in errmsg_utf8
+
+
+def test_namedtuple_factory_dml():
+    hndl = cdb2.Handle('mattdb', 'dev')
+    hndl.row_factory = namedtuple_row_factory
+
+    hndl.execute("insert into simple (key, val) values (1, 1)")
+    assert next(hndl)._0 == 1
+
+    hndl.execute("update simple set val=0 where key=1")
+    assert next(hndl)._0 == 1
+
+    hndl.execute("delete from simple where 1=1")
+    assert next(hndl)._0 == 1
