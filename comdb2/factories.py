@@ -72,6 +72,11 @@ def namedtuple_row_factory(col_names):
         >>> print(row.x)
         1
     """
+    # Ensure DML doesn't raise an exception for an invalid column name
+    if len(col_names) == 1:
+        if col_names[0] in ("rows inserted", "rows updated", "rows deleted"):
+            return namedtuple('Row', col_names, rename=True)._make
+
     try:
         return namedtuple('Row', col_names)._make
     except ValueError:
