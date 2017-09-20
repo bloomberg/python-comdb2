@@ -99,6 +99,7 @@ def test_datetimeus_type_stickiness():
     new_york = pytz.timezone('America/New_York')
     utc = pytz.UTC
 
+    check(new_york.localize(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456)))
     check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456, new_york))
     check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456))
     check(cdb2.DatetimeUs.today())
