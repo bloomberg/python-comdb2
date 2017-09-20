@@ -301,8 +301,8 @@ def test_inserting_one_row_with_all_datatypes_without_parameters():
                    Binary('\x01'), Binary('\x01\x02\x03\x04\x05'),
                    'hello', 'goodbye',
                    Binary('\x01\x02\x03\x04\x05\x06\x07'),
-                   Datetime(2009, 2, 13, 18, 31, 30, 234000,
-                            pytz.timezone("America/New_York")),
+                   pytz.timezone("America/New_York").localize(
+                        Datetime(2009, 2, 13, 18, 31, 30, 234000)),
                    "hello world"]
     assert cursor.fetchone() is None
 
@@ -323,8 +323,8 @@ def test_all_datatypes_as_parameters():
         ("cstring_col", 'HELLO'),
         ("pstring_col", 'GOODBYE'),
         ("blob_col", Binary('')),
-        ("datetime_col", Datetime(2009, 2, 13, 18, 31, 30, 234000,
-                                   pytz.timezone("America/New_York"))),
+        ("datetime_col", pytz.timezone("America/New_York").localize(
+                              Datetime(2009, 2, 13, 18, 31, 30, 234000))),
         ("vutf8_col", "foo" * 50)
     )
     cursor.execute("insert into all_datatypes(" + ', '.join(COLUMN_LIST) + ")"
