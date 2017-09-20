@@ -393,6 +393,6 @@ cdef class Handle(object):
             return self._row_factory
 
         def __set__(self, value):
-            if not callable(value):
-                raise TypeError("row_factory must be a callable")
+            if not callable(value) and value is not None:
+                raise TypeError("row_factory must be a callable or None")
             self._row_factory = value
