@@ -161,6 +161,25 @@ def test_row_factories_with_dup_col_names():
     assert isinstance(exc_info.value.args[1], six.text_type)
 
 
+def test_setting_non_callable_row_factory():
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    with pytest.raises(TypeError):
+        hndl.row_factory = "foo"
+
+
+def test_unsetting_row_factory():
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    assert list(hndl.execute("select 1")) == [[1]]
+
+    hndl.row_factory = dict_row_factory
+    assert list(hndl.execute("select 1")) == [{'1': 1}]
+
+    hndl.row_factory = None
+    assert list(hndl.execute("select 1")) == [[1]]
+
+
 def test_failures_instantiating_row_class():
     def factory(col_names):
         def klass(col_values):
