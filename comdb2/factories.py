@@ -14,8 +14,9 @@
 Both `.dbapi2.Connection` and `.cdb2.Handle` have a public ``row_factory``
 property that can be used to control the type used for result rows.  By
 default, each row is returned as a `list`, but you can receive the row as
-a `collections.namedtuple` by using `namedtuple_row_factory` as a ``row_factory``.
-Likewise you can receive the row as a `dict` by using `dict_row_factory`.
+a `collections.namedtuple` by using `namedtuple_row_factory` as the
+``row_factory``.  Likewise you can receive the row as a `dict` by using
+`dict_row_factory`.
 
 A factory function will be called with a list of column names, and must return
 a callable that will be called once per row with a list of column values.
@@ -71,6 +72,11 @@ def namedtuple_row_factory(col_names):
         >>> print(row.x)
         1
     """
+    # Ensure DML doesn't raise an exception for an invalid column name
+    if len(col_names) == 1:
+        if col_names[0] in ("rows inserted", "rows updated", "rows deleted"):
+            return namedtuple('Row', col_names, rename=True)._make
+
     try:
         return namedtuple('Row', col_names)._make
     except ValueError:
