@@ -818,3 +818,18 @@ def test_datetimeus():
     rcvd = cursor.fetchall()[0][0]
 
     assert sent + datetime.timedelta(days=30) == rcvd
+
+
+def test_interface_error_reading_result_set_after_commits():
+    hndl = connect('mattdb', 'dev')
+    cursor = hndl.cursor().execute("delete from simple where 1=1")
+    hndl.commit()
+    with pytest.raises(InterfaceError) as exc_info:
+        cursor.fetchall()
+    assert "No result set exists" in str(exc_info.value)
+
+    hndl = connect('mattdb', 'dev', autocommit=True)
+    cursor = hndl.cursor().execute("delete from simple where 1=1")
+    with pytest.raises(InterfaceError) as exc_info:
+        cursor.fetchall()
+    assert "No result set exists" in str(exc_info.value)
