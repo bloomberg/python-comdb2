@@ -1120,7 +1120,7 @@ class Cursor(object):
     # Optional DB API Extension
     def next(self):
         self._check_closed()
-        if not self._description:
+        if not self._description or self._rowcount != -1:
             raise InterfaceError("No result set exists")
         try:
             return next(self._hndl)
