@@ -112,13 +112,13 @@ the ``name`` between them varies for each parameter.  For example:
     [[0]]
 
 In this example, we run the query with two different sets of
-parameters, producing different results.  First, we execute
-the query with ``@a`` bound to ``20`` and ``@b`` bound to ``42``.  In this
-case, because ``20 <= 25 <= 42``, the expression evaluates to true, and a ``1``
-is returned.
+parameters, producing different results.  First, we execute the query with
+parameter ``a`` bound to ``20`` and ``b`` bound to ``42``.  In this case,
+because ``20 <= 25 <= 42``, the expression evaluates to true, and a ``1`` is
+returned.
 
-When we run the same query with ``@b`` bound to ``23``, a ``0``
-is returned instead, because ``20 <= 25 <= 23`` is false.
+When we run the same query with parameter ``b`` bound to ``23``, a ``0`` is
+returned instead, because ``20 <= 25 <= 23`` is false.
 
 Note:
     Because parameters are bound using ``%(name)s``, other ``%`` signs in
