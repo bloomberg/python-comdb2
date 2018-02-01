@@ -9,7 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module provides a DBAPI-2.0 compatible Comdb2 API.
+"""This module provides a DB-API 2.0 compatible Comdb2 API.
 
 Overview
 ========
@@ -271,7 +271,10 @@ paramstyle = "pyformat"
 """The SQL placeholder format for this module is ``%(name)s``.
 
 Comdb2's native placeholder format is ``@name``, but that cannot be used by
-this module because it's not an acceptable DB-API 2.0 placeholder style.
+this module because it's not an acceptable `DB-API 2.0 placeholder style
+<https://www.python.org/dev/peps/pep-0249/#paramstyle>`_.  This module uses
+``pyformat`` because it is the only DB-API 2.0 paramstyle that we can translate
+into Comdb2's placeholder format without needing a SQL parser.
 
 Note:
     An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last
