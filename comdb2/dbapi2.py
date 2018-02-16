@@ -962,7 +962,8 @@ class Cursor(object):
                 raise InterfaceError(errmsg)
 
         self._execute(operation, sql, parameters)
-        self._load_description()
+        if self._rowcount == -1:
+            self._load_description()
         # Optional DB API Extension: execute's return value is unspecified.  We
         # return an iterable over the rows, but this isn't portable across DBs.
         return self
@@ -1123,7 +1124,7 @@ class Cursor(object):
     # Optional DB API Extension
     def next(self):
         self._check_closed()
-        if not self._description or self._rowcount != -1:
+        if not self._description:
             raise InterfaceError("No result set exists")
         try:
             return next(self._hndl)

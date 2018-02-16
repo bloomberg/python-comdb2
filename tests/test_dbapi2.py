@@ -823,6 +823,7 @@ def test_datetimeus():
 def test_interface_error_reading_result_set_after_commits():
     hndl = connect('mattdb', 'dev')
     cursor = hndl.cursor().execute("delete from simple where 1=1")
+    assert cursor.description is None
     hndl.commit()
     with pytest.raises(InterfaceError) as exc_info:
         cursor.fetchall()
@@ -830,6 +831,7 @@ def test_interface_error_reading_result_set_after_commits():
 
     hndl = connect('mattdb', 'dev', autocommit=True)
     cursor = hndl.cursor().execute("delete from simple where 1=1")
+    assert cursor.description is None
     with pytest.raises(InterfaceError) as exc_info:
         cursor.fetchall()
     assert "No result set exists" in str(exc_info.value)
