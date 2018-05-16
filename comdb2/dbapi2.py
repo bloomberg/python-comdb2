@@ -689,7 +689,7 @@ class Connection(object):
             >>>     for row in conn.cursor().execute("select 1"):
             >>>         print(row)
         """
-        if self._hndl is None:
+        if not self.isOpen():
             raise InterfaceError("close() called on already closed connection")
         self._close_any_outstanding_cursor()
         self._hndl.close()
@@ -739,6 +739,32 @@ class Connection(object):
         cursor = Cursor(self)
         self._active_cursor = weakref.ref(cursor)
         return cursor
+
+    def isOpen(self):
+        """Checks if the connection is (apparently) open.  This method is
+           intended to be used from within this class as well as external
+           callers.
+
+        Returns:
+            The boolean value True if the connection is (apparently) open.
+        """
+        return bool(self._hndl is not None)
+
+    def __enter__(self):
+        """This method is called by the context manager when a `with` block
+           is exited.  Currently, it does nothing.
+        """
+        pass
+
+    def __exit__(self):
+        """This method is called by the context manager when a `with` block
+           is exited.  It is designed to close the connection unless it has
+           already been closed.  In that case, it does nothing.
+        """
+        if self.isOpen():
+            self.close()
+
+        return False
 
     # Optional DB API Extension
     Error = Error

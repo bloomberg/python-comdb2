@@ -835,3 +835,15 @@ def test_interface_error_reading_result_set_after_commits():
     with pytest.raises(InterfaceError) as exc_info:
         cursor.fetchall()
     assert "No result set exists" in str(exc_info.value)
+
+def test_context_manager_support():
+    with connect('mattdb', 'dev') as hndl1:
+       pass
+
+    assert hndl1.isOpen() == False
+
+    with pytest.raises(Exception) as exc_info:
+        with connect('mattdb', 'dev') as hndl2:
+            raise Exception('bad')
+
+    assert hndl2.isOpen() == False
