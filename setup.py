@@ -22,7 +22,7 @@ ccdb2 = Extension("comdb2._ccdb2",
                   sources=["comdb2/_ccdb2.pyx"])
 
 setup(
-    name='python-comdb2',
+    name='comdb2',
     version=__version__,
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
