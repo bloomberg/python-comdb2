@@ -12,14 +12,13 @@
 import sys
 
 from setuptools import setup, Extension
-from Cython.Build import cythonize
 
 from comdb2 import __version__
 
 ccdb2 = Extension("comdb2._ccdb2",
                   extra_compile_args=['-std=c99'],
                   libraries=['cdb2api', 'protobuf-c'],
-                  sources=["comdb2/_ccdb2.pyx"])
+                  sources=["comdb2/_ccdb2.pyx", "comdb2/_cdb2api.pxd"])
 
 setup(
     name='python-comdb2',
@@ -30,5 +29,5 @@ setup(
     setup_requires=['setuptools>=18.0', 'cython>=0.22'],
     install_requires=["six", "pytz"],
     tests_require=["python-dateutil>=2.6.0", "pytest"],
-    ext_modules=cythonize([ccdb2]),
+    ext_modules=[ccdb2],
 )
