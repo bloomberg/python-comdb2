@@ -270,3 +270,15 @@ def test_namedtuple_factory_dml():
 
     hndl.execute("delete from simple where 1=1")
     assert next(hndl)._0 == 1
+
+def test_context_manager_support():
+    with cdb2.Handle('mattdb', 'dev') as hndl1:
+        pass
+
+    assert hndl1.isOpen() == False
+
+    with pytest.raises(Exception) as exc_info:
+        with cdb2.Handle('mattdb', 'dev') as hndl2:
+            raise Exception('bad')
+
+    assert hndl2.isOpen() == False

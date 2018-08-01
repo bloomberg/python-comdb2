@@ -409,3 +409,29 @@ class Handle(object):
             object exposed by this module.
         """
         return self._hndl.column_types()
+
+    def isOpen(self):
+        """Checks if the connection is (apparently) open.  This method is
+           intended to be used from within this class as well as external
+           callers.
+
+        Returns:
+            The boolean value True if the connection is (apparently) open.
+        """
+        return bool(self._hndl is not None)
+
+    def __enter__(self):
+        """This method is called by the context manager when a `with` block
+           is exited.  Currently, it does nothing.
+        """
+        pass
+
+    def __exit__(self):
+        """This method is called by the context manager when a `with` block
+           is exited.  It is designed to close the connection unless it has
+           already been closed.  In that case, it does nothing.
+        """
+        if self.isOpen():
+            self.close()
+
+        return False
