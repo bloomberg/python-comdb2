@@ -10,15 +10,35 @@
 # limitations under the License.
 
 import sys
+import pkgconfig
 
 from setuptools import setup, Extension
 
 from comdb2 import __version__
 
-ccdb2 = Extension("comdb2._ccdb2",
-                  extra_compile_args=['-std=c99'],
-                  libraries=['cdb2api', 'protobuf-c'],
-                  sources=["comdb2/_ccdb2.pyx", "comdb2/_cdb2api.pxd"])
+
+def make_static_extension(name, **kwargs):
+    libraries = kwargs.pop('libraries', [])
+    pkg_config = pkgconfig.parse(' '.join(libraries), static=True)
+    libraries = pkg_config['libraries']
+    library_dirs = pkg_config['library_dirs']
+    include_dirs = kwargs.pop("include_dirs", []) + pkg_config['include_dirs']
+    return Extension(
+        name,
+        libraries=libraries,
+        library_dirs=library_dirs,
+        include_dirs=include_dirs,
+        **kwargs
+    )
+
+
+ccdb2 = make_static_extension(
+    "comdb2._ccdb2",
+    extra_compile_args=['-std=c99'],
+    libraries=['cdb2api', 'protobuf-c'],
+    sources=["comdb2/_ccdb2.pyx", "comdb2/_cdb2api.pxd"]
+)
+
 
 setup(
     name='comdb2',
