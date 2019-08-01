@@ -46,7 +46,6 @@ setup(
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
-    setup_requires=['setuptools>=18.0', 'cython>=0.22'],
     install_requires=["six", "pytz"],
     tests_require=["python-dateutil>=2.6.0", "pytest"],
     ext_modules=[ccdb2],
