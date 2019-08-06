@@ -28,4 +28,4 @@ anticipate a need to interact with libraries that require DB-API compliant
 connections, this module may be simpler to get started with.
 """
 
-__version__ = "1.2.2"
+from ._about import *

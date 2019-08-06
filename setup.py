@@ -14,7 +14,9 @@ import pkgconfig
 
 from setuptools import setup, Extension
 
-from comdb2 import __version__
+about = {}
+with open('comdb2/_about.py') as fp:
+    exec(fp.read(), about)
 
 
 def make_static_extension(name, **kwargs):
@@ -42,7 +44,7 @@ ccdb2 = make_static_extension(
 
 setup(
     name='comdb2',
-    version=__version__,
+    version=about["__version__"],
     author='Alex Chamberlain',
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
