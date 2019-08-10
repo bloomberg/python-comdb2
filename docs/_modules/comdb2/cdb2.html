@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>comdb2.cdb2 &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Comdb2 1.2.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for comdb2.cdb2</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Bloomberg Finance L.P.</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;This module provides a thin, pythonic wrapper over cdb2api.</span>
+
+<span class="sd">Overview</span>
+<span class="sd">========</span>
+
+<span class="sd">Basic Usage</span>
+<span class="sd">-----------</span>
+
+<span class="sd">The main class used for interacting with a Comdb2 is `Handle`.  A basic usage</span>
+<span class="sd">example looks like this::</span>
+
+<span class="sd">    from comdb2 import cdb2</span>
+<span class="sd">    hndl = cdb2.Handle(&#39;mattdb&#39;)</span>
+<span class="sd">    for row in hndl.execute(&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;):</span>
+<span class="sd">        print(row)</span>
+
+<span class="sd">Which would result in the following output::</span>
+
+<span class="sd">    [1, &#39;a&#39;]</span>
+<span class="sd">    [2, &#39;b&#39;]</span>
+
+<span class="sd">Graceful Teardown and Error Handling</span>
+<span class="sd">------------------------------------</span>
+
+<span class="sd">Non-trivial applications should guarantee that the handle is closed when it is</span>
+<span class="sd">no longer needed, preferably by using `contextlib.closing`.  They should also</span>
+<span class="sd">be prepared to handle any errors returned by the database.  Failures that are</span>
+<span class="sd">encountered when connecting to or querying the database are raised as instances</span>
+<span class="sd">of the `Error` class.  So, a more thorough version of the example above would</span>
+<span class="sd">be::</span>
+
+<span class="sd">    from comdb2 import cdb2</span>
+<span class="sd">    import contextlib</span>
+<span class="sd">    try:</span>
+<span class="sd">        with contextlib.closing(cdb2.Handle(&#39;mattdb&#39;)) as hndl:</span>
+<span class="sd">            for row in hndl.execute(&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;):</span>
+<span class="sd">                print(row)</span>
+<span class="sd">    except cdb2.Error as exc:</span>
+<span class="sd">        print(&quot;Comdb2 exception encountered: %s&quot; % exc)</span>
+
+<span class="sd">In this example, `contextlib.closing` is used to guarantee that `Handle.close`</span>
+<span class="sd">is called at the end of the ``with`` block, and an exception</span>
+<span class="sd">handler been added for exceptions of type `Error`.</span>
+
+<span class="sd">Controlling the Type Used For Result Rows</span>
+<span class="sd">-----------------------------------------</span>
+
+<span class="sd">As you can see, rows are returned as a `list` of column values in positional</span>
+<span class="sd">order.  If you&#39;d prefer to get the columns back as some other type, you can set</span>
+<span class="sd">`Handle.row_factory` to one of the factories provided by</span>
+<span class="sd">`comdb2.factories` - for example::</span>
+
+<span class="sd">    from comdb2 import cdb2</span>
+<span class="sd">    from comdb2 import factories</span>
+<span class="sd">    hndl = cdb2.Handle(&#39;mattdb&#39;)</span>
+<span class="sd">    hndl.row_factory = factories.dict_row_factory</span>
+<span class="sd">    for row in hndl.execute(&quot;select 1 as &#39;x&#39;, 2 as &#39;y&#39; union all select 3, 4&quot;):</span>
+<span class="sd">        print(row)</span>
+
+<span class="sd">This program will return each row as a `dict` rather than a `list`::</span>
+
+<span class="sd">    {&#39;y&#39;: 2, &#39;x&#39;: 1}</span>
+<span class="sd">    {&#39;y&#39;: 4, &#39;x&#39;: 3}</span>
+
+<span class="sd">Parameter Binding</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">In real applications you&#39;ll often need to pass parameters into a SQL query.</span>
+<span class="sd">This is done using parameter binding - in the query, placeholders are specified</span>
+<span class="sd">using ``@name``, and a mapping of names to values is passed to `Handle.execute`</span>
+<span class="sd">along with the query.  For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; query = &quot;select 25 between @a and @b&quot;</span>
+<span class="sd">    &gt;&gt;&gt; print(list(hndl.execute(query, {&#39;a&#39;: 20, &#39;b&#39;: 42})))</span>
+<span class="sd">    [[1]]</span>
+<span class="sd">    &gt;&gt;&gt; params = {&#39;a&#39;: 20, &#39;b&#39;: 23}</span>
+<span class="sd">    &gt;&gt;&gt; print(list(hndl.execute(query, params)))</span>
+<span class="sd">    [[0]]</span>
+
+<span class="sd">In this example, we run the query with two different sets of</span>
+<span class="sd">parameters, producing different results.  First, we execute</span>
+<span class="sd">the query with ``@a`` bound to ``20`` and ``@b`` bound to ``42``.  In this</span>
+<span class="sd">case, because ``20 &lt;= 25 &lt;= 42``, the expression evaluates to true, and a ``1``</span>
+<span class="sd">is returned.</span>
+
+<span class="sd">When we run the same query with ``@b`` bound to ``23``, a ``0``</span>
+<span class="sd">is returned instead, because ``20 &lt;= 25 &lt;= 23`` is false.  In both of these</span>
+<span class="sd">examples we make use of the `list` constructor to turn the iterable returned</span>
+<span class="sd">by `Handle.execute` into a list of result rows.</span>
+
+<span class="sd">Types</span>
+<span class="sd">-----</span>
+
+<span class="sd">For all Comdb2 types, the same Python type is used for binding a parameter</span>
+<span class="sd">value as is returned for a SQL query result column of that type.  In brief, SQL</span>
+<span class="sd">types are mapped to Python types according to the following table:</span>
+
+<span class="sd">============   ================================================================</span>
+<span class="sd">SQL type       Python type</span>
+<span class="sd">============   ================================================================</span>
+<span class="sd">NULL           ``None``</span>
+<span class="sd">integer        `int`</span>
+<span class="sd">real           `float`</span>
+<span class="sd">blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)</span>
+<span class="sd">text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)</span>
+<span class="sd">datetime       `datetime.datetime`</span>
+<span class="sd">datetimeus     `DatetimeUs`</span>
+<span class="sd">============   ================================================================</span>
+
+<span class="sd">See :ref:`Comdb2 to Python Type Mappings` for a thorough explanation of these</span>
+<span class="sd">type mappings and their implications.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    This module uses byte strings to represent BLOB columns, and Unicode</span>
+<span class="sd">    strings to represent TEXT columns.  This is a very common source of</span>
+<span class="sd">    problems for new users.</span>
+<span class="sd">    Make sure to carefully read :ref:`String and Blob Types` on that page.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">unicode_literals</span>
+
+<span class="kn">from</span> <span class="nn">._cdb2_types</span> <span class="k">import</span> <span class="n">Error</span><span class="p">,</span> <span class="n">Effects</span><span class="p">,</span> <span class="n">DatetimeUs</span>
+<span class="kn">from</span> <span class="nn">._ccdb2</span> <span class="k">import</span> <span class="n">Handle</span> <span class="k">as</span> <span class="n">CHandle</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Error&#39;</span><span class="p">,</span> <span class="s1">&#39;Handle&#39;</span><span class="p">,</span> <span class="s1">&#39;Effects&#39;</span><span class="p">,</span> <span class="s1">&#39;DatetimeUs&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ERROR_CODE&#39;</span><span class="p">,</span> <span class="s1">&#39;TYPE&#39;</span><span class="p">,</span> <span class="s1">&#39;HANDLE_FLAGS&#39;</span><span class="p">]</span>
+
+<span class="c1"># Pull all comdb2 error codes from cdb2api.h into our namespace</span>
+<span class="n">ERROR_CODE</span> <span class="o">=</span> <span class="p">{</span><span class="sa">u</span><span class="s1">&#39;CONNECT_ERROR&#39;</span>         <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NOTCONNECTED&#39;</span>          <span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;PREPARE_ERROR&#39;</span>         <span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;IO_ERROR&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;INTERNAL&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NOSTATEMENT&#39;</span>           <span class="p">:</span> <span class="o">-</span><span class="mi">6</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;BADCOLUMN&#39;</span>             <span class="p">:</span> <span class="o">-</span><span class="mi">7</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;BADSTATE&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">8</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;ASYNCERR&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">9</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;INVALID_ID&#39;</span>            <span class="p">:</span> <span class="o">-</span><span class="mi">12</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;RECORD_OUT_OF_RANGE&#39;</span>   <span class="p">:</span> <span class="o">-</span><span class="mi">13</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;REJECTED&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">15</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;STOPPED&#39;</span>               <span class="p">:</span> <span class="o">-</span><span class="mi">16</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;BADREQ&#39;</span>                <span class="p">:</span> <span class="o">-</span><span class="mi">17</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;DBCREATE_FAILED&#39;</span>       <span class="p">:</span> <span class="o">-</span><span class="mi">18</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;THREADPOOL_INTERNAL&#39;</span>   <span class="p">:</span> <span class="o">-</span><span class="mi">20</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;READONLY&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">21</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NOMASTER&#39;</span>              <span class="p">:</span> <span class="o">-</span><span class="mi">101</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;UNTAGGED_DATABASE&#39;</span>     <span class="p">:</span> <span class="o">-</span><span class="mi">102</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;CONSTRAINTS&#39;</span>           <span class="p">:</span> <span class="o">-</span><span class="mi">103</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;DEADLOCK&#39;</span>              <span class="p">:</span> <span class="mi">203</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;TRAN_IO_ERROR&#39;</span>         <span class="p">:</span> <span class="o">-</span><span class="mi">105</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;ACCESS&#39;</span>                <span class="p">:</span> <span class="o">-</span><span class="mi">106</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;TRAN_MODE_UNSUPPORTED&#39;</span> <span class="p">:</span> <span class="o">-</span><span class="mi">107</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;VERIFY_ERROR&#39;</span>          <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;FKEY_VIOLATION&#39;</span>        <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NULL_CONSTRAINT&#39;</span>       <span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;CONV_FAIL&#39;</span>             <span class="p">:</span> <span class="mi">113</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NONKLESS&#39;</span>              <span class="p">:</span> <span class="mi">114</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;MALLOC&#39;</span>                <span class="p">:</span> <span class="mi">115</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;NOTSUPPORTED&#39;</span>          <span class="p">:</span> <span class="mi">116</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;DUPLICATE&#39;</span>             <span class="p">:</span> <span class="mi">299</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;TZNAME_FAIL&#39;</span>           <span class="p">:</span> <span class="mi">401</span><span class="p">,</span>
+              <span class="sa">u</span><span class="s1">&#39;UNKNOWN&#39;</span>               <span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+             <span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;This dict maps all known Comdb2 error names to their respective values.</span>
+
+<span class="sd">The value returned in `Error.error_code` will generally be the value</span>
+<span class="sd">corresponding to one of the keys in this dict, though that&#39;s not always</span>
+<span class="sd">guaranteed because new error codes can be added to the Comdb2 server at any</span>
+<span class="sd">time.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Pull comdb2 column types from cdb2api.h into our namespace</span>
+<span class="n">TYPE</span> <span class="o">=</span> <span class="p">{</span><span class="sa">u</span><span class="s1">&#39;INTEGER&#39;</span>      <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;REAL&#39;</span>         <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;CSTRING&#39;</span>      <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;BLOB&#39;</span>         <span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;DATETIME&#39;</span>     <span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;INTERVALYM&#39;</span>   <span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;INTERVALDS&#39;</span>   <span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;DATETIMEUS&#39;</span>   <span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+        <span class="sa">u</span><span class="s1">&#39;INTERVALDSUS&#39;</span> <span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+       <span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;This dict maps all known Comdb2 types to their enumeration value.</span>
+
+<span class="sd">Each value in the list returned by `Handle.column_types` will generally be the</span>
+<span class="sd">value corresponding to one of the keys in this dict, though that&#39;s not always</span>
+<span class="sd">guaranteed because new types can be added to the Comdb2 server at any time.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Pull comdb2 handle flags from cdb2api.h into our namespace</span>
+<span class="n">HANDLE_FLAGS</span> <span class="o">=</span> <span class="p">{</span><span class="sa">u</span><span class="s1">&#39;READ_INTRANS_RESULTS&#39;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="sa">u</span><span class="s1">&#39;DIRECT_CPU&#39;</span>           <span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="sa">u</span><span class="s1">&#39;RANDOM&#39;</span>               <span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+                <span class="sa">u</span><span class="s1">&#39;RANDOMROOM&#39;</span>           <span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+                <span class="sa">u</span><span class="s1">&#39;ROOM&#39;</span>                 <span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+               <span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;This dict maps all known Comdb2 flags to their enumeration value.</span>
+
+<span class="sd">These values can be passed directly to `Handle`, though values not in this dict</span>
+<span class="sd">can be passed as well (such as the bitwise OR of two different flags).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Handle"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle">[docs]</a><span class="k">class</span> <span class="nc">Handle</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a connection to a database.</span>
+
+<span class="sd">    By default, the connection will be made to the cluster configured as the</span>
+<span class="sd">    machine-wide default for the given database.  This is almost always what</span>
+<span class="sd">    you want.  If you need to connect to a database that&#39;s running on your</span>
+<span class="sd">    local machine rather than a cluster, you can pass &quot;local&quot; as the ``tier``.</span>
+<span class="sd">    It&#39;s also permitted to specify &quot;dev&quot;, &quot;alpha&quot;, &quot;beta&quot;, or &quot;prod&quot; as the</span>
+<span class="sd">    ``tier``, which will connect you directly to the tier you specify (firewall</span>
+<span class="sd">    permitting).</span>
+
+<span class="sd">    Alternately, you can pass a machine name as the ``host`` argument, to</span>
+<span class="sd">    connect directly to an instance of the given database on that host, rather</span>
+<span class="sd">    than on a cluster or the local machine.</span>
+
+<span class="sd">    By default, the connection will use UTC as its timezone.  This differs from</span>
+<span class="sd">    cdb2api&#39;s default behavior, where the timezone used by the query differs</span>
+<span class="sd">    depending on the machine that it is run from.  If for some reason you need</span>
+<span class="sd">    to have that machine-specific default timezone instead, you can pass</span>
+<span class="sd">    ``None`` for the ``tz`` argument.  Any other valid timezone name may also</span>
+<span class="sd">    be used instead of &#39;UTC&#39;.</span>
+
+<span class="sd">    Note that Python does not guarantee that object finalizers will be called</span>
+<span class="sd">    when the interpreter exits, so to ensure that the handle is cleanly</span>
+<span class="sd">    released you should call the `close` method when you&#39;re done with it.  You</span>
+<span class="sd">    can use `contextlib.closing` to guarantee the handle is released when</span>
+<span class="sd">    a block completes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        database_name (str): The name of the database to connect to.</span>
+<span class="sd">        tier (str): The cluster to connect to.</span>
+<span class="sd">        host (str): Alternately, a single remote host to connect to.</span>
+<span class="sd">        flags (int): A flags value passed directly through to cdb2_open.</span>
+<span class="sd">        tz (str): The timezone to be used by the new connection, or ``None`` to</span>
+<span class="sd">            use a machine-specific default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database_name</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">,</span>
+                 <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tier</span> <span class="o">!=</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s1">&#39;NOTSUPPORTED&#39;</span><span class="p">],</span>
+                            <span class="s2">&quot;Connecting to a host by name and to a &quot;</span>
+                            <span class="s2">&quot;cluster by tier are mutually exclusive&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tier</span> <span class="o">=</span> <span class="n">host</span>
+                <span class="n">flags</span> <span class="o">|=</span> <span class="n">HANDLE_FLAGS</span><span class="p">[</span><span class="s1">&#39;DIRECT_CPU&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="o">=</span> <span class="n">CHandle</span><span class="p">(</span><span class="n">database_name</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;set timezone </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">tz</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cursor</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">([])</span>
+
+<div class="viewcode-block" id="Handle.close"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gracefully close the Comdb2 connection.</span>
+
+<span class="sd">        Once a `Handle` has been closed, no further operations may be performed</span>
+<span class="sd">        on it.</span>
+
+<span class="sd">        If a socket pool is running on the machine and the connection was in</span>
+<span class="sd">        a clean state, this will turn over the connection to the socket pool.</span>
+<span class="sd">        This cannot be done if the connection is in a transaction, or</span>
+<span class="sd">        in the middle of retrieving a result set.  Other restrictions may apply</span>
+<span class="sd">        as well.</span>
+
+<span class="sd">        You can ensure that this gets called at the end of a block using</span>
+<span class="sd">        something like:</span>
+
+<span class="sd">            &gt;&gt;&gt; with contextlib.closing(Handle(&#39;mattdb&#39;)) as hndl:</span>
+<span class="sd">            &gt;&gt;&gt;     for row in hndl.execute(&quot;select 1&quot;):</span>
+<span class="sd">            &gt;&gt;&gt;         print(row)</span>
+<span class="sd">            [1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">row_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Factory used when constructing result rows.</span>
+
+<span class="sd">        By default, or when set to ``None``, each row is returned as a `list`</span>
+<span class="sd">        of column values.  If you&#39;d prefer to receive rows as a `dict` or as</span>
+<span class="sd">        a `collections.namedtuple`, you can set this property to one of the</span>
+<span class="sd">        factories provided by the `comdb2.factories` module.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from comdb2.factories import dict_row_factory</span>
+<span class="sd">            &gt;&gt;&gt; hndl.row_factory = dict_row_factory</span>
+<span class="sd">            &gt;&gt;&gt; for row in hndl.execute(&quot;SELECT 1 as &#39;foo&#39;, 2 as &#39;bar&#39;&quot;):</span>
+<span class="sd">            ...     print(row)</span>
+<span class="sd">            {&#39;foo&#39;: 1, &#39;bar&#39;: 2}</span>
+
+<span class="sd">        .. versionadded:: 0.9</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">row_factory</span>
+
+    <span class="nd">@row_factory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">row_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Handle.execute"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute a database operation (query or command).</span>
+
+<span class="sd">        The ``sql`` string may have placeholders for parameters to be passed.</span>
+<span class="sd">        This should always be the preferred method of parameterizing the SQL</span>
+<span class="sd">        query, as it prevents SQL injection vulnerabilities and is faster.</span>
+<span class="sd">        Placeholders for named parameters must be in Comdb2&#39;s native format,</span>
+<span class="sd">        ``@param_name``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sql (str): The SQL string to execute.</span>
+<span class="sd">            parameters (Mapping[str, T]): An optional mapping from parameter</span>
+<span class="sd">                names to the values to be bound for them.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Handle: This method returns the `Handle` that it was called on,</span>
+<span class="sd">            which can be used as an iterator over the result set returned by</span>
+<span class="sd">            the query.  Iterating over it will yield one ``list`` per row in</span>
+<span class="sd">            the result set, where the elements in the list correspond to the</span>
+<span class="sd">            result columns within the row, in positional order.</span>
+
+<span class="sd">            The `row_factory` property can be used to return rows as</span>
+<span class="sd">            a different type, instead.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; for row in hndl.execute(&quot;select 1, 2 UNION ALL select @x, @y&quot;,</span>
+<span class="sd">            ...                         {&#39;x&#39;: 2, &#39;y&#39;: 4}):</span>
+<span class="sd">            ...     print(row)</span>
+<span class="sd">            [1, 2]</span>
+<span class="sd">            [2, 4]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cursor</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Handle.__iter__"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.__iter__">[docs]</a>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over all remaining rows in the current result set.</span>
+
+<span class="sd">        By default each row is returned as a `list`, where the elements in the</span>
+<span class="sd">        list correspond to the result row&#39;s columns in positional order, but</span>
+<span class="sd">        this can be changed with the `row_factory` property.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; hndl.execute(&quot;select 1, 2 UNION ALL select 3, 4&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; for row in hndl:</span>
+<span class="sd">            ...     print(row)</span>
+<span class="sd">            [1, 2]</span>
+<span class="sd">            [3, 4]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cursor</span></div>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Allow using `Handle` as an iterator, to avoid breaking backwards</span>
+        <span class="c1"># compatibility for a user who did something like:</span>
+        <span class="c1">#   next(handle.execute(&quot;select 1&quot;))</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cursor</span><span class="p">)</span>
+    <span class="nb">next</span> <span class="o">=</span> <span class="fm">__next__</span>
+
+<div class="viewcode-block" id="Handle.get_effects"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.get_effects">[docs]</a>    <span class="k">def</span> <span class="nf">get_effects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return counts of rows affected by executed queries.</span>
+
+<span class="sd">        Within a transaction, these counts are a running total from the start</span>
+<span class="sd">        of the transaction up through the last executed SQL statement.  Outside</span>
+<span class="sd">        of a transaction, these counts represent the rows affected by only the</span>
+<span class="sd">        last executed SQL statement.</span>
+
+<span class="sd">        Warning:</span>
+<span class="sd">            Calling this method consumes all remaining rows in the current</span>
+<span class="sd">            result set.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            The results within a transaction are not necessarily reliable</span>
+<span class="sd">            unless the ``VERIFYRETRY`` setting is turned off.  All of the</span>
+<span class="sd">            caveats of the ``cdb2_get_effects`` call apply.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Effects: An count of rows that have been affected, selected,</span>
+<span class="sd">            updated, deleted, or inserted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">get_effects</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Handle.column_names"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.column_names">[docs]</a>    <span class="k">def</span> <span class="nf">column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the names of the columns of the current result set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of unicode strings, one per column in the result set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">column_names</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Handle.column_types"><a class="viewcode-back" href="../../cdb2.html#comdb2.cdb2.Handle.column_types">[docs]</a>    <span class="k">def</span> <span class="nf">column_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the type codes of the columns of the current result set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[int]: A list of integers, one per column in the result set.</span>
+<span class="sd">            Each generally corresponds to one of the types in the `TYPE` global</span>
+<span class="sd">            object exposed by this module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">column_types</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Comdb2 1.2.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to the python-comdb2 documentation! &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API" href="dbapi2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dbapi2.html" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to the python-comdb2 documentation!</a><ul>
+<li><a class="reference internal" href="#module-comdb2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2</span></code> Python interfaces to Comdb2 databases</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dbapi2.html"
+                        title="next chapter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a></p>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-the-python-comdb2-documentation">
+<h1>Welcome to the python-comdb2 documentation!<a class="headerlink" href="#welcome-to-the-python-comdb2-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-comdb2">
+<span id="comdb2-python-interfaces-to-comdb2-databases"></span><h2><a class="reference internal" href="#module-comdb2" title="comdb2: Python interfaces to Comdb2 databases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2</span></code></a> Python interfaces to Comdb2 databases<a class="headerlink" href="#module-comdb2" title="Permalink to this headline">¶</a></h2>
+<p>This package provides Python interfaces to Comdb2 databases.</p>
+<p>Two different Python submodules are provided for interacting with Comdb2
+databases.  Both submodules work from Python 2.7+ and from Python 3.5+.</p>
+<p><a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code></a> provides an interface that conforms to <a class="reference external" href="https://www.python.org/dev/peps/pep-0249/">the Python Database API
+Specification v2.0</a>.  If you’re
+already familiar with the Python DB-API, or if you intend to use libraries that
+expect to be given DB-API compliant connections, this module is likely to be
+the best fit for you.  Additionally, if a better way of communicating with
+a Comdb2 database than <code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code> is ever introduced, this module will be
+upgraded to it under the hood.</p>
+<p><a class="reference internal" href="cdb2.html#module-comdb2.cdb2" title="comdb2.cdb2: Thin, pythonic wrapper over cdb2api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code></a> provides a thin, pythonic wrapper over cdb2api.  If you’re more
+familiar with <code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code> than with the Python DB-API and you don’t
+anticipate a need to interact with libraries that require DB-API compliant
+connections, this module may be simpler to get started with.</p>
+<div class="section" id="contents">
+<h3>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbapi2.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#graceful-teardown-and-error-handling">Graceful Teardown and Error Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#controlling-the-type-used-for-result-rows">Controlling the Type Used For Result Rows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#parameter-binding">Parameter Binding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#types">Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#autocommit-mode">Autocommit Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#db-api-compliance">DB-API Compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dbapi2.html#api-documentation">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#constants">Constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#connections-and-cursors">Connections and Cursors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#type-objects">Type Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#type-constructors">Type Constructors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#datetimeus">DatetimeUs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#exceptions">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cdb2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cdb2.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#graceful-teardown-and-error-handling">Graceful Teardown and Error Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#controlling-the-type-used-for-result-rows">Controlling the Type Used For Result Rows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#parameter-binding">Parameter Binding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#types">Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdb2.html#api-documentation">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#handles">Handles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#exceptions">Exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#datetimeus">DatetimeUs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#effects">Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#enumerations">Enumerations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Comdb2 to Python Type Mappings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="types.html#null">NULL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#numeric-types">Numeric Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#string-and-blob-types">String and Blob Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#date-and-time-types">Date and Time Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#decimal-type">Decimal Type</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Best Practices, Tips, and Tricks</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h3>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dbapi2.html" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

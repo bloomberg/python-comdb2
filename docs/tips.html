@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Best Practices, Tips, and Tricks &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="comdb2.factories Factory functions for use with Comdb2 handles" href="factories.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="factories.html" title="comdb2.factories Factory functions for use with Comdb2 handles"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="factories.html"
+                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></p>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="best-practices-tips-and-tricks">
+<h1>Best Practices, Tips, and Tricks<a class="headerlink" href="#best-practices-tips-and-tricks" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic">
+<li><p>This package uses <code class="xref py py-obj docutils literal notranslate"><span class="pre">six.text_type</span></code> for text and <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bytes</span></code></a> for blobs; this may
+be surprising if you’re using <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> in Python 2.  See <a class="reference internal" href="types.html"><span class="doc">Comdb2 to Python Type Mappings</span></a> for an
+explanation of what Python types must be used when binding parameters, and
+what Python types will be returned for result columns.</p>
+<p>An error message saying “incompatible values from SQL blob of length 3 to
+bcstring field ‘foo’” most likely means that you passed a byte string where
+a unicode string should have been passed.</p>
+<p>An error message saying “incompatible values from SQL string of length 3 to
+bbytearray field ‘bar’” most likely means that you passed a unicode string
+where a byte string should have been passed.</p>
+<p>Not all places where you pass the wrong type of string will result in an
+exception - in some cases the SQL query will appear to succeed but
+a <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause that you expected to match some rows will silently fail
+to match any.</p>
+</li>
+<li><p>Prefer using Python 3 rather than Python 2 when possible.  The above type
+mappings are much more intuitive in Python 3 than in Python 2.  If you can’t
+use Python 3 but are writing a new module, prefer to use <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">__future__</span>
+<span class="pre">import</span> <span class="pre">unicode_literals</span></code> to opt into forward compatible unicode string
+literals (rather than the default, string literals as byte strings).</p></li>
+<li><p>The database can time out connections that have been idle for a period of
+time, and each idle connection uses some amount of resources on the database
+server, so avoid leaving sessions open when they’re not in use.  As an
+example, prefer opening a new database connection for each client request in
+a service.</p></li>
+<li><p>Running a SQL statement using the <a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2</span></code></a> interface will implicitly open
+a transaction, as per PEP-249.  This means that, unlike other Comdb2
+interfaces, you need to explicitly call <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.commit" title="comdb2.dbapi2.Connection.commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Connection.commit</span></code></a> to save your
+changes.  If you write a program that seems to succeed but doesn’t make the
+updates you expected, make sure you didn’t miss a call to
+<a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.commit" title="comdb2.dbapi2.Connection.commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">commit</span></code></a>.</p></li>
+<li><p>When transactions aren’t needed, prefer using <a class="reference internal" href="dbapi2.html#autocommit-mode"><span class="std std-ref">Autocommit Mode</span></a> on your
+<a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection" title="comdb2.dbapi2.Connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Connection</span></code></a> objects.  It results in less bookkeeping on the
+database server, and results in transparent retries after some error
+conditions - and it makes the behavior more consistent with other Comdb2
+interfaces.</p></li>
+<li><p>Always prefer binding parameters over dynamically generating SQL queries.
+Instead of this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM test where id=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">my_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Always do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM test where id=</span><span class="si">%(id)s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">my_id</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Because of this: <a class="reference external" href="https://xkcd.com/327/">https://xkcd.com/327/</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The two modules provided by this package use different syntax for SQL
+placeholders.  See <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.execute" title="comdb2.dbapi2.Cursor.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Cursor.execute</span></code></a> and <a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.execute" title="comdb2.cdb2.Handle.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdb2.Handle.execute</span></code></a>
+for details.</p>
+</div>
+</li>
+<li><p>For <a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2</span></code></a>, be sure to escape any <code class="docutils literal notranslate"><span class="pre">%</span></code> signs in a query by doubling
+them.  That is, instead of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col like &#39;foo%&#39;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You need to write:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col like &#39;foo</span><span class="si">%%</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.paramstyle" title="comdb2.dbapi2.paramstyle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.paramstyle</span></code></a> for an explanation of why.</p>
+</li>
+<li><p>Unlike many other databases, Comdb2 does not allow you to read uncommitted
+rows by default, even from the cursor that created them.  If you need to be
+able to read your own uncommitted work, you must execute <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">transaction</span>
+<span class="pre">read</span> <span class="pre">committed</span></code> as the first statement on a new <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection" title="comdb2.dbapi2.Connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Connection</span></code></a> or
+<a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdb2.Handle</span></code></a> (any isolation level higher than <code class="docutils literal notranslate"><span class="pre">READ</span> <span class="pre">COMMITTED</span></code> would
+obviously work as well).</p></li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="factories.html" title="comdb2.factories Factory functions for use with Comdb2 handles"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

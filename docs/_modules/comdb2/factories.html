@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>comdb2.factories &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Comdb2 1.2.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for comdb2.factories</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Bloomberg Finance L.P.</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;This module provides factory functions for use with Comdb2 handles.</span>
+
+<span class="sd">Both `.dbapi2.Connection` and `.cdb2.Handle` have a public ``row_factory``</span>
+<span class="sd">property that can be used to control the type used for result rows.  By</span>
+<span class="sd">default, each row is returned as a `list`, but you can receive the row as</span>
+<span class="sd">a `collections.namedtuple` by using `namedtuple_row_factory` as the</span>
+<span class="sd">``row_factory``.  Likewise you can receive the row as a `dict` by using</span>
+<span class="sd">`dict_row_factory`.</span>
+
+<span class="sd">A factory function will be called with a list of column names, and must return</span>
+<span class="sd">a callable that will be called once per row with a list of column values.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+
+
+<div class="viewcode-block" id="namedtuple_row_factory"><a class="viewcode-back" href="../../factories.html#comdb2.factories.namedtuple_row_factory">[docs]</a><span class="k">def</span> <span class="nf">namedtuple_row_factory</span><span class="p">(</span><span class="n">col_names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return each result row as a `collections.namedtuple`.</span>
+
+<span class="sd">    The fields of the `~collections.namedtuple` are set to the names of the</span>
+<span class="sd">    result set columns, in positional order.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        You will not be able to use this factory if your result set includes</span>
+<span class="sd">        columns whose names aren&#39;t valid Python attribute names.  Make sure to</span>
+<span class="sd">        assign each column a name starting with a letter and containing only</span>
+<span class="sd">        alphanumeric characters and underscores.  Also make sure that column</span>
+<span class="sd">        names aren&#39;t Python reserved words.  You can control column names by</span>
+<span class="sd">        using ``AS`` in your SQL query, as in:</span>
+
+<span class="sd">        .. code-block:: sql</span>
+
+<span class="sd">            SELECT count(*) AS rowcount</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        You will not be able to use this factory if your result set includes</span>
+<span class="sd">        duplicated column names.  This can happen when joining across tables</span>
+<span class="sd">        that use the same name for a foreign key column, for instance.  To</span>
+<span class="sd">        avoid duplicating column names, avoid using ``SELECT *`` with joins.</span>
+
+<span class="sd">        You may also be able to use the ``USING`` clause on the join to avoid</span>
+<span class="sd">        duplicating column names.  This query would duplicate the ``id``</span>
+<span class="sd">        column:</span>
+
+<span class="sd">        .. code-block:: sql</span>
+
+<span class="sd">            SELECT * FROM a INNER JOIN b ON a.id = b.id</span>
+
+<span class="sd">        Whereas this one wouldn&#39;t:</span>
+
+<span class="sd">        .. code-block:: sql</span>
+
+<span class="sd">            SELECT * FROM a INNER JOIN b USING(id)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; conn.row_factory = namedtuple_row_factory</span>
+<span class="sd">        &gt;&gt;&gt; row = conn.cursor().execute(&quot;select 1 as x, 2 as y&quot;).fetchone()</span>
+<span class="sd">        &gt;&gt;&gt; print(row)</span>
+<span class="sd">        Row(x=1, y=2)</span>
+<span class="sd">        &gt;&gt;&gt; print(row.x)</span>
+<span class="sd">        1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ensure DML doesn&#39;t raise an exception for an invalid column name</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">col_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;rows inserted&quot;</span><span class="p">,</span> <span class="s2">&quot;rows updated&quot;</span><span class="p">,</span> <span class="s2">&quot;rows deleted&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Row&#39;</span><span class="p">,</span> <span class="n">col_names</span><span class="p">,</span> <span class="n">rename</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">_make</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Row&#39;</span><span class="p">,</span> <span class="n">col_names</span><span class="p">)</span><span class="o">.</span><span class="n">_make</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="c1"># If the error was caused by duplicated column names, raise a more</span>
+        <span class="c1"># preceise error message.  Otherwise, re-raise.</span>
+        <span class="n">_raise_on_duplicate_column_names</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span>
+        <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="dict_row_factory"><a class="viewcode-back" href="../../factories.html#comdb2.factories.dict_row_factory">[docs]</a><span class="k">def</span> <span class="nf">dict_row_factory</span><span class="p">(</span><span class="n">col_names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return each result row as a `dict` mapping column names to values.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        You will not be able to use this factory if your result set includes</span>
+<span class="sd">        duplicated column names.  This can happen when joining across tables</span>
+<span class="sd">        that use the same name for a foreign key column, for instance.  To</span>
+<span class="sd">        avoid duplicating column names, avoid using ``SELECT *`` with joins.</span>
+
+<span class="sd">        You may also be able to use the ``USING`` clause on the join to avoid</span>
+<span class="sd">        duplicating column names.  This query would duplicate the ``id``</span>
+<span class="sd">        column:</span>
+
+<span class="sd">        .. code-block:: sql</span>
+
+<span class="sd">            SELECT * FROM a INNER JOIN b ON a.id = b.id</span>
+
+<span class="sd">        Whereas this one wouldn&#39;t:</span>
+
+<span class="sd">        .. code-block:: sql</span>
+
+<span class="sd">            SELECT * FROM a INNER JOIN b USING(id)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; conn.row_factory = dict_row_factory</span>
+<span class="sd">        &gt;&gt;&gt; row = conn.cursor().execute(&quot;select 1 as x, 2 as y&quot;).fetchone()</span>
+<span class="sd">        &gt;&gt;&gt; print(row)</span>
+<span class="sd">        {&#39;y&#39;: 2, &#39;x&#39;: 1}</span>
+<span class="sd">        &gt;&gt;&gt; print(row[&#39;x&#39;])</span>
+<span class="sd">        1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_raise_on_duplicate_column_names</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">dict_row</span><span class="p">(</span><span class="n">col_vals</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">col_names</span><span class="p">,</span> <span class="n">col_vals</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">dict_row</span></div>
+
+
+<span class="k">def</span> <span class="nf">_raise_on_duplicate_column_names</span><span class="p">(</span><span class="n">col_names</span><span class="p">):</span>
+    <span class="n">distinct_col_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">distinct_col_names</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="n">counts_by_name</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span>
+    <span class="n">bad_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">counts_by_name</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Duplicated column names&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">bad_names</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Comdb2 1.2.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

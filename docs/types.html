@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Comdb2 to Python Type Mappings &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="comdb2.factories Factory functions for use with Comdb2 handles" href="factories.html" />
+    <link rel="prev" title="comdb2.cdb2 Thin, pythonic wrapper over cdb2api" href="cdb2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="factories.html" title="comdb2.factories Factory functions for use with Comdb2 handles"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="cdb2.html" title="comdb2.cdb2 Thin, pythonic wrapper over cdb2api"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Comdb2 to Python Type Mappings</a><ul>
+<li><a class="reference internal" href="#null">NULL</a></li>
+<li><a class="reference internal" href="#numeric-types">Numeric Types</a></li>
+<li><a class="reference internal" href="#string-and-blob-types">String and Blob Types</a></li>
+<li><a class="reference internal" href="#date-and-time-types">Date and Time Types</a></li>
+<li><a class="reference internal" href="#decimal-type">Decimal Type</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="cdb2.html"
+                        title="previous chapter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="factories.html"
+                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></p>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="comdb2-to-python-type-mappings">
+<span id="id1"></span><h1>Comdb2 to Python Type Mappings<a class="headerlink" href="#comdb2-to-python-type-mappings" title="Permalink to this headline">¶</a></h1>
+<p>For all Comdb2 types, the same Python type is used for binding a parameter
+value as is returned for a SQL query result column of that type.  SQL types are
+mapped to Python types according to the following table:</p>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SQL type</p></th>
+<th class="head"><p>Python type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NULL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>integer</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>real</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>blob</p></td>
+<td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">six.binary_type</span></code> (aka <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bytes</span></code></a> in Python 3, <code class="docutils literal notranslate"><span class="pre">str</span></code> in Python 2)</p></td>
+</tr>
+<tr class="row-even"><td><p>text</p></td>
+<td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">six.text_type</span></code> (aka <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> in Python 3, <code class="docutils literal notranslate"><span class="pre">unicode</span></code> in Python 2)</p></td>
+</tr>
+<tr class="row-odd"><td><p>datetime</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>datetimeus</p></td>
+<td><p><a class="reference internal" href="cdb2.html#comdb2.cdb2.DatetimeUs" title="comdb2.cdb2.DatetimeUs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>intervalym</p></td>
+<td><p>not supported</p></td>
+</tr>
+<tr class="row-even"><td><p>intervalds</p></td>
+<td><p>not supported</p></td>
+</tr>
+<tr class="row-odd"><td><p>intervaldsus</p></td>
+<td><p>not supported</p></td>
+</tr>
+<tr class="row-even"><td><p>decimal</p></td>
+<td><p>not supported</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="null">
+<h2>NULL<a class="headerlink" href="#null" title="Permalink to this headline">¶</a></h2>
+<p>A SQL NULL value is represented as a Python <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</div>
+<div class="section" id="numeric-types">
+<h2>Numeric Types<a class="headerlink" href="#numeric-types" title="Permalink to this headline">¶</a></h2>
+<p>Integral SQL values are represented as Python <code class="docutils literal notranslate"><span class="pre">int</span></code> values.  Floating point
+SQL values are represented as Python <code class="docutils literal notranslate"><span class="pre">float</span></code> values.  If a Python value is
+given that’s too large to fit into the database column (for instance, 1000000
+into a column of type <code class="docutils literal notranslate"><span class="pre">short</span></code>), an exception will be raised.</p>
+</div>
+<div class="section" id="string-and-blob-types">
+<span id="id2"></span><h2>String and Blob Types<a class="headerlink" href="#string-and-blob-types" title="Permalink to this headline">¶</a></h2>
+<p>This module uses byte strings to represent BLOB values, and Unicode strings to
+represent TEXT columns.  This was chosen for maximum forward compatibility with
+Python 3, and to make it easier to write code that will work identically in
+both languages.  This decision has many important ramifications.</p>
+<ol class="arabic">
+<li><p>In Python 2, <code class="docutils literal notranslate"><span class="pre">'foo'</span></code> is the wrong type for binding a <code class="docutils literal notranslate"><span class="pre">cstring</span></code> column.
+You instead need to use a Unicode literal like <code class="docutils literal notranslate"><span class="pre">u'foo'</span></code>.
+Alternately, you can make all string literals in your module be Unicode
+literals by default by doing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It’s not safe to blindly do this in existing code as it changes that
+code’s behavior, and might cause problems.</p>
+</div>
+</li>
+<li><p>If you have a variable  of type <code class="xref py py-obj docutils literal notranslate"><span class="pre">six.binary_type</span></code> (byte string) and you
+want to pass it to the database as a TEXT value, you need to convert it to
+a <code class="xref py py-obj docutils literal notranslate"><span class="pre">six.text_type</span></code> (Unicode) string using <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes.decode" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decode</span></code></a>.  In Python 2,
+unless <code class="xref py py-obj docutils literal notranslate"><span class="pre">unicode_literals</span></code> was imported from <a class="reference external" href="https://docs.python.org/3/library/__future__.html#module-__future__" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__future__</span></code></a>, you will need to
+do this with every string variable that you want to use as a cstring
+column.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;foo&#39;</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;col&#39;</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)}</span>
+<span class="c1"># dbapi2</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col=</span><span class="si">%(col)s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="c1"># cdb2</span>
+<span class="n">handle</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col=@col&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>TEXT columns are returned to you as <code class="xref py py-obj docutils literal notranslate"><span class="pre">six.text_type</span></code> (Unicode) strings.
+If you need to pass them to a library that expects <code class="xref py py-obj docutils literal notranslate"><span class="pre">six.binary_type</span></code> (byte)
+strings, you have to use <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str.encode" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode</span></code></a>, like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select col from tbl&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">library_func</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This may come up a lot in Python 2, where historically libraries were
+written to expect byte strings rather than Unicode strings.</p>
+</li>
+<li><p>When a TEXT column is read back from the database, it is decoded as UTF-8.
+If your database has non-UTF-8 text in a <code class="docutils literal notranslate"><span class="pre">cstring</span></code> column, you need to
+cast that column from a TEXT to a BLOB in SQL when reading it out, like
+this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select cast(col as blob) from tbl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That will result in you receiving a byte string rather than a Unicode
+string for that result column.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>ASCII is a subset of UTF-8, so this is not required for if the column
+contains plain ASCII text.</p>
+</div>
+</li>
+<li><p>Likewise, when a Unicode string is sent to the database, it is encoded as
+UTF-8.  If you need to store non-UTF-8 text in a <code class="docutils literal notranslate"><span class="pre">cstring</span></code> column in your
+database, you need to bind a byte string in Python land, and then cast the
+value from BLOB to TEXT in SQL.  For instance, to bind a latin1 string
+containing a copyright symbol, you could do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;Copyright </span><span class="se">\xA9</span><span class="s1"> 2016&#39;</span><span class="p">}</span>
+<span class="c1"># dbapi2</span>
+<span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col=cast(</span><span class="si">%(c)s</span><span class="s2"> as text)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="c1"># cdb2</span>
+<span class="n">h</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select * from tbl where col=cast(@c as text)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="date-and-time-types">
+<h2>Date and Time Types<a class="headerlink" href="#date-and-time-types" title="Permalink to this headline">¶</a></h2>
+<p>Comdb2 has two types for representing a specific point in time.  The DATETIME
+type supports millisecond precision and is mapped to Python’s
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a>. The DATETIMEUS type supports microsecond precision and is
+mapped to a subclass of datetime.datetime that we expose, called
+<a class="reference internal" href="cdb2.html#comdb2.cdb2.DatetimeUs" title="comdb2.cdb2.DatetimeUs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a>.  This subclass behaves identically to
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a>, differing only in type and in resulting in higher
+precision values when bound as an input parameter or retrieved as a result
+column.</p>
+<p>Whenever either type of datetime is retrieved as a result column, the returned
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> object will be aware, meaning it will be associated with
+a timezone (namely, the current timezone of the Comdb2 connection). Whenever
+either type of datetime is sent as a query parameter, it is permitted to be
+naïve, in which case it uses the current timezone of the Comdb2 connection.  By
+default that timezone is UTC but it can be changed on a per-connection basis if
+needed.</p>
+<p>Comdb2 additionally supports three types for representing time intervals. One
+represents an exact number of elapsed milliseconds between two times
+(INTERVALDS). One represents an exact number of elapsed microseconds between
+two times (INTERVALDSUS). The final one (INTERVALYM) represents a number of
+years and months between two events - unlike the other two, this represents
+a fuzzy time interval, as the length of a month varies. We do not currently
+support any of these types.</p>
+</div>
+<div class="section" id="decimal-type">
+<h2>Decimal Type<a class="headerlink" href="#decimal-type" title="Permalink to this headline">¶</a></h2>
+<p>Comdb2 supports a DECIMAL type. However, when retriving these columns through
+<code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code>, they are returned as TEXT, making them indistinguishable from
+string columns.  That currently makes it impossible to map them to Python’s
+<a class="reference external" href="https://docs.python.org/3/library/decimal.html#decimal.Decimal" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decimal.Decimal</span></code></a> type as we would like to.  If <code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code> is ever changed
+to properly distinguish between DECIMAL and TEXT columns this package will be
+enhanced to properly expose DECIMAL columns.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="factories.html" title="comdb2.factories Factory functions for use with Comdb2 handles"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="cdb2.html" title="comdb2.cdb2 Thin, pythonic wrapper over cdb2api"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

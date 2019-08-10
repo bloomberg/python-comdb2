@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>comdb2.factories Factory functions for use with Comdb2 handles &#8212; Comdb2 1.2.2 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Best Practices, Tips, and Tricks" href="tips.html" />
+    <link rel="prev" title="Comdb2 to Python Type Mappings" href="types.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tips.html" title="Best Practices, Tips, and Tricks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="types.html" title="Comdb2 to Python Type Mappings"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="types.html"
+                        title="previous chapter">Comdb2 to Python Type Mappings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tips.html"
+                        title="next chapter">Best Practices, Tips, and Tricks</a></p>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-comdb2.factories">
+<span id="comdb2-factories-factory-functions-for-use-with-comdb2-handles"></span><h1><a class="reference internal" href="#module-comdb2.factories" title="comdb2.factories: Factory functions for use with Comdb2 handles"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code></a> Factory functions for use with Comdb2 handles<a class="headerlink" href="#module-comdb2.factories" title="Permalink to this headline">¶</a></h1>
+<p>This module provides factory functions for use with Comdb2 handles.</p>
+<p>Both <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection" title="comdb2.dbapi2.Connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Connection</span></code></a> and <a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdb2.Handle</span></code></a> have a public <code class="docutils literal notranslate"><span class="pre">row_factory</span></code>
+property that can be used to control the type used for result rows.  By
+default, each row is returned as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>, but you can receive the row as
+a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.namedtuple" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collections.namedtuple</span></code></a> by using <a class="reference internal" href="#comdb2.factories.namedtuple_row_factory" title="comdb2.factories.namedtuple_row_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">namedtuple_row_factory</span></code></a> as the
+<code class="docutils literal notranslate"><span class="pre">row_factory</span></code>.  Likewise you can receive the row as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> by using
+<a class="reference internal" href="#comdb2.factories.dict_row_factory" title="comdb2.factories.dict_row_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict_row_factory</span></code></a>.</p>
+<p>A factory function will be called with a list of column names, and must return
+a callable that will be called once per row with a list of column values.</p>
+<dl class="function">
+<dt id="comdb2.factories.dict_row_factory">
+<code class="descclassname">comdb2.factories.</code><code class="descname">dict_row_factory</code><span class="sig-paren">(</span><em>col_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/factories.html#dict_row_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#comdb2.factories.dict_row_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return each result row as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> mapping column names to values.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You will not be able to use this factory if your result set includes
+duplicated column names.  This can happen when joining across tables
+that use the same name for a foreign key column, for instance.  To
+avoid duplicating column names, avoid using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span></code> with joins.</p>
+<p>You may also be able to use the <code class="docutils literal notranslate"><span class="pre">USING</span></code> clause on the join to avoid
+duplicating column names.  This query would duplicate the <code class="docutils literal notranslate"><span class="pre">id</span></code>
+column:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">a</span> <span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">b</span> <span class="k">ON</span> <span class="n">a</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">b</span><span class="p">.</span><span class="n">id</span>
+</pre></div>
+</div>
+<p>Whereas this one wouldn’t:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">a</span> <span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">b</span> <span class="k">USING</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_row_factory</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1 as x, 2 as y&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">{&#39;y&#39;: 2, &#39;x&#39;: 1}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="comdb2.factories.namedtuple_row_factory">
+<code class="descclassname">comdb2.factories.</code><code class="descname">namedtuple_row_factory</code><span class="sig-paren">(</span><em>col_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/factories.html#namedtuple_row_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#comdb2.factories.namedtuple_row_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return each result row as a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.namedtuple" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collections.namedtuple</span></code></a>.</p>
+<p>The fields of the <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.namedtuple" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">namedtuple</span></code></a> are set to the names of the
+result set columns, in positional order.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You will not be able to use this factory if your result set includes
+columns whose names aren’t valid Python attribute names.  Make sure to
+assign each column a name starting with a letter and containing only
+alphanumeric characters and underscores.  Also make sure that column
+names aren’t Python reserved words.  You can control column names by
+using <code class="docutils literal notranslate"><span class="pre">AS</span></code> in your SQL query, as in:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">AS</span> <span class="n">rowcount</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You will not be able to use this factory if your result set includes
+duplicated column names.  This can happen when joining across tables
+that use the same name for a foreign key column, for instance.  To
+avoid duplicating column names, avoid using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span></code> with joins.</p>
+<p>You may also be able to use the <code class="docutils literal notranslate"><span class="pre">USING</span></code> clause on the join to avoid
+duplicating column names.  This query would duplicate the <code class="docutils literal notranslate"><span class="pre">id</span></code>
+column:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">a</span> <span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">b</span> <span class="k">ON</span> <span class="n">a</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">b</span><span class="p">.</span><span class="n">id</span>
+</pre></div>
+</div>
+<p>Whereas this one wouldn’t:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">a</span> <span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">b</span> <span class="k">USING</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">namedtuple_row_factory</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1 as x, 2 as y&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">Row(x=1, y=2)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tips.html" title="Best Practices, Tips, and Tricks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="types.html" title="Comdb2 to Python Type Mappings"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Comdb2 1.2.2 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Bloomberg LP.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>
