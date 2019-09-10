@@ -386,13 +386,13 @@ cdef class Handle(object):
         self.cursor = <PyObject*>ret
         return ret
 
-    property row_factory:
+    @property
+    def row_factory(self):
         """Factory for creating the result row type"""
+        return self._row_factory
 
-        def __get__(self):
-            return self._row_factory
-
-        def __set__(self, value):
-            if not callable(value) and value is not None:
-                raise TypeError("row_factory must be a callable or None")
-            self._row_factory = value
+    @row_factory.setter
+    def row_factory(self, value):
+        if not callable(value) and value is not None:
+            raise TypeError("row_factory must be a callable or None")
+        self._row_factory = value
