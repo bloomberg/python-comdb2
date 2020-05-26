@@ -13,7 +13,11 @@ Best Practices, Tips, and Tricks
 
    An error message saying "incompatible values from SQL string of length 3 to
    bbytearray field 'bar'" most likely means that you passed a unicode string
-   where a byte string should have been passed.
+   where a byte string should have been passed.  Note the byte string must be 
+   *exactly* the length of the column.  No padding is performed automatically,
+   unless the column is declared with a ``dbpad`` attribute in the csc2 schema 
+   (for example ``dbpad=0`` will pad with null bytes or ``dbpad=32`` will pad 
+   with spaces).
 
    Not all places where you pass the wrong type of string will result in an
    exception - in some cases the SQL query will appear to succeed but
