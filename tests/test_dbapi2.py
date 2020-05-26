@@ -11,6 +11,7 @@
 
 from __future__ import unicode_literals, absolute_import
 
+from comdb2.dbapi2 import _sql_operation
 from comdb2.dbapi2 import NUMBER
 from comdb2.dbapi2 import BINARY
 from comdb2.dbapi2 import STRING
@@ -835,3 +836,22 @@ def test_interface_error_reading_result_set_after_commits():
     with pytest.raises(InterfaceError) as exc_info:
         cursor.fetchall()
     assert "No result set exists" in str(exc_info.value)
+
+
+@pytest.mark.parametrize("statement, operation", [
+    ("select 1", "select"),
+    (" \n\tselect 1", "select"),
+    (" /* */ select 1", "select"),
+    ("\n--\n\t\tselect 1", "select"),
+    ("insert/**/1", "insert"),
+    ("-- select 1\n-- Insert 2\nUpdate 3", "update"),
+    ("/*select 1*/\n/*Insert 2*/\nUpdate 3", "update"),
+    ("/* foo\nbar\nbaz\n-- INSERT*/select foo", "select"),
+    ("/* foo\nbar\nbaz\n-- INSERT*/--select\ninsert foo", "insert"),
+    ("-- /*\n*/ foo", None),
+    ("--", None),
+    ("*/", None),
+    ("", None),
+])
+def test_finding_operation(statement, operation):
+    assert _sql_operation(statement) == operation

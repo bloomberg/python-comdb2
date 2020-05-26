@@ -286,7 +286,20 @@ Note:
     ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
 """
 
-_FIRST_WORD_OF_LINE = re.compile(r'(\S+)')
+_FIRST_WORD_OF_STMT = re.compile(
+    r"""
+    (?:           # match (without capturing)
+      \s*         #   optional whitespace
+      /\*.*?\*/   #   then a C-style /* ... */ comment, possibly across lines
+    |             # or
+      \s*         #   optional whitespace
+      --[^\n]*\n  #   then a SQL-style comment terminated by a newline
+    )*            # repeat until all comments have been matched
+    \s*           # then skip over any whitespace
+    (\w+)         # and capture the first word
+    """,
+    re.VERBOSE | re.DOTALL | (0 if six.PY2 else re.ASCII),
+)
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
@@ -518,7 +531,7 @@ def _raise_wrapped_exception(exc):
 
 
 def _sql_operation(sql):
-    match = _FIRST_WORD_OF_LINE.search(sql)
+    match = _FIRST_WORD_OF_STMT.match(sql)
     if match:
         return match.group(1).lower()
     return None
