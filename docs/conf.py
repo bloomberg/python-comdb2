@@ -31,6 +31,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -100,7 +101,7 @@ modindex_common_prefix = ['comdb2.']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -146,7 +147,6 @@ html_static_path = []
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
-html_sidebars =  {'**': ['localtoc.html', 'relations.html']}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -263,13 +263,13 @@ htmlhelp_basename = 'Comdb2doc'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'six': ('https://pythonhosted.org/six', None)}
+                       'six': ('https://six.readthedocs.io', None)}
 
 # Don't highlight the code for the Python standard library datetime module.
 viewcode_import = False
 
-import importlib.util
-spec = importlib.util.spec_from_file_location("comdb2._ccdb2", "_ccdb2.py")
-_ccdb2 = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(_ccdb2)
-sys.modules['comdb2._ccdb2'] = _ccdb2
+# Don't automatically infer types from type annotations.
+autodoc_typehints = 'none'
+
+# Replace the extension module with a mock.
+autodoc_mock_imports = ['comdb2._ccdb2']
