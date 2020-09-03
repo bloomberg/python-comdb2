@@ -271,8 +271,5 @@ viewcode_import = False
 # Don't automatically infer types from type annotations.
 autodoc_typehints = 'none'
 
-import importlib.util
-spec = importlib.util.spec_from_file_location("comdb2._ccdb2", "_ccdb2.py")
-_ccdb2 = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(_ccdb2)
-sys.modules['comdb2._ccdb2'] = _ccdb2
+# Replace the extension module with a mock.
+autodoc_mock_imports = ['comdb2._ccdb2']
