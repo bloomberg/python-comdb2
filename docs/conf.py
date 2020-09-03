@@ -268,6 +268,9 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 # Don't highlight the code for the Python standard library datetime module.
 viewcode_import = False
 
+# Don't automatically infer types from type annotations.
+autodoc_typehints = 'none'
+
 import importlib.util
 spec = importlib.util.spec_from_file_location("comdb2._ccdb2", "_ccdb2.py")
 _ccdb2 = importlib.util.module_from_spec(spec)
