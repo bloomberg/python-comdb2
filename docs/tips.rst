@@ -82,3 +82,26 @@ Best Practices, Tips, and Tricks
    read committed`` as the first statement on a new `.dbapi2.Connection` or
    `.cdb2.Handle` (any isolation level higher than ``READ COMMITTED`` would
    obviously work as well).
+
+#. The underlying API doesn't currently allow binding lists. The following snippet
+   will be useful for a `$var in $list` query with a dynamically generated list::
+
+        from comdb2.dbapi2 import connect
+
+        def _generate_bound_list(prefix, items):
+            params = {prefix + str(i): e for i, e in enumerate(items)}
+            sql_frag = "(" + ", ".join("%%(%s)s" % p for p in params) + ")"
+            return params, sql_frag
+
+        def search_in_list(needle, haystack):
+            haystack_params, in_haystack_sql = _generate_bound_list("hs", haystack)
+            params = {'needle': needle}
+            params.update(haystack_params)
+
+            sql = "select %(needle)s in " + in_haystack_sql
+            print(connect('mattdb').cursor().execute(sql, params).fetchall())
+
+        haystack = [1, 2, 3, 4, 5]
+        search_in_list(0, haystack)
+        search_in_list(5, haystack)
+
