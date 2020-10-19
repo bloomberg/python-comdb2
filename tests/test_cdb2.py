@@ -270,3 +270,32 @@ def test_namedtuple_factory_dml():
 
     hndl.execute("delete from simple where 1=1")
     assert next(hndl)._0 == 1
+
+
+def test_parameter_name_in_binding_errors_exception():
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    class BadBytes(bytes):
+        def __len__(self):
+            raise RuntimeError("YY")
+
+        def __repr__(self):
+            return "xx"
+
+    with pytest.raises(Exception) as exc:
+        hndl.execute("select @param", dict(param=BadBytes(b"23")))
+
+    assert exc.value.args[1] == (
+        "Can't bind BadBytes value xx for parameter 'param': RuntimeError: YY"
+    )
+
+
+def test_parameter_name_in_binding_errors_noexception():
+    hndl = cdb2.Handle('mattdb', 'dev')
+
+    with pytest.raises(Exception) as exc:
+        hndl.execute("select @param", dict(param=(5+6j)))
+
+    assert exc.value.args[1] == (
+        "Can't map complex value (5+6j) for parameter 'param' to a Comdb2 type"
+    )
