@@ -105,7 +105,7 @@ cdef class _ParameterValue(object):
     cdef void *data
     cdef object owner
 
-    def __cinit__(self, obj):
+    def __cinit__(self, obj, param_name):
         try:
             if obj is None:
                 self.type = lib.CDB2_INTEGER
@@ -161,10 +161,19 @@ cdef class _ParameterValue(object):
         exc_desc = _describe_exception(exc)
 
         if exc is not None:
-            errmsg = "Can't bind value %r: %s" % (obj, exc_desc)
+            errmsg = "Can't bind %s value %r for parameter '%s': %s" % (
+                type(obj).__name__,
+                obj,
+                param_name,
+                exc_desc,
+            )
             six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, errmsg), exc)
         else:
-            errmsg = "No Comdb2 type mapping for parameter %r" % obj
+            errmsg = "Can't map %s value %r for parameter '%s' to a Comdb2 type" % (
+                type(obj).__name__,
+                obj,
+                param_name,
+            )
             raise Error(lib.CDB2ERR_NOTSUPPORTED, errmsg)
 
 
@@ -326,7 +335,7 @@ cdef class Handle(object):
             if parameters is not None:
                 for key, val in parameters.items():
                     ckey = _string_as_bytes(key)
-                    cval = _ParameterValue(val)
+                    cval = _ParameterValue(val, key)
                     param_guards.append(ckey)
                     param_guards.append(cval)
                     rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
