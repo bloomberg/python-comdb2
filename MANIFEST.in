@@ -1,1 +1,3 @@
 include pyproject.toml
+recursive-include comdb2 py.typed
+recursive-include comdb2 *.pyi
