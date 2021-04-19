@@ -118,8 +118,8 @@ class DatetimeUs(datetime):
         ret = super(DatetimeUs, cls).fromtimestamp(timestamp, tz)
         return DatetimeUs.fromdatetime(ret)
 
-    def astimezone(self, tz):
-        ret = super(DatetimeUs, self).astimezone(tz)
+    def astimezone(self, *args, **kwargs):
+        ret = super(DatetimeUs, self).astimezone(*args, **kwargs)
         return DatetimeUs.fromdatetime(ret)
 
     def replace(self, *args, **kwargs):
