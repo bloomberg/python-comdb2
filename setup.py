@@ -51,4 +51,5 @@ setup(
     install_requires=["six", "pytz"],
     tests_require=["python-dateutil>=2.6.0", "pytest"],
     ext_modules=[ccdb2],
+    package_data={"comdb2": ["py.typed", "*.pyi"]},
 )
