@@ -133,7 +133,7 @@ class Handle:
     def execute(
         self,
         sql: Union[Text, bytes],
-        parameters: Optional[Mapping[Union[Text, bytes], Value]] = ...,
+        parameters: Optional[Mapping[Text, Value]] = ...,
     ) -> Handle: ...
 
     def __iter__(self) -> Iterator[Row]: ...

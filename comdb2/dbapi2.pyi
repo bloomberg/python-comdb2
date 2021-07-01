@@ -176,13 +176,13 @@ class Cursor:
     def execute(
         self,
         sql: Union[str, Text],
-        parameters: Optional[Mapping[Union[str, Text], Value]] = None,
+        parameters: Optional[Mapping[Text, Value]] = None,
     ) -> Cursor: ...
 
     def executemany(
         self,
         sql: str,
-        seq_of_parameters: Sequence[Mapping[Union[str, Text], Value]],
+        seq_of_parameters: Sequence[Mapping[Text, Value]],
     ) -> None: ...
 
     def setinputsizes(self, sizes: Sequence[Any]) -> None: ...
