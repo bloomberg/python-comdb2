@@ -264,11 +264,19 @@ class Handle(object):
             self._hndl.execute("set timezone %s" % tz, {})
         self._cursor = iter([])
 
-    def close(self):
+    def close(self, ack_current_event=True):
         """Gracefully close the Comdb2 connection.
 
         Once a `Handle` has been closed, no further operations may be performed
         on it.
+
+        If the handle was used to consume events from a `Lua consumer`__, then
+        *ack_current_event* tells the database what to do with the last
+        event that was delivered. By default it will be marked as consumed and
+        won't be redelivered, but if ``ack_current_event=False`` then the
+        event will be redelivered to another consumer for processing.
+
+        __ https://bloomberg.github.io/comdb2/triggers.html#lua-consumers
 
         If a socket pool is running on the machine and the connection was in
         a clean state, this will turn over the connection to the socket pool.
@@ -284,7 +292,7 @@ class Handle(object):
             >>>         print(row)
             [1]
         """
-        self._hndl.close()
+        self._hndl.close(ack_current_event=ack_current_event)
 
     @property
     def row_factory(self):

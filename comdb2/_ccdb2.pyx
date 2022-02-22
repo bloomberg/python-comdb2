@@ -316,9 +316,14 @@ cdef class Handle(object):
             with nogil:
                 lib.cdb2_close(self.hndl)
 
-    def close(self):
-        """close(): close this handle's Comdb2 connection"""
+    def close(self, *, ack_current_event=True):
+        """close(ack_current_event=True): close this handle's Comdb2 connection"""
         if not self.hndl: raise _closed_connection_error('close')
+
+        if not ack_current_event:
+            rc = lib.cdb2_clear_ack(self.hndl)
+            _errchk(rc, self.hndl)
+
         with nogil:
             rc = lib.cdb2_close(self.hndl)
         self.hndl = NULL
