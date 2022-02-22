@@ -312,6 +312,7 @@ cdef class Handle(object):
 
     def __dealloc__(self):
         if self.hndl:
+            lib.cdb2_clear_ack(self.hndl)
             with nogil:
                 lib.cdb2_close(self.hndl)
 
