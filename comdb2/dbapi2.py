@@ -683,11 +683,19 @@ class Connection(object):
             cursor = self.cursor()
         cursor._execute(operation, operation)
 
-    def close(self):
+    def close(self, ack_current_event=True):
         """Gracefully close the Comdb2 connection.
 
         Once a `Connection` has been closed, no further operations may be
         performed on it.
+
+        If the connection was used to consume events from a `Lua consumer`__,
+        then *ack_current_event* tells the database what to do with the
+        last event that was delivered. By default it will be marked as consumed
+        and won't be redelivered, but if ``ack_current_event=False`` then
+        the event will be redelivered to another consumer for processing.
+
+        __ https://bloomberg.github.io/comdb2/triggers.html#lua-consumers
 
         If a socket pool is running on the machine and the connection was in
         a clean state, this will turn over the connection to the socket pool.
@@ -705,7 +713,7 @@ class Connection(object):
         if self._hndl is None:
             raise InterfaceError("close() called on already closed connection")
         self._close_any_outstanding_cursor()
-        self._hndl.close()
+        self._hndl.close(ack_current_event=ack_current_event)
         self._hndl = None
 
     def commit(self):

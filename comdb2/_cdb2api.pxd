@@ -76,3 +76,4 @@ cdef extern from "cdb2api.h" nogil:
     const char* cdb2_errstr(cdb2_hndl_tp* hndl);
     int cdb2_bind_param(cdb2_hndl_tp *hndl, const char *name, int type, const void *varaddr, int length);
     int cdb2_clearbindings(cdb2_hndl_tp *hndl);
+    int cdb2_clear_ack(cdb2_hndl_tp *hndl);
