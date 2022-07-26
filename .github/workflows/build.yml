@@ -1,0 +1,87 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+  COMDB2_DBNAME: mattdb
+jobs:
+  test:
+    name: Test suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - '3.10'
+          - '3.9'
+          - '3.8'
+          - '3.7'
+          - '3.6'
+          - '2.7'
+    steps:
+      - name: Install dependencies
+        run: '
+          sudo apt-get install -qy
+            pkg-config
+        ' # libcdb2api-dev is installed from source below
+      - uses: actions/checkout@v3
+      - name: Checkout comdb2 dependency
+        uses: actions/checkout@v3
+        with:
+          repository: bloomberg/comdb2
+          path: original_comdb2
+      - name: Build comdb2 from source
+        run: '
+          sudo apt-get update &&
+          sudo apt-get install -qy
+            bison
+            build-essential
+            cmake
+            flex
+            libevent-dev
+            liblz4-dev
+            libprotobuf-c-dev
+            libreadline-dev
+            libsqlite3-dev
+            libssl-dev
+            libunwind-dev
+            ncurses-dev
+            protobuf-c-compiler
+            tcl
+            uuid-dev
+            zlib1g-dev &&
+          (
+            mkdir original_comdb2/build &&
+            cd original_comdb2/build &&
+            cmake .. &&
+            make &&
+            sudo make install
+          )
+        '
+      - name: Start local comdb2 instance
+        run: '
+          sudo mkdir -p /opt/bb/share/schemas/$COMDB2_DBNAME &&
+          sudo echo "$COMDB2_DBNAME 1234 $(hostname -f)" > /opt/bb/etc/cdb2/config/comdb2db.cfg &&
+          (/opt/bb/bin/pmux -n &) &&
+          echo started pmux &&
+          /opt/bb/bin/comdb2 --create $COMDB2_DBNAME &&
+          (/opt/bb/bin/comdb2 $COMDB2_DBNAME > /tmp/$COMDB2_DBNAME.log 2>&1 &);
+          until /opt/bb/bin/cdb2sql $COMDB2_DBNAME local "select 1+1" > /dev/null 2>&1;
+          do
+            echo -n ".";
+            sleep 1;
+          done
+        '
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4 # note that this step overwrites the PKG_CONFIG_PATH variable
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          PKG_CONFIG_PATH=/opt/bb/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig LDFLAGS="-Wl,-rpath,/opt/bb/lib" python -m pip install .[tests]
+      - name: Run Tests
+        run: (cd tests && python -m pytest -vvv)
