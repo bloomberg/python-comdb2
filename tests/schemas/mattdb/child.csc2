@@ -1,0 +1,14 @@
+tag ondisk
+{
+    int  key
+}
+
+keys
+{
+    "KEY" = key
+}
+
+constraints
+{
+    "KEY" -> <"simple":"KEY1">
+}
