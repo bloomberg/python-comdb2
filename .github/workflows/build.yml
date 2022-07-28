@@ -75,6 +75,15 @@ jobs:
             sleep 1;
           done
         '
+      - name: Creating tables
+        run: |
+          tables="$(cat tests/schemas/$COMDB2_DBNAME/table_constraint_order.txt)"
+          for table_name in $tables
+          do
+            table_file="tests/schemas/$COMDB2_DBNAME/$table_name.csc2"
+            echo "Creating $table_name from $table_file"
+            /opt/bb/bin/cdb2sql "$COMDB2_DBNAME" local "create table $table_name { $(cat $table_file) }"
+          done
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4 # note that this step overwrites the PKG_CONFIG_PATH variable
         with:

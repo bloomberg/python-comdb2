@@ -1,0 +1,5 @@
+tag ondisk
+{
+    cstring  foo[6]
+    byte     bar[5]
+}
