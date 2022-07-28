@@ -1,0 +1,30 @@
+tag ondisk
+{
+    short         short_col
+    u_short       u_short_col
+    int           int_col
+    u_int         u_int_col
+    longlong      longlong_col
+//  u_longlong    u_longlong_col
+    float         float_col
+    double        double_col
+    byte          byte_col
+    byte          byte_array_col[5]
+    cstring       cstring_col[6]
+    pstring       pstring_col[10]
+    blob          blob_col
+    datetime      datetime_col
+//  datetimeus    datetimeus_col
+//  intervalym    intervalym_col
+//  intervalds    intervalds_col
+//  intervaldsus  intervaldsus_col
+    vutf8         vutf8_col
+//  decimal32     decimal32_col
+//  decimal64     decimal64_col
+//  decimal128    decimal128_col
+}
+
+keys
+{
+    "KEY1" = short_col
+}
