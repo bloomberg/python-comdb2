@@ -77,6 +77,7 @@ def delete_all_rows():
     conn.close()
 
 
+@pytest.mark.xfail(reason="cdb2_open ignores tier")
 def test_invalid_cluster():
     with pytest.raises(OperationalError):
         connect('mattdb', 'foo')
