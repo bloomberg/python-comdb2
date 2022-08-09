@@ -219,6 +219,7 @@ def test_get_effects():
     assert hndl.get_effects().num_deleted == 1
 
 
+@pytest.mark.xfail(reason="cdb2_open ignores tier")
 def test_nonascii_error_messages():
     with pytest.raises(cdb2.Error) as exc_info:
         cdb2.Handle('mattdb', b'\xc3')

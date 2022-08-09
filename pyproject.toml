@@ -7,3 +7,6 @@ requires = [
 ]
 
 build-backend = 'setuptools.build_meta'
+
+[tool.pytest.ini_options]
+xfailt_strict=true
