@@ -225,11 +225,11 @@ The interface this module provides fully conforms to `the Python Database API
 Specification v2.0 <https://www.python.org/dev/peps/pep-0249/>`_ with a few
 specific exceptions:
 
-1. DB-API requires `Date` and `DateFromTicks` constructors, which we don't
+1. DB-API requires ``Date`` and ``DateFromTicks`` constructors, which we don't
    provide because Comdb2 has no type for representing a date without a time
    component.
 
-2. DB-API requires `Time` and `TimeFromTicks` constructors, which we don't
+2. DB-API requires ``Time`` and ``TimeFromTicks`` constructors, which we don't
    provide because Comdb2 has no type for representing a time without a date
    component.
 
@@ -920,13 +920,13 @@ class Cursor(object):
 
         Args:
             procname (str): The name of the stored procedure to be executed.
-            parameters (Sequence[T]): A sequence of values to be passed, in
+            parameters (Sequence[Any]): A sequence of values to be passed, in
                 order, as the parameters to the stored procedure.  Each element
                 must be an instance of one of the Python types listed in
                 :doc:`types`.
 
         Returns:
-            List[T]: A copy of the input parameters.
+            List[Any]: A copy of the input parameters.
         """
         if not _VALID_SP_NAME.match(procname):
             raise NotSupportedError("Invalid procedure name '%s'" % procname)
@@ -952,7 +952,7 @@ class Cursor(object):
 
         Args:
             sql (str): The SQL string to execute, as a Python format string.
-            parameters (Mapping[str, T]): An optional mapping from parameter
+            parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
 
         Returns:
@@ -998,7 +998,7 @@ class Cursor(object):
         Args:
             sql (str): The SQL string to execute, as a Python format string of
                 the format expected by `execute`.
-            seq_of_parameters (Sequence[Mapping[str, T]]): A sequence of
+            seq_of_parameters (Sequence[Mapping[str, Any]]): A sequence of
                 mappings from parameter names to the values to be bound for
                 them.  The ``sql`` statement will be run once per element in
                 this sequence.
@@ -1076,7 +1076,7 @@ class Cursor(object):
         """Fetch the next row of the current result set.
 
         Returns:
-            Row: If no rows remain in the current result set, ``None`` is
+            If no rows remain in the current result set, ``None`` is
             returned, otherwise the next row of the result set is returned.  By
             default the row is returned as a `list`, where the elements in the
             list correspond to the result row's columns in positional order,
@@ -1095,7 +1095,7 @@ class Cursor(object):
                 given, `Cursor.arraysize` is used as the maximum.
 
         Returns:
-            List[Row]: Returns a `list` containing the next ``n`` rows of the
+            list: Returns a `list` containing the next ``n`` rows of the
             result set.  If fewer than ``n`` rows remain, the returned list
             will contain fewer than ``n`` elements.  If no rows remain, the
             list will be empty.  By default each row is
@@ -1111,7 +1111,7 @@ class Cursor(object):
         """Fetch all remaining rows of the current result set.
 
         Returns:
-            List[Row]: Returns a `list` containing all remaining rows of the
+            list: Returns a `list` containing all remaining rows of the
             result set.  By default each row is returned as a `list`, where the
             elements in the list correspond to the result row's columns in
             positional order, but this can be changed with the

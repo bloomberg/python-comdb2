@@ -329,7 +329,7 @@ class Handle(object):
 
         Args:
             sql (str): The SQL string to execute.
-            parameters (Mapping[str, T]): An optional mapping from parameter
+            parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
 
         Returns:

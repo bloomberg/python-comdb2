@@ -84,7 +84,7 @@ Best Practices, Tips, and Tricks
    obviously work as well).
 
 #. The underlying API doesn't currently allow binding lists. The following snippet
-   will be useful for a `$var in $list` query with a dynamically generated list::
+   will be useful for a ``$var in $list`` query with a dynamically generated list::
 
         from comdb2.dbapi2 import connect
 

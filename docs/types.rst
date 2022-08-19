@@ -61,7 +61,7 @@ both languages.  This decision has many important ramifications.
 #.  If you have a variable  of type `six.binary_type` (byte string) and you
     want to pass it to the database as a TEXT value, you need to convert it to
     a `six.text_type` (Unicode) string using `~bytes.decode`.  In Python 2,
-    unless `unicode_literals` was imported from `__future__`, you will need to
+    unless ``unicode_literals`` was imported from `__future__`, you will need to
     do this with every string variable that you want to use as a cstring
     column.  For example::
 
