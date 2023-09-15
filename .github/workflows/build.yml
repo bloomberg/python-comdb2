@@ -6,6 +6,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # At 12:00 on every day-of-month
+    - cron: "0 12 */1 * *"
 env:
   COMDB2_DBNAME: mattdb
   TIMEOUT: 30
@@ -16,12 +19,11 @@ jobs:
     strategy:
       matrix:
         python-version:
+          - '3.12'
+          - '3.11'
           - '3.10'
           - '3.9'
           - '3.8'
-          - '3.7'
-          - '3.6'
-          - '2.7'
     steps:
       - name: Install dependencies
         run: '

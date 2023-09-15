@@ -38,7 +38,7 @@ ccdb2 = make_static_extension(
     "comdb2._ccdb2",
     extra_compile_args=['-std=c99'],
     libraries=['cdb2api'],
-    sources=["comdb2/_ccdb2.pyx", "comdb2/_cdb2api.pxd"]
+    sources=["comdb2/_ccdb2.pyx"]
 )
 
 
