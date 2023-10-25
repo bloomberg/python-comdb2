@@ -1,3 +1,6 @@
+include *.txt
 include pyproject.toml
-recursive-include comdb2 py.typed
-recursive-include comdb2 *.pyi
+recursive-include comdb2/ py.typed *.pyi *.pxd *.h
+recursive-include docs/ *.rst *.py
+recursive-include tests/ *.py *.csc2 *.txt
+exclude comdb2/_ccdb2.c*
