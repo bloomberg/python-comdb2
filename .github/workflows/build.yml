@@ -71,24 +71,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_bloomberg_comdb2]
     steps:
-      - name: Download bloomberg-comdb2 with build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: bloomberg-comdb2
-          path: .
-      - name: Install bloomberg-comdb2
-        run: '
-          sudo apt-get install -qy
-            libevent-dev
-            liblz4-dev
-            libprotobuf-c-dev
-            libsqlite3-dev
-            libssl-dev
-            libunwind-dev
-            zlib1g-dev &&
-          tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install)
-        '
       - uses: actions/checkout@v4
       - name: 'Set up Python 3.7'
         uses: actions/setup-python@v4  # note that this step overwrites the PKG_CONFIG_PATH variable
