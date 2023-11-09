@@ -36,6 +36,7 @@ from comdb2.factories import namedtuple_row_factory
 import pytest
 import datetime
 import pytz
+import re
 from functools import partial
 
 from unittest.mock import patch
@@ -851,3 +852,66 @@ def test_interface_error_reading_result_set_after_commits():
 ])
 def test_finding_operation(statement, operation):
     assert _sql_operation(statement) == operation
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        [5, 10],
+        ("hello", "hi"),
+        [0.25, 0.35, 0.25],
+        (b"123", b"456"),
+    ],
+)
+def test_parameter_binding_arrays(values):
+    # GIVEN
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+
+    # WHEN
+    cursor.execute("select * from carray(%(values)s)", dict(values=values))
+    results = cursor.fetchall()
+
+    # THEN
+    assert results == [[v] for v in values]
+    conn.close()
+
+
+@pytest.mark.parametrize(
+    "values,exc_msg",
+    [
+        (
+            [],
+            "Can't bind list value [] for parameter 'values': "
+            + "ValueError: empty lists cannot be bound",
+        ),
+        (
+            (),
+            "Can't bind tuple value () for parameter 'values': "
+            + "ValueError: empty tuples cannot be bound",
+        ),
+        (
+            [1, "hello"],
+            "Can't bind list value [1, 'hello'] for parameter 'values': "
+            + "ValueError: all list elements must be the same type",
+        ),
+        (
+            (1j,),
+            "Can't bind tuple value (1j,) for parameter 'values': "
+            + "ValueError: Cannot bind a tuple of complex",
+        ),
+        (
+            ((1, 2, 3),),
+            "Can't bind tuple value ((1, 2, 3),) for parameter 'values': "
+            + "ValueError: Cannot bind a tuple of tuple",
+        ),
+    ],
+)
+def test_parameter_binding_invalid_arrays(values, exc_msg):
+    # GIVEN
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+
+    # WHEN/THEN
+    with pytest.raises(DataError, match=re.escape(exc_msg)):
+        cursor.execute("select * from carray(%(values)s)", dict(values=values))

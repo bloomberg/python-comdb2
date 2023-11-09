@@ -18,7 +18,7 @@ cdef extern from "cdb2api.h" nogil:
         CDB2ERR_NOTSUPPORTED
         CDB2ERR_CONV_FAIL
 
-    enum:
+    enum cdb2_coltype:
         CDB2_INTEGER
         CDB2_REAL
         CDB2_CSTRING
@@ -75,5 +75,6 @@ cdef extern from "cdb2api.h" nogil:
     void* cdb2_column_value(cdb2_hndl_tp* hndl, int col);
     const char* cdb2_errstr(cdb2_hndl_tp* hndl);
     int cdb2_bind_param(cdb2_hndl_tp *hndl, const char *name, int type, const void *varaddr, int length);
+    int cdb2_bind_array(cdb2_hndl_tp *hndl, const char *name, cdb2_coltype, const void *varaddr, size_t count, size_t typelen);
     int cdb2_clearbindings(cdb2_hndl_tp *hndl);
     int cdb2_clear_ack(cdb2_hndl_tp *hndl);
