@@ -39,6 +39,11 @@ ctypedef fused client_datetime:
     lib.cdb2_client_datetimeus_t
 
 
+cdef struct blob_descriptor:
+    size_t size
+    char* data
+
+
 cdef _string_as_bytes(s):
     if isinstance(s, unicode):
         return s.encode('utf-8')
@@ -99,13 +104,15 @@ cdef _bind_datetime(obj, client_datetime *val):
 
 
 cdef class _ParameterValue(object):
-    cdef int type
+    cdef lib.cdb2_coltype type
     cdef int size
     cdef void *data
     cdef object owner
+    cdef int list_size
 
     def __cinit__(self, obj, param_name):
         try:
+            self.list_size = -1
             if obj is None:
                 self.type = lib.CDB2_INTEGER
                 self.owner = None
@@ -152,6 +159,54 @@ cdef class _ParameterValue(object):
                 self.data = PyMem_Malloc(self.size)
                 _bind_datetime(obj, <lib.cdb2_client_datetime_t*>self.data)
                 return
+            elif isinstance(obj, (list, tuple)):
+                self.list_size = len(obj)
+                if 0 == self.list_size:
+                    raise ValueError(f"empty {type(obj).__name__}s cannot be bound")
+
+                if all(isinstance(ele, int) for ele in obj):
+                    self.type = lib.CDB2_INTEGER
+                    self.size = sizeof(long long)
+                    self.owner = None
+                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    for l_index in range(self.list_size):
+                        (<long long*>self.data)[l_index] = obj[l_index]
+                    return
+                elif all(isinstance(ele, float) for ele in obj):
+                    self.type = lib.CDB2_REAL
+                    self.size = sizeof(double)
+                    self.owner = None
+                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    for l_index in range(self.list_size):
+                        (<double*>self.data)[l_index] = obj[l_index]
+                    return
+                elif all(isinstance(ele, bytes) for ele in obj):
+                    self.type = lib.CDB2_BLOB
+                    self.size = sizeof(blob_descriptor)
+                    self.owner = obj
+                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    for l_index in range(self.list_size):
+                        (<blob_descriptor*>self.data)[l_index].size = len(obj[l_index])
+                        (<blob_descriptor*>self.data)[l_index].data = obj[l_index]
+                    return
+                elif all(isinstance(ele, unicode) for ele in obj):
+                    self.type = lib.CDB2_CSTRING
+                    self.size = sizeof(char*)
+                    # Strings need to be converted to bytes
+                    self.owner = [x.encode('utf-8') for x in obj]
+                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    for l_index in range(self.list_size):
+                        (<char**>self.data)[l_index] = <char*>(self.owner[l_index])
+                    return
+                elif not all(isinstance(ele, type(obj[0])) for ele in obj):
+                    raise ValueError(
+                        f"all {type(obj).__name__} elements must be the same type"
+                    )
+                else:
+                    raise ValueError(
+                        f"Cannot bind a {type(obj).__name__} of {type(obj[0]).__name__}"
+                    )
+
         except Exception as e:
             exc = e
         else:
@@ -177,7 +232,7 @@ cdef class _ParameterValue(object):
 
 
     def __dealloc__(self):
-        if self.owner is None:
+        if self.owner is None or self.list_size != -1:
             PyMem_Free(self.data)
 
 
@@ -343,8 +398,12 @@ cdef class Handle(object):
                     cval = _ParameterValue(val, key)
                     param_guards.append(ckey)
                     param_guards.append(cval)
-                    rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
-                                             cval.type, cval.data, cval.size)
+                    if cval.list_size == -1:
+                        rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
+                                                cval.type, cval.data, cval.size)
+                    else:
+                        # Bind Array if cval is an array
+                        rc = lib.cdb2_bind_array(self.hndl, <char*>ckey, cval.type, cval.data, cval.list_size, cval.size)
                     _errchk(rc, self.hndl)
 
             with nogil:
