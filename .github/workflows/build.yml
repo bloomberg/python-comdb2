@@ -136,8 +136,9 @@ jobs:
             libunwind-dev
             zlib1g-dev &&
           tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install)
-        '
+          (cd bloomberg-comdb2/build && sudo make install) &&
+          sudo rm /opt/bb/lib/libcdb2api.so
+        '  # removing the `.so` to instead pick `libcdb2api.a`
       - name: Start local comdb2 instance
         run: '
           sudo mkdir -p /opt/bb/share/schemas/$COMDB2_DBNAME &&
