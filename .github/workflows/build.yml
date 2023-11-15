@@ -26,8 +26,9 @@ jobs:
       - name: Checkout bloomberg-comdb2 repository
         uses: actions/checkout@v4
         with:
-          repository: bloomberg/comdb2
+          repository: akshatsikarwar/comdb2
           path: bloomberg-comdb2
+          ref: python-comdb2
       - name: Install build dependencies
         run: '
           sudo apt-get update &&
@@ -189,5 +190,6 @@ jobs:
           LDFLAGS="-Wl,-rpath,/opt/bb/lib"
           python -m pip install ./python-comdb2-sdist[tests]
         '
+      - uses: lhotari/action-upterm@v1
       - name: Run Tests
         run: (cd python-comdb2-sdist/tests && python -m pytest -vvv)
