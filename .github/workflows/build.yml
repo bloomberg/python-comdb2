@@ -26,8 +26,9 @@ jobs:
       - name: Checkout bloomberg-comdb2 repository
         uses: actions/checkout@v4
         with:
-          repository: bloomberg/comdb2
+          repository: akshatsikarwar/comdb2
           path: bloomberg-comdb2
+          ref: python-comdb2
       - name: Install build dependencies
         run: '
           sudo apt-get update &&
