@@ -2,10 +2,9 @@
 Best Practices, Tips, and Tricks
 ********************************
 
-#. This package uses `six.text_type` for text and `bytes` for blobs; this may
-   be surprising if you're using `str` in Python 2.  See :doc:`types` for an
-   explanation of what Python types must be used when binding parameters, and
-   what Python types will be returned for result columns.
+#. This package uses `str` for text and `bytes` for blobs. See :doc:`types` for
+   an explanation of what Python types must be used when binding parameters,
+   and what Python types will be returned for result columns.
 
    An error message saying "incompatible values from SQL blob of length 3 to
    bcstring field 'foo'" most likely means that you passed a byte string where
@@ -24,11 +23,8 @@ Best Practices, Tips, and Tricks
    a ``WHERE`` clause that you expected to match some rows will silently fail
    to match any.
 
-#. Prefer using Python 3 rather than Python 2 when possible.  The above type
-   mappings are much more intuitive in Python 3 than in Python 2.  If you can't
-   use Python 3 but are writing a new module, prefer to use ``from __future__
-   import unicode_literals`` to opt into forward compatible unicode string
-   literals (rather than the default, string literals as byte strings).
+#. The latest version of this package only supports Python 3. If you can't
+   use Python 3, make sure to use version less than ``1.5.0``.
 
 #. The database can time out connections that have been idle for a period of
    time, and each idle connection uses some amount of resources on the database

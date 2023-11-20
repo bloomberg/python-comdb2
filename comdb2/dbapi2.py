@@ -138,8 +138,8 @@ SQL type       Python type
 NULL           ``None``
 integer        `int`
 real           `float`
-blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)
-text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)
+blob           `bytes`
+text           `str`
 datetime       `datetime.datetime`
 datetimeus     `DatetimeUs`
 ============   ================================================================
@@ -239,14 +239,12 @@ specific exceptions:
    `Connection.cursor` is called, we call `Cursor.close` on any existing, open
    cursor for that connection.
 """
-from __future__ import absolute_import, unicode_literals
 
 import functools
 import itertools
 import weakref
 import datetime
 import re
-import six
 
 from . import cdb2
 
@@ -298,13 +296,13 @@ _FIRST_WORD_OF_STMT = re.compile(
     \s*           # then skip over any whitespace
     (\w+)         # and capture the first word
     """,
-    re.VERBOSE | re.DOTALL | (0 if six.PY2 else re.ASCII),
+    re.VERBOSE | re.DOTALL | re.ASCII,
 )
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
 
 @functools.total_ordering
-class _TypeObject(object):
+class _TypeObject:
     def __init__(self, *value_names):
         self.value_names = value_names
         self.values = [cdb2.TYPE[v] for v in value_names]
@@ -320,7 +318,7 @@ class _TypeObject(object):
 
 
 def _binary(string):
-    if isinstance(string, six.text_type):
+    if isinstance(string, str):
         return string.encode('utf-8')
     return bytes(string)
 
@@ -350,10 +348,7 @@ DatetimeUsFromTicks = DatetimeUs.fromtimestamp
 TimestampFromTicks = Timestamp.fromtimestamp
 TimestampUsFromTicks = TimestampUs.fromtimestamp
 
-try:
-    UserException = StandardError  # Python 2
-except NameError:
-    UserException = Exception      # Python 3
+UserException = Exception
 
 
 class Error(UserException):
@@ -526,8 +521,8 @@ def _raise_wrapped_exception(exc):
     code = exc.error_code
     msg = '%s (cdb2api rc %d)' % (exc.error_message, code)
     if "null constraint violation" in msg:
-        six.raise_from(NonNullConstraintError(msg), exc)  # DRQS 86013831
-    six.raise_from(_EXCEPTION_BY_RC.get(code, OperationalError)(msg), exc)
+        raise NonNullConstraintError(msg) from exc  # DRQS 86013831
+    raise _EXCEPTION_BY_RC.get(code, OperationalError)(msg) from exc
 
 
 def _sql_operation(sql):
@@ -566,7 +561,7 @@ def connect(*args, **kwargs):
     return Connection(*args, **kwargs)
 
 
-class Connection(object):
+class Connection:
     """Represents a connection to a Comdb2 database.
 
     By default, the connection will be made to the cluster configured as the
@@ -774,7 +769,7 @@ class Connection(object):
     NotSupportedError = NotSupportedError
 
 
-class Cursor(object):
+class Cursor:
     """Class used to send requests through a database connection.
 
     This class is not meant to be instantiated directly; it should always be
@@ -1028,10 +1023,10 @@ class Cursor(object):
             sql = sql % {name: "@" + name for name in parameters}
         except KeyError as keyerr:
             msg = "No value provided for parameter %s" % keyerr
-            six.raise_from(InterfaceError(msg), keyerr)
+            raise InterfaceError(msg) from keyerr
         except Exception as exc:
             msg = "Invalid Python format string for query"
-            six.raise_from(InterfaceError(msg), exc)
+            raise InterfaceError(msg) from exc
 
         if _operation_ends_transaction(operation):
             self._conn._in_transaction = False  # txn ends, even on failure

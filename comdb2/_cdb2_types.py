@@ -11,7 +11,6 @@
 
 from collections import namedtuple
 from datetime import datetime
-import six
 
 __name__ = 'comdb2.cdb2'
 
@@ -36,11 +35,11 @@ class Error(RuntimeError):
             after the failed call.
     """
     def __init__(self, error_code, error_message):
-        if not(isinstance(error_message, six.text_type)):
+        if not(isinstance(error_message, str)):
             error_message = _errstr(error_message)
         self.error_code = error_code
         self.error_message = error_message
-        super(Error, self).__init__(error_code, error_message)
+        super().__init__(error_code, error_message)
 
 
 class Effects(namedtuple('Effects',
@@ -94,13 +93,13 @@ class DatetimeUs(datetime):
                           dt.tzinfo, **kwargs)
 
     def __add__(self, other):
-        ret = super(DatetimeUs, self).__add__(other)
+        ret = super().__add__(other)
         if isinstance(ret, datetime):
             return DatetimeUs.fromdatetime(ret)
         return ret  # must be a timedelta
 
     def __sub__(self, other):
-        ret = super(DatetimeUs, self).__sub__(other)
+        ret = super().__sub__(other)
         if isinstance(ret, datetime):
             return DatetimeUs.fromdatetime(ret)
         return ret  # must be a timedelta
@@ -110,20 +109,20 @@ class DatetimeUs(datetime):
 
     @classmethod
     def now(cls, tz=None):
-        ret = super(DatetimeUs, cls).now(tz)
+        ret = super().now(tz)
         return DatetimeUs.fromdatetime(ret)
 
     @classmethod
     def fromtimestamp(cls, timestamp, tz=None):
-        ret = super(DatetimeUs, cls).fromtimestamp(timestamp, tz)
+        ret = super().fromtimestamp(timestamp, tz)
         return DatetimeUs.fromdatetime(ret)
 
     def astimezone(self, *args, **kwargs):
-        ret = super(DatetimeUs, self).astimezone(*args, **kwargs)
+        ret = super().astimezone(*args, **kwargs)
         return DatetimeUs.fromdatetime(ret)
 
     def replace(self, *args, **kwargs):
         # Before Python 3.7, it is effectively implementation dependent whether
         # this returns a DatetimeUs or a datetime.
-        dt = super(DatetimeUs, self).replace(*args, **kwargs)
+        dt = super().replace(*args, **kwargs)
         return self.fromdatetime(dt)

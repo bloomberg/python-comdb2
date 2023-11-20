@@ -9,7 +9,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals, absolute_import
 
 from comdb2.dbapi2 import _sql_operation
 from comdb2.dbapi2 import NUMBER
@@ -37,13 +36,9 @@ from comdb2.factories import namedtuple_row_factory
 import pytest
 import datetime
 import pytz
-import six
 from functools import partial
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
+from unittest.mock import patch
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
@@ -618,7 +613,7 @@ def test_exceptions_containing_unicode_error_messages():
         try:
             cursor.execute("select")
         except ProgrammingError as exc:
-            assert isinstance(exc.args[0], six.text_type)
+            assert isinstance(exc.args[0], str)
             raise
 
 

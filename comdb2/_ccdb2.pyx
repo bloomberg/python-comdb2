@@ -22,7 +22,6 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 import datetime
 
 from pytz import timezone, UTC
-import six
 
 from ._cdb2_types import Error, Effects, DatetimeUs
 from . cimport _cdb2api as lib
@@ -113,7 +112,7 @@ cdef class _ParameterValue(object):
                 self.size = 0
                 self.data = NULL
                 return
-            elif isinstance(obj, six.integer_types):
+            elif isinstance(obj, int):
                 self.type = lib.CDB2_INTEGER
                 self.owner = None
                 self.size = sizeof(long long)
@@ -167,7 +166,7 @@ cdef class _ParameterValue(object):
                 param_name,
                 exc_desc,
             )
-            six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, errmsg), exc)
+            raise Error(lib.CDB2ERR_CONV_FAIL, errmsg) from exc
         else:
             errmsg = "Can't map %s value %r for parameter '%s' to a Comdb2 type" % (
                 type(obj).__name__,
@@ -248,7 +247,7 @@ cdef _column_value(lib.cdb2_hndl_tp *hndl, int col):
 
     if exc is not None:
         errmsg += _describe_exception(exc)
-        six.raise_from(Error(lib.CDB2ERR_CONV_FAIL, errmsg), exc)
+        raise Error(lib.CDB2ERR_CONV_FAIL, errmsg) from exc
     else:
         errmsg += "Unsupported column type"
         raise Error(lib.CDB2ERR_NOTSUPPORTED, errmsg)
@@ -289,7 +288,7 @@ cdef class _Cursor(object):
                 ret = self.row_class(ret)
             except Exception as e:
                 errmsg = "Instantiating row failed: " + _describe_exception(e)
-                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, errmsg), e)
+                raise Error(lib.CDB2ERR_UNKNOWN, errmsg) from e
         return ret
 
 
@@ -393,7 +392,7 @@ cdef class Handle(object):
                 row_class = self._row_factory(self.column_names())
             except Exception as e:
                 errmsg = "row_factory call failed: " + _describe_exception(e)
-                six.raise_from(Error(lib.CDB2ERR_UNKNOWN, errmsg), e)
+                raise Error(lib.CDB2ERR_UNKNOWN, errmsg) from e
 
         cdef _Cursor ret = _Cursor.__new__(_Cursor)
         ret.handle = self
