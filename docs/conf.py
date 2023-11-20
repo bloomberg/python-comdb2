@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Comdb2 documentation build configuration file, created by
 # sphinx-quickstart on Thu Sep  8 16:16:10 2016.
@@ -47,8 +46,8 @@ source_suffix = '.rst'
 root_doc = 'index'
 
 # General information about the project.
-project = u'Comdb2'
-copyright = u'2017, Bloomberg LP'
+project = 'Comdb2'
+copyright = '2017, Bloomberg LP'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

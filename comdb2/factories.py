@@ -21,7 +21,6 @@ a `collections.namedtuple` by using `namedtuple_row_factory` as the
 A factory function will be called with a list of column names, and must return
 a callable that will be called once per row with a list of column values.
 """
-from __future__ import unicode_literals
 from collections import namedtuple
 from collections import Counter
 

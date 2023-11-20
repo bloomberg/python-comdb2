@@ -9,7 +9,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals, absolute_import
 
 from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
@@ -153,12 +152,12 @@ def test_row_factories_with_dup_col_names():
     hndl.row_factory = namedtuple_row_factory
     with pytest.raises(cdb2.Error) as exc_info:
         hndl.execute(query)
-    assert isinstance(exc_info.value.args[1], six.text_type)
+    assert isinstance(exc_info.value.args[1], str)
 
     hndl.row_factory = dict_row_factory
     with pytest.raises(cdb2.Error) as exc_info:
         hndl.execute(query)
-    assert isinstance(exc_info.value.args[1], six.text_type)
+    assert isinstance(exc_info.value.args[1], str)
 
 
 def test_setting_non_callable_row_factory():
@@ -193,7 +192,7 @@ def test_failures_instantiating_row_class():
     it = iter(hndl.execute(query))
     with pytest.raises(cdb2.Error) as exc_info:
         next(it)
-    assert isinstance(exc_info.value.args[1], six.text_type)
+    assert isinstance(exc_info.value.args[1], str)
 
 
 def test_get_effects():

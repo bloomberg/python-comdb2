@@ -49,7 +49,8 @@ setup(
     author_email='achamberlai9@bloomberg.net',
     packages=['comdb2'],
     install_requires=["six", "pytz"],
-    extras_require={"tests": ["python-dateutil>=2.6.0", "pytest", "mock; python_version < '3.3'"]},
+    extras_require={"tests": ["python-dateutil>=2.6.0", "pytest"]},
+    python_requires=">=3.6",
     ext_modules=[ccdb2],
     package_data={"comdb2": ["py.typed", "*.pyi"]},
 )

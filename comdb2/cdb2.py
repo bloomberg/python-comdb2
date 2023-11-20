@@ -127,7 +127,6 @@ Note:
     problems for new users.
     Make sure to carefully read :ref:`String and Blob Types` on that page.
 """
-from __future__ import absolute_import, unicode_literals
 
 from ._cdb2_types import Error, Effects, DatetimeUs
 from ._ccdb2 import Handle as CHandle
@@ -136,40 +135,40 @@ __all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
            'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
-ERROR_CODE = {u'CONNECT_ERROR'         : -1,
-              u'NOTCONNECTED'          : -2,
-              u'PREPARE_ERROR'         : -3,
-              u'IO_ERROR'              : -4,
-              u'INTERNAL'              : -5,
-              u'NOSTATEMENT'           : -6,
-              u'BADCOLUMN'             : -7,
-              u'BADSTATE'              : -8,
-              u'ASYNCERR'              : -9,
-              u'INVALID_ID'            : -12,
-              u'RECORD_OUT_OF_RANGE'   : -13,
-              u'REJECTED'              : -15,
-              u'STOPPED'               : -16,
-              u'BADREQ'                : -17,
-              u'DBCREATE_FAILED'       : -18,
-              u'THREADPOOL_INTERNAL'   : -20,
-              u'READONLY'              : -21,
-              u'NOMASTER'              : -101,
-              u'UNTAGGED_DATABASE'     : -102,
-              u'CONSTRAINTS'           : -103,
-              u'DEADLOCK'              : 203,
-              u'TRAN_IO_ERROR'         : -105,
-              u'ACCESS'                : -106,
-              u'TRAN_MODE_UNSUPPORTED' : -107,
-              u'VERIFY_ERROR'          : 2,
-              u'FKEY_VIOLATION'        : 3,
-              u'NULL_CONSTRAINT'       : 4,
-              u'CONV_FAIL'             : 113,
-              u'NONKLESS'              : 114,
-              u'MALLOC'                : 115,
-              u'NOTSUPPORTED'          : 116,
-              u'DUPLICATE'             : 299,
-              u'TZNAME_FAIL'           : 401,
-              u'UNKNOWN'               : 300,
+ERROR_CODE = {'CONNECT_ERROR'         : -1,
+              'NOTCONNECTED'          : -2,
+              'PREPARE_ERROR'         : -3,
+              'IO_ERROR'              : -4,
+              'INTERNAL'              : -5,
+              'NOSTATEMENT'           : -6,
+              'BADCOLUMN'             : -7,
+              'BADSTATE'              : -8,
+              'ASYNCERR'              : -9,
+              'INVALID_ID'            : -12,
+              'RECORD_OUT_OF_RANGE'   : -13,
+              'REJECTED'              : -15,
+              'STOPPED'               : -16,
+              'BADREQ'                : -17,
+              'DBCREATE_FAILED'       : -18,
+              'THREADPOOL_INTERNAL'   : -20,
+              'READONLY'              : -21,
+              'NOMASTER'              : -101,
+              'UNTAGGED_DATABASE'     : -102,
+              'CONSTRAINTS'           : -103,
+              'DEADLOCK'              : 203,
+              'TRAN_IO_ERROR'         : -105,
+              'ACCESS'                : -106,
+              'TRAN_MODE_UNSUPPORTED' : -107,
+              'VERIFY_ERROR'          : 2,
+              'FKEY_VIOLATION'        : 3,
+              'NULL_CONSTRAINT'       : 4,
+              'CONV_FAIL'             : 113,
+              'NONKLESS'              : 114,
+              'MALLOC'                : 115,
+              'NOTSUPPORTED'          : 116,
+              'DUPLICATE'             : 299,
+              'TZNAME_FAIL'           : 401,
+              'UNKNOWN'               : 300,
              }
 """This dict maps all known Comdb2 error names to their respective values.
 
@@ -180,15 +179,15 @@ time.
 """
 
 # Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {u'INTEGER'      : 1,
-        u'REAL'         : 2,
-        u'CSTRING'      : 3,
-        u'BLOB'         : 4,
-        u'DATETIME'     : 6,
-        u'INTERVALYM'   : 7,
-        u'INTERVALDS'   : 8,
-        u'DATETIMEUS'   : 9,
-        u'INTERVALDSUS' : 10,
+TYPE = {'INTEGER'      : 1,
+        'REAL'         : 2,
+        'CSTRING'      : 3,
+        'BLOB'         : 4,
+        'DATETIME'     : 6,
+        'INTERVALYM'   : 7,
+        'INTERVALDS'   : 8,
+        'DATETIMEUS'   : 9,
+        'INTERVALDSUS' : 10,
        }
 """This dict maps all known Comdb2 types to their enumeration value.
 
@@ -198,11 +197,11 @@ guaranteed because new types can be added to the Comdb2 server at any time.
 """
 
 # Pull comdb2 handle flags from cdb2api.h into our namespace
-HANDLE_FLAGS = {u'READ_INTRANS_RESULTS' : 2,
-                u'DIRECT_CPU'           : 4,
-                u'RANDOM'               : 8,
-                u'RANDOMROOM'           : 16,
-                u'ROOM'                 : 32,
+HANDLE_FLAGS = {'READ_INTRANS_RESULTS' : 2,
+                'DIRECT_CPU'           : 4,
+                'RANDOM'               : 8,
+                'RANDOMROOM'           : 16,
+                'ROOM'                 : 32,
                }
 """This dict maps all known Comdb2 flags to their enumeration value.
 
@@ -211,7 +210,7 @@ can be passed as well (such as the bitwise OR of two different flags).
 """
 
 
-class Handle(object):
+class Handle:
     """Represents a connection to a database.
 
     By default, the connection will be made to the cluster configured as the
