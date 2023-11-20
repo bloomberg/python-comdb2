@@ -42,23 +42,11 @@ into a column of type ``short``), an exception will be raised.
 String and Blob Types
 =====================
 
-This module uses byte strings to represent BLOB values, and Unicode strings to
-represent TEXT columns.  This was chosen for maximum forward compatibility with
-Python 3, and to make it easier to write code that will work identically in
-both languages.  This decision has many important ramifications.
+You may occasionally need to convert between byte strings and Unicode strings:
 
 #.  If you have a variable of type `bytes` and you want to pass it to the
     database as a TEXT value, you need to convert it to a `str` using
     `~bytes.decode`.
-
-#.  TEXT columns are returned to you as `str` strings. If you need to pass them
-    to a library that expects `bytes` strings, you have to use `~str.encode`,
-    like this::
-
-        cursor.execute("select col from tbl")
-        for row in cursor:
-            col = row[0]
-            library_func(col.encode('utf-8'))
 
 #.  When a TEXT column is read back from the database, it is decoded as UTF-8.
     If your database has non-UTF-8 text in a ``cstring`` column, you need to

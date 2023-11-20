@@ -24,7 +24,7 @@ Best Practices, Tips, and Tricks
    to match any.
 
 #. The latest version of this package only supports Python 3. If you can't
-   use Python 3, make sure to use version 1.4.1 or earlier.
+   use Python 3, make sure to use version less than ``1.5.0``.
 
 #. The database can time out connections that have been idle for a period of
    time, and each idle connection uses some amount of resources on the database
