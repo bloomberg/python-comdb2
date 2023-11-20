@@ -36,7 +36,6 @@ from comdb2.factories import namedtuple_row_factory
 import pytest
 import datetime
 import pytz
-import six
 from functools import partial
 
 try:

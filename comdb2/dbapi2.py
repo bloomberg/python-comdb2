@@ -138,8 +138,8 @@ SQL type       Python type
 NULL           ``None``
 integer        `int`
 real           `float`
-blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)
-text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)
+blob           `bytes`
+text           `str`
 datetime       `datetime.datetime`
 datetimeus     `DatetimeUs`
 ============   ================================================================
@@ -245,7 +245,6 @@ import itertools
 import weakref
 import datetime
 import re
-import six
 
 from . import cdb2
 
@@ -297,7 +296,7 @@ _FIRST_WORD_OF_STMT = re.compile(
     \s*           # then skip over any whitespace
     (\w+)         # and capture the first word
     """,
-    re.VERBOSE | re.DOTALL | (0 if six.PY2 else re.ASCII),
+    re.VERBOSE | re.DOTALL | re.ASCII,
 )
 _VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
 
@@ -349,10 +348,7 @@ DatetimeUsFromTicks = DatetimeUs.fromtimestamp
 TimestampFromTicks = Timestamp.fromtimestamp
 TimestampUsFromTicks = TimestampUs.fromtimestamp
 
-try:
-    UserException = StandardError  # Python 2
-except NameError:
-    UserException = Exception      # Python 3
+UserException = Exception
 
 
 class Error(UserException):

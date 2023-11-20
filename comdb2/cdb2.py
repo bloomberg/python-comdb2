@@ -112,8 +112,8 @@ SQL type       Python type
 NULL           ``None``
 integer        `int`
 real           `float`
-blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)
-text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)
+blob           `bytes`
+text           `str`
 datetime       `datetime.datetime`
 datetimeus     `DatetimeUs`
 ============   ================================================================

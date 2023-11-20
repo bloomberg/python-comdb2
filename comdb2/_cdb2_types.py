@@ -11,7 +11,6 @@
 
 from collections import namedtuple
 from datetime import datetime
-import six
 
 __name__ = 'comdb2.cdb2'
 

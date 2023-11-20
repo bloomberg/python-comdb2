@@ -14,7 +14,6 @@ from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
 from comdb2.factories import namedtuple_row_factory
 import pytest
-import six
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"

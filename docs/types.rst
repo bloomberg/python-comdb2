@@ -14,8 +14,8 @@ SQL type       Python type
 NULL           ``None``
 integer        `int`
 real           `float`
-blob           `six.binary_type` (aka `bytes` in Python 3, ``str`` in Python 2)
-text           `six.text_type` (aka `str` in Python 3, ``unicode`` in Python 2)
+blob           `bytes`
+text           `str`
 datetime       `datetime.datetime`
 datetimeus     `~.cdb2.DatetimeUs`
 intervalym     not supported
@@ -47,42 +47,18 @@ represent TEXT columns.  This was chosen for maximum forward compatibility with
 Python 3, and to make it easier to write code that will work identically in
 both languages.  This decision has many important ramifications.
 
-#.  In Python 2, ``'foo'`` is the wrong type for binding a ``cstring`` column.
-    You instead need to use a Unicode literal like ``u'foo'``.
-    Alternately, you can make all string literals in your module be Unicode
-    literals by default by doing::
+#.  If you have a variable of type `bytes` and you want to pass it to the
+    database as a TEXT value, you need to convert it to a `str` using
+    `~bytes.decode`.
 
-        from __future__ import unicode_literals
-
-    .. note::
-        It's not safe to blindly do this in existing code as it changes that
-        code's behavior, and might cause problems.
-
-#.  If you have a variable  of type `six.binary_type` (byte string) and you
-    want to pass it to the database as a TEXT value, you need to convert it to
-    a `six.text_type` (Unicode) string using `~bytes.decode`.  In Python 2,
-    unless ``unicode_literals`` was imported from `__future__`, you will need to
-    do this with every string variable that you want to use as a cstring
-    column.  For example::
-
-        value = 'foo'
-        params = {'col': value.decode('utf-8')}
-        # dbapi2
-        cursor.execute("select * from tbl where col=%(col)s", params)
-        # cdb2
-        handle.execute("select * from tbl where col=@col", params)
-
-#.  TEXT columns are returned to you as `six.text_type` (Unicode) strings.
-    If you need to pass them to a library that expects `six.binary_type` (byte)
-    strings, you have to use `~str.encode`, like this::
+#.  TEXT columns are returned to you as `str` strings. If you need to pass them
+    to a library that expects `bytes` strings, you have to use `~str.encode`,
+    like this::
 
         cursor.execute("select col from tbl")
         for row in cursor:
             col = row[0]
             library_func(col.encode('utf-8'))
-
-    This may come up a lot in Python 2, where historically libraries were
-    written to expect byte strings rather than Unicode strings.
 
 #.  When a TEXT column is read back from the database, it is decoded as UTF-8.
     If your database has non-UTF-8 text in a ``cstring`` column, you need to
@@ -91,14 +67,14 @@ both languages.  This decision has many important ramifications.
 
         cursor.execute("select cast(col as blob) from tbl")
 
-    That will result in you receiving a byte string rather than a Unicode
-    string for that result column.
+    That will result in you receiving a `bytes` object rather than `str` for
+    that result column.
 
     .. note::
         ASCII is a subset of UTF-8, so this is not required for if the column
         contains plain ASCII text.
 
-#.  Likewise, when a Unicode string is sent to the database, it is encoded as
+#.  Likewise, when a `str` object is sent to the database, it is encoded as
     UTF-8.  If you need to store non-UTF-8 text in a ``cstring`` column in your
     database, you need to bind a byte string in Python land, and then cast the
     value from BLOB to TEXT in SQL.  For instance, to bind a latin1 string
