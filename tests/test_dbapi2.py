@@ -38,10 +38,7 @@ import datetime
 import pytz
 from functools import partial
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from unittest.mock import patch
+from unittest.mock import patch
 
 COLUMN_LIST = ("short_col u_short_col int_col u_int_col longlong_col"
                " float_col double_col byte_col byte_array_col"
