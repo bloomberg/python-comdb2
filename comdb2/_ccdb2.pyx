@@ -181,9 +181,17 @@ cdef class _ParameterValue(object):
                         (<double*>self.data)[l_index] = obj[l_index]
                     return
                 elif all(isinstance(ele, bytes) for ele in obj):
+                    if isinstance(obj, tuple):
+                        owner = obj
+                    else:
+                        # Copy the list into a tuple. If we referenced the list
+                        # directly, another thread could remove an element when
+                        # we drop the GIL, invalidating a pointer we're holding
+                        owner = tuple(obj)
+
                     self.type = lib.CDB2_BLOB
                     self.size = sizeof(blob_descriptor)
-                    self.owner = obj
+                    self.owner = owner
                     self.data = PyMem_Malloc(self.list_size * self.size)
                     for l_index in range(self.list_size):
                         (<blob_descriptor*>self.data)[l_index].size = len(obj[l_index])
