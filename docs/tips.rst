@@ -11,7 +11,7 @@ Best Practices, Tips, and Tricks
    a unicode string should have been passed.
 
    An error message saying "incompatible values from SQL string of length 3 to
-   bbytearray field 'bar'" most likely means that you passed a unicode string
+   bytearray field 'bar'" most likely means that you passed a unicode string
    where a byte string should have been passed.  Note the byte string must be 
    *exactly* the length of the column.  No padding is performed automatically,
    unless the column is declared with a ``dbpad`` attribute in the csc2 schema 
