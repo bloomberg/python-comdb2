@@ -23,6 +23,16 @@ a callable that will be called once per row with a list of column values.
 """
 from collections import namedtuple
 from collections import Counter
+from typing import Any
+
+
+def _raise_on_duplicate_column_names(col_names):
+    distinct_col_names = set(col_names)
+    if len(col_names) == len(distinct_col_names):
+        return
+    counts_by_name = Counter(col_names)
+    bad_names = [k for k, v in counts_by_name.items() if v > 1]
+    raise ValueError("Duplicated column names", *bad_names)
 
 
 def namedtuple_row_factory(col_names):
@@ -122,10 +132,50 @@ def dict_row_factory(col_names):
     return dict_row
 
 
-def _raise_on_duplicate_column_names(col_names):
-    distinct_col_names = set(col_names)
-    if len(col_names) == len(distinct_col_names):
-        return
-    counts_by_name = Counter(col_names)
-    bad_names = [k for k, v in counts_by_name.items() if v > 1]
-    raise ValueError("Duplicated column names", *bad_names)
+class ClassRowFactory:
+    """Return each result row as a `dict` mapping column names to values.
+
+    Note:
+        You will not be able to use this factory if your result set includes
+        duplicated column names.  This can happen when joining across tables
+        that use the same name for a foreign key column, for instance.  To
+        avoid duplicating column names, avoid using ``SELECT *`` with joins.
+
+        You may also be able to use the ``USING`` clause on the join to avoid
+        duplicating column names.  This query would duplicate the ``id``
+        column:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b ON a.id = b.id
+
+        Whereas this one wouldn't:
+
+        .. code-block:: sql
+
+            SELECT * FROM a INNER JOIN b USING(id)
+
+    Example:
+        >>> class ABC:
+        >>>     x: int
+        >>>     y: int
+        ...
+        >>> conn.row_factory = ClassRowFactory(ABC)
+        >>> row = conn.cursor().execute("select 1 as x, 2 as y").fetchone()
+        >>> print(row)
+        <>
+        >>> print(row.x)
+        1
+    """
+    def __init__(self, class_pointer: Any) -> None:
+        self.class_pointer = class_pointer
+
+    def __call__(self, col_names: Any) -> Any:
+        _raise_on_duplicate_column_names(col_names)
+        def class_row(col_values):
+            key_value_mapping = dict(zip(col_names, col_values))
+            resulting_class = self.class_pointer(**key_value_mapping)
+            return resulting_class
+        return class_row
+
+
