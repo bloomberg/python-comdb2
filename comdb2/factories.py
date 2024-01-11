@@ -159,6 +159,7 @@ class ClassRowFactory:
         >>> class ABC:
         >>>     x: int
         >>>     y: int
+        
         ...
         >>> conn.row_factory = ClassRowFactory(ABC)
         >>> row = conn.cursor().execute("select 1 as x, 2 as y").fetchone()
