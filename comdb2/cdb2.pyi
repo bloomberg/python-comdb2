@@ -23,6 +23,7 @@ from typing import Mapping
 from typing import NamedTuple
 from typing import Optional
 from typing import Text
+from typing import Tuple
 from typing import Union
 from typing import overload
 
@@ -106,7 +107,23 @@ ERROR_CODE: Dict[Text, int]
 TYPE: Dict[Text, int]
 HANDLE_FLAGS: Dict[Text, int]
 
-Value = Union[None, int, float, bytes, Text, datetime, DatetimeUs]
+Value = Union[
+    None,
+    int,
+    float,
+    bytes,
+    Text,
+    datetime,
+    DatetimeUs,
+    List[int],
+    List[float],
+    List[bytes],
+    List[str],
+    Tuple[int, ...],
+    Tuple[float, ...],
+    Tuple[bytes, ...],
+    Tuple[str, ...],
+]
 Row = Any
 
 
