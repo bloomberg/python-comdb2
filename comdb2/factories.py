@@ -156,7 +156,11 @@ class ClassRowFactory:
             SELECT * FROM a INNER JOIN b USING(id)
 
     Example:
-        >>> class ABC:
+        >>> from dataclasses import dataclass
+        >>> from comdb2.dataclasses.class_row_factory import BaseRowFactoryClass
+        ...
+        >>> @dataclass
+        >>> class ABC(BaseRowFactoryClass):
         >>>     x: int
         >>>     y: int
         
