@@ -114,7 +114,7 @@ def test_datetimeus_type_stickiness():
     check(cdb2.DatetimeUs.now() - datetime.timedelta(0))
     check(cdb2.DatetimeUs.now() + datetime.timedelta(0))
     check(datetime.timedelta(0) + cdb2.DatetimeUs.now())
-    check(cdb2.DatetimeUs.now().replace(year=2015))
+    check(cdb2.DatetimeUs.now().replace(year=2016))
     check(cdb2.DatetimeUs.now().replace(tzinfo=new_york))
     check(cdb2.DatetimeUs.now(utc).astimezone(new_york))
 
