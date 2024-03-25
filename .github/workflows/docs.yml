@@ -1,0 +1,37 @@
+name: Docs
+
+on:
+  push:
+  pull_request:
+  release:
+    types:
+      - published
+  schedule:
+    # At 12:00 on every day-of-month
+    - cron: "0 12 */1 * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python dependencies
+        run: python3 -m pip install sphinx sphinx_rtd_theme
+      - name: Build docs
+        run: python -m sphinx docs html -a -E -n -v -W --keep-going
+      - name: Publish docs to GitHub Pages
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: html
+          single-commit: true
