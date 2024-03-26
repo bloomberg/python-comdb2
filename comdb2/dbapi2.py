@@ -240,6 +240,8 @@ specific exceptions:
    cursor for that connection.
 """
 
+from __future__ import annotations
+
 import functools
 import itertools
 import weakref
@@ -247,6 +249,8 @@ import datetime
 import re
 
 from . import cdb2
+from .cdb2 import Row, Value
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
 __all__ = ['apilevel', 'threadsafety', 'paramstyle',
            'connect', 'Connection', 'Cursor',
@@ -317,7 +321,7 @@ class _TypeObject:
         return 'TypeObject' + str(self.value_names)
 
 
-def _binary(string):
+def _binary(string: str | bytes) -> bytes:
     if isinstance(string, str):
         return string.encode('utf-8')
     return bytes(string)
@@ -544,7 +548,12 @@ def _modifies_rows(operation):
     return operation in ('commit', 'insert', 'update', 'delete')
 
 
-def connect(*args, **kwargs):
+def connect(
+    database_name: str | bytes,
+    tier: str | bytes="default",
+    autocommit: bool=False,
+    host: str | bytes | None=None
+) -> Connection:
     """Establish a connection to a Comdb2 database.
 
     All arguments are passed directly through to the `Connection` constructor.
@@ -558,7 +567,12 @@ def connect(*args, **kwargs):
     Returns:
         Connection: A handle for the newly established connection.
     """
-    return Connection(*args, **kwargs)
+    return Connection(
+        database_name=database_name,
+        tier=tier,
+        autocommit=autocommit,
+        host=host,
+    )
 
 
 class Connection:
@@ -619,8 +633,8 @@ class Connection:
             statements, disabling DB-API 2.0's automatic implicit transactions.
     """
 
-    def __init__(self, database_name, tier="default", autocommit=False,
-                 host=None):
+    def __init__(self, database_name: str | bytes, tier: str | bytes="default", autocommit: bool=False,
+                 host: str | bytes | None=None) -> None:
         if host is not None and tier != "default":
             raise InterfaceError("Connecting to a host by name and to a "
                                  "cluster by tier are mutually exclusive")
@@ -638,7 +652,7 @@ class Connection:
             raise InterfaceError("Attempted to use a closed Connection")
 
     @property
-    def row_factory(self):
+    def row_factory(self) -> Callable[[list[str]], Callable[[list[Value]], Row]]:
         """Factory used when constructing result rows.
 
         By default, or when set to ``None``, each row is returned as a `list`
@@ -660,7 +674,7 @@ class Connection:
         return self._hndl.row_factory
 
     @row_factory.setter
-    def row_factory(self, value):
+    def row_factory(self, value: Callable[[list[str]], Callable[[list[Value]], Row]]) -> None:
         self._check_closed()
         self._hndl.row_factory = value
 
@@ -678,7 +692,7 @@ class Connection:
             cursor = self.cursor()
         cursor._execute(operation, operation)
 
-    def close(self, ack_current_event=True):
+    def close(self, ack_current_event: bool=True) -> None:
         """Gracefully close the Comdb2 connection.
 
         Once a `Connection` has been closed, no further operations may be
@@ -711,7 +725,7 @@ class Connection:
         self._hndl.close(ack_current_event=ack_current_event)
         self._hndl = None
 
-    def commit(self):
+    def commit(self) -> None:
         """Commit any pending transaction to the database.
 
         This method will fail if the `Connection` is in ``autocommit`` mode and
@@ -720,7 +734,7 @@ class Connection:
         self._check_closed()
         self._execute("commit")
 
-    def rollback(self):
+    def rollback(self) -> None:
         """Rollback the current transaction.
 
         This method will fail if the `Connection` is in ``autocommit`` mode and
@@ -736,7 +750,7 @@ class Connection:
         self._check_closed()
         self._execute("rollback")
 
-    def cursor(self):
+    def cursor(self) -> Cursor:
         """Return a new `Cursor` for this connection.
 
         This calls `Cursor.close` on any outstanding `Cursor`; only one
@@ -792,7 +806,7 @@ class Cursor:
         'rollback': "Use Connection.rollback to roll back transactions",
     }
 
-    def __init__(self, conn):
+    def __init__(self, conn: Connection) -> None:
         self._arraysize = 1
         self._conn = conn
         self._hndl = conn._hndl
@@ -805,7 +819,7 @@ class Cursor:
             raise InterfaceError("Attempted to use a closed cursor")
 
     @property
-    def arraysize(self):
+    def arraysize(self) -> int:
         """Controls the number of rows to fetch at a time with `fetchmany`.
 
         The default is ``1``, meaning that a single row will be fetched at
@@ -814,11 +828,11 @@ class Cursor:
         return self._arraysize
 
     @arraysize.setter
-    def arraysize(self, value):
+    def arraysize(self, value: int) -> None:
         self._arraysize = value
 
     @property
-    def description(self):
+    def description(self) -> tuple[tuple[str, object, None, None, None, None, None], ...]:
         """Provides the name and type of each column in the latest result set.
 
         This read-only attribute will contain one element per column in the
@@ -853,7 +867,7 @@ class Cursor:
         return self._description
 
     @property
-    def rowcount(self):
+    def rowcount(self) -> int:
         """Provides the count of rows modified by the last transaction.
 
         For `Cursor` objects on a `Connection` that is not using ``autocommit``
@@ -882,12 +896,12 @@ class Cursor:
 
     # Optional DB API Extension
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         """Return a reference to the `Connection` that this `Cursor` uses."""
         self._check_closed()
         return self._conn
 
-    def close(self):
+    def close(self) -> None:
         """Close the cursor now.
 
         From this point forward an exception will be raised if any
@@ -903,7 +917,7 @@ class Cursor:
         self._description = None
         self._closed = True
 
-    def callproc(self, procname, parameters):
+    def callproc(self, procname: str, parameters: Sequence[Value]) -> Sequence[Value]:
         """Call a stored procedure with the given name.
 
         The ``parameters`` sequence must contain one entry for each argument
@@ -932,7 +946,7 @@ class Cursor:
         self.execute(sql, params_as_dict)
         return parameters[:]
 
-    def execute(self, sql, parameters=None):
+    def execute(self, sql: str, parameters: Mapping[str, Value] | None=None) -> Cursor:
         """Execute a database operation (query or command).
 
         The ``sql`` string must be provided as a Python format string, with
@@ -984,7 +998,7 @@ class Cursor:
         # return an iterable over the rows, but this isn't portable across DBs.
         return self
 
-    def executemany(self, sql, seq_of_parameters):
+    def executemany(self, sql: str, seq_of_parameters: Sequence[Mapping[str, Value]]) -> None:
         """Execute the same SQL statement repeatedly with different parameters.
 
         This is currently equivalent to calling execute multiple times, once
@@ -1045,11 +1059,11 @@ class Cursor:
             # an explicit transaction.  We can get the count of affected rows.
             self._update_rowcount()
 
-    def setinputsizes(self, sizes):
+    def setinputsizes(self, sizes: Sequence[Any]) -> None:
         """No-op; implemented for PEP-249 compliance."""
         self._check_closed()
 
-    def setoutputsize(self, size, column=None):
+    def setoutputsize(self, size: Any, column: int=None) -> None:
         """No-op; implemented for PEP-249 compliance."""
         self._check_closed()
 
@@ -1067,7 +1081,7 @@ class Cursor:
         if not self._description:
             self._description = None
 
-    def fetchone(self):
+    def fetchone(self) -> Row | None:
         """Fetch the next row of the current result set.
 
         Returns:
@@ -1082,7 +1096,7 @@ class Cursor:
         except StopIteration:
             return None
 
-    def fetchmany(self, n=None):
+    def fetchmany(self, n: int | None=None) -> Sequence[Row]:
         """Fetch the next set of rows of the current result set.
 
         Args:
@@ -1102,7 +1116,7 @@ class Cursor:
             n = self._arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
-    def fetchall(self):
+    def fetchall(self) -> Sequence[Row]:
         """Fetch all remaining rows of the current result set.
 
         Returns:
@@ -1115,7 +1129,7 @@ class Cursor:
         return [x for x in self]
 
     # Optional DB API Extension
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Row]:
         """Iterate over all rows in a result set.
 
         By default each row is returned as a `list`, where the elements in the
