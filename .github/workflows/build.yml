@@ -87,7 +87,8 @@ jobs:
             libunwind-dev
             zlib1g-dev &&
           tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install)
+          (cd bloomberg-comdb2/build && sudo make install) &&
+          sudo rm -rf bloomberg-comdb2/ bloomberg-comdb2.tar.gz
         '
       - uses: actions/checkout@v4
       - name: 'Set up Python 3.7'
@@ -136,7 +137,8 @@ jobs:
             libunwind-dev
             zlib1g-dev &&
           tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install)
+          (cd bloomberg-comdb2/build && sudo make install) &&
+          sudo rm -rf bloomberg-comdb2/ bloomberg-comdb2.tar.gz
         '
       - name: Start local comdb2 instance
         run: '
