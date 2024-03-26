@@ -79,10 +79,10 @@ def namedtuple_row_factory(col_names: list[str]) -> Callable[[list[Value]], Name
     # Ensure DML doesn't raise an exception for an invalid column name
     if len(col_names) == 1:
         if col_names[0] in ("rows inserted", "rows updated", "rows deleted"):
-            return namedtuple('Row', col_names, rename=True)._make
+            return namedtuple("Row", col_names, rename=True)._make
 
     try:
-        return namedtuple('Row', col_names)._make
+        return namedtuple("Row", col_names)._make
     except ValueError:
         # If the error was caused by duplicated column names, raise a more
         # preceise error message.  Otherwise, re-raise.
@@ -122,8 +122,10 @@ def dict_row_factory(col_names: list[str]) -> Callable[[list[Value]], dict[str, 
         1
     """
     _raise_on_duplicate_column_names(col_names)
+
     def dict_row(col_vals):
         return dict(zip(col_names, col_vals))
+
     return dict_row
 
 

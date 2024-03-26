@@ -135,8 +135,15 @@ from typing import Any, Callable, Iterator, List, Mapping, Tuple, Union
 from ._cdb2_types import Error, Effects, DatetimeUs
 from ._ccdb2 import Handle as CHandle
 
-__all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
-           'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
+__all__ = [
+    "Error",
+    "Handle",
+    "Effects",
+    "DatetimeUs",
+    "ERROR_CODE",
+    "TYPE",
+    "HANDLE_FLAGS",
+]
 
 Value = Union[
     None,
@@ -158,41 +165,42 @@ Value = Union[
 Row = Any
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
-ERROR_CODE = {'CONNECT_ERROR'         : -1,
-              'NOTCONNECTED'          : -2,
-              'PREPARE_ERROR'         : -3,
-              'IO_ERROR'              : -4,
-              'INTERNAL'              : -5,
-              'NOSTATEMENT'           : -6,
-              'BADCOLUMN'             : -7,
-              'BADSTATE'              : -8,
-              'ASYNCERR'              : -9,
-              'INVALID_ID'            : -12,
-              'RECORD_OUT_OF_RANGE'   : -13,
-              'REJECTED'              : -15,
-              'STOPPED'               : -16,
-              'BADREQ'                : -17,
-              'DBCREATE_FAILED'       : -18,
-              'THREADPOOL_INTERNAL'   : -20,
-              'READONLY'              : -21,
-              'NOMASTER'              : -101,
-              'UNTAGGED_DATABASE'     : -102,
-              'CONSTRAINTS'           : -103,
-              'DEADLOCK'              : 203,
-              'TRAN_IO_ERROR'         : -105,
-              'ACCESS'                : -106,
-              'TRAN_MODE_UNSUPPORTED' : -107,
-              'VERIFY_ERROR'          : 2,
-              'FKEY_VIOLATION'        : 3,
-              'NULL_CONSTRAINT'       : 4,
-              'CONV_FAIL'             : 113,
-              'NONKLESS'              : 114,
-              'MALLOC'                : 115,
-              'NOTSUPPORTED'          : 116,
-              'DUPLICATE'             : 299,
-              'TZNAME_FAIL'           : 401,
-              'UNKNOWN'               : 300,
-             }
+ERROR_CODE = {
+    "CONNECT_ERROR": -1,
+    "NOTCONNECTED": -2,
+    "PREPARE_ERROR": -3,
+    "IO_ERROR": -4,
+    "INTERNAL": -5,
+    "NOSTATEMENT": -6,
+    "BADCOLUMN": -7,
+    "BADSTATE": -8,
+    "ASYNCERR": -9,
+    "INVALID_ID": -12,
+    "RECORD_OUT_OF_RANGE": -13,
+    "REJECTED": -15,
+    "STOPPED": -16,
+    "BADREQ": -17,
+    "DBCREATE_FAILED": -18,
+    "THREADPOOL_INTERNAL": -20,
+    "READONLY": -21,
+    "NOMASTER": -101,
+    "UNTAGGED_DATABASE": -102,
+    "CONSTRAINTS": -103,
+    "DEADLOCK": 203,
+    "TRAN_IO_ERROR": -105,
+    "ACCESS": -106,
+    "TRAN_MODE_UNSUPPORTED": -107,
+    "VERIFY_ERROR": 2,
+    "FKEY_VIOLATION": 3,
+    "NULL_CONSTRAINT": 4,
+    "CONV_FAIL": 113,
+    "NONKLESS": 114,
+    "MALLOC": 115,
+    "NOTSUPPORTED": 116,
+    "DUPLICATE": 299,
+    "TZNAME_FAIL": 401,
+    "UNKNOWN": 300,
+}
 """This dict maps all known Comdb2 error names to their respective values.
 
 The value returned in `Error.error_code` will generally be the value
@@ -202,16 +210,17 @@ time.
 """
 
 # Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {'INTEGER'      : 1,
-        'REAL'         : 2,
-        'CSTRING'      : 3,
-        'BLOB'         : 4,
-        'DATETIME'     : 6,
-        'INTERVALYM'   : 7,
-        'INTERVALDS'   : 8,
-        'DATETIMEUS'   : 9,
-        'INTERVALDSUS' : 10,
-       }
+TYPE = {
+    "INTEGER": 1,
+    "REAL": 2,
+    "CSTRING": 3,
+    "BLOB": 4,
+    "DATETIME": 6,
+    "INTERVALYM": 7,
+    "INTERVALDS": 8,
+    "DATETIMEUS": 9,
+    "INTERVALDSUS": 10,
+}
 """This dict maps all known Comdb2 types to their enumeration value.
 
 Each value in the list returned by `Handle.column_types` will generally be the
@@ -220,12 +229,13 @@ guaranteed because new types can be added to the Comdb2 server at any time.
 """
 
 # Pull comdb2 handle flags from cdb2api.h into our namespace
-HANDLE_FLAGS = {'READ_INTRANS_RESULTS' : 2,
-                'DIRECT_CPU'           : 4,
-                'RANDOM'               : 8,
-                'RANDOMROOM'           : 16,
-                'ROOM'                 : 32,
-               }
+HANDLE_FLAGS = {
+    "READ_INTRANS_RESULTS": 2,
+    "DIRECT_CPU": 4,
+    "RANDOM": 8,
+    "RANDOMROOM": 16,
+    "ROOM": 32,
+}
 """This dict maps all known Comdb2 flags to their enumeration value.
 
 These values can be passed directly to `Handle`, though values not in this dict
@@ -270,23 +280,31 @@ class Handle:
             use a machine-specific default.
     """
 
-    def __init__(self, database_name: str | bytes, tier: str | bytes="default", flags: int=0, tz: str='UTC',
-                 host: str | bytes | None=None) -> None:
+    def __init__(
+        self,
+        database_name: str | bytes,
+        tier: str | bytes = "default",
+        flags: int = 0,
+        tz: str = "UTC",
+        host: str | bytes | None = None,
+    ) -> None:
         if host is not None:
             if tier != "default":
-                raise Error(ERROR_CODE['NOTSUPPORTED'],
-                            "Connecting to a host by name and to a "
-                            "cluster by tier are mutually exclusive")
+                raise Error(
+                    ERROR_CODE["NOTSUPPORTED"],
+                    "Connecting to a host by name and to a "
+                    "cluster by tier are mutually exclusive",
+                )
             else:
                 tier = host
-                flags |= HANDLE_FLAGS['DIRECT_CPU']
+                flags |= HANDLE_FLAGS["DIRECT_CPU"]
 
         self._hndl = CHandle(database_name, tier, flags)
         if tz is not None:
             self._hndl.execute("set timezone %s" % tz, {})
         self._cursor = iter([])
 
-    def close(self, ack_current_event: bool=True) -> None:
+    def close(self, ack_current_event: bool = True) -> None:
         """Gracefully close the Comdb2 connection.
 
         Once a `Handle` has been closed, no further operations may be performed
@@ -337,10 +355,14 @@ class Handle:
         return self._hndl.row_factory
 
     @row_factory.setter
-    def row_factory(self, value: Callable[[list[str]], Callable[[list[Value]], Row]]) -> None:
+    def row_factory(
+        self, value: Callable[[list[str]], Callable[[list[Value]], Row]]
+    ) -> None:
         self._hndl.row_factory = value
 
-    def execute(self, sql: str | bytes, parameters: Mapping[str, Value] | None=None) -> Handle:
+    def execute(
+        self, sql: str | bytes, parameters: Mapping[str, Value] | None = None
+    ) -> Handle:
         """Execute a database operation (query or command).
 
         The ``sql`` string may have placeholders for parameters to be passed.
@@ -397,6 +419,7 @@ class Handle:
         # compatibility for a user who did something like:
         #   next(handle.execute("select 1"))
         return next(self._cursor)
+
     next = __next__
 
     def get_effects(self) -> Effects:
