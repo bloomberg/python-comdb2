@@ -128,11 +128,34 @@ Note:
     Make sure to carefully read :ref:`String and Blob Types` on that page.
 """
 
+from __future__ import annotations
+
+import datetime
+from typing import Any, Callable, Iterator, List, Mapping, Tuple, Union
 from ._cdb2_types import Error, Effects, DatetimeUs
 from ._ccdb2 import Handle as CHandle
 
 __all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
            'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
+
+Value = Union[
+    None,
+    int,
+    float,
+    bytes,
+    str,
+    datetime.datetime,
+    DatetimeUs,
+    List[int],
+    List[float],
+    List[bytes],
+    List[str],
+    Tuple[int, ...],
+    Tuple[float, ...],
+    Tuple[bytes, ...],
+    Tuple[str, ...],
+]
+Row = Any
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
 ERROR_CODE = {'CONNECT_ERROR'         : -1,
@@ -247,8 +270,8 @@ class Handle:
             use a machine-specific default.
     """
 
-    def __init__(self, database_name, tier="default", flags=0, tz='UTC',
-                 host=None):
+    def __init__(self, database_name: str | bytes, tier: str | bytes="default", flags: int=0, tz: str='UTC',
+                 host: str | bytes | None=None) -> None:
         if host is not None:
             if tier != "default":
                 raise Error(ERROR_CODE['NOTSUPPORTED'],
@@ -263,7 +286,7 @@ class Handle:
             self._hndl.execute("set timezone %s" % tz, {})
         self._cursor = iter([])
 
-    def close(self, ack_current_event=True):
+    def close(self, ack_current_event: bool=True) -> None:
         """Gracefully close the Comdb2 connection.
 
         Once a `Handle` has been closed, no further operations may be performed
@@ -294,7 +317,7 @@ class Handle:
         self._hndl.close(ack_current_event=ack_current_event)
 
     @property
-    def row_factory(self):
+    def row_factory(self) -> Callable[[list[str]], Callable[[list[Value]], Row]]:
         """Factory used when constructing result rows.
 
         By default, or when set to ``None``, each row is returned as a `list`
@@ -314,10 +337,10 @@ class Handle:
         return self._hndl.row_factory
 
     @row_factory.setter
-    def row_factory(self, value):
+    def row_factory(self, value: Callable[[list[str]], Callable[[list[Value]], Row]]) -> None:
         self._hndl.row_factory = value
 
-    def execute(self, sql, parameters=None):
+    def execute(self, sql: str | bytes, parameters: Mapping[str, Value] | None=None) -> Handle:
         """Execute a database operation (query or command).
 
         The ``sql`` string may have placeholders for parameters to be passed.
@@ -353,7 +376,7 @@ class Handle:
         self._cursor = iter(self._hndl.execute(sql, parameters))
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Row]:
         """Iterate over all remaining rows in the current result set.
 
         By default each row is returned as a `list`, where the elements in the
@@ -376,7 +399,7 @@ class Handle:
         return next(self._cursor)
     next = __next__
 
-    def get_effects(self):
+    def get_effects(self) -> Effects:
         """Return counts of rows affected by executed queries.
 
         Within a transaction, these counts are a running total from the start
@@ -399,7 +422,7 @@ class Handle:
         """
         return self._hndl.get_effects()
 
-    def column_names(self):
+    def column_names(self) -> list[str]:
         """Returns the names of the columns of the current result set.
 
         Returns:
@@ -407,7 +430,7 @@ class Handle:
         """
         return self._hndl.column_names()
 
-    def column_types(self):
+    def column_types(self) -> list[int]:
         """Returns the type codes of the columns of the current result set.
 
         Returns:
