@@ -21,11 +21,16 @@ a `collections.namedtuple` by using `namedtuple_row_factory` as the
 A factory function will be called with a list of column names, and must return
 a callable that will be called once per row with a list of column values.
 """
+
+from __future__ import annotations
+
 from collections import namedtuple
 from collections import Counter
+from .cdb2 import Value
+from typing import Callable, NamedTuple
 
 
-def namedtuple_row_factory(col_names):
+def namedtuple_row_factory(col_names: list[str]) -> Callable[[list[Value]], NamedTuple]:
     """Return each result row as a `collections.namedtuple`.
 
     The fields of the `~collections.namedtuple` are set to the names of the
@@ -85,7 +90,7 @@ def namedtuple_row_factory(col_names):
         raise
 
 
-def dict_row_factory(col_names):
+def dict_row_factory(col_names: list[str]) -> Callable[[list[Value]], dict[str, Value]]:
     """Return each result row as a `dict` mapping column names to values.
 
     Note:
