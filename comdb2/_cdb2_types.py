@@ -9,21 +9,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
-from datetime import datetime
+from __future__ import annotations
 
-__name__ = 'comdb2.cdb2'
+import datetime
+from typing import NamedTuple
+
+__name__ = "comdb2.cdb2"
 
 
 def _errstr(msg):
     try:
-        return msg.decode('utf-8')
+        return msg.decode("utf-8")
     except UnicodeDecodeError:
         # The DB's error strings aren't necessarily UTF-8.
         # If one isn't, it's preferable to mangle the error string than to
         # raise a UnicodeDecodeError (which would obscure the root cause).
         # Return a unicode string with \x escapes in place of non-ascii bytes.
-        return msg.decode('latin1').encode('unicode_escape').decode('ascii')
+        return msg.decode("latin1").encode("unicode_escape").decode("ascii")
 
 
 class Error(RuntimeError):
@@ -34,16 +36,16 @@ class Error(RuntimeError):
         error_message (str): The string returned by cdb2api's ``cdb2_errstr``
             after the failed call.
     """
-    def __init__(self, error_code, error_message):
-        if not(isinstance(error_message, str)):
+
+    def __init__(self, error_code: int, error_message: str) -> None:
+        if not (isinstance(error_message, str)):
             error_message = _errstr(error_message)
         self.error_code = error_code
         self.error_message = error_message
         super().__init__(error_code, error_message)
 
 
-class Effects(namedtuple('Effects',
-    "num_affected num_selected num_updated num_deleted num_inserted")):
+class Effects(NamedTuple):
     """Type used to represent the count of rows affected by a SQL query.
 
     An object of this type is returned by `Handle.get_effects`.
@@ -55,10 +57,15 @@ class Effects(namedtuple('Effects',
         num_deleted (int): The number of rows that were deleted.
         num_inserted (int): The number of rows that were inserted.
     """
-    __slots__ = ()
+
+    num_affected: int
+    num_selected: int
+    num_updated: int
+    num_deleted: int
+    num_inserted: int
 
 
-class DatetimeUs(datetime):
+class DatetimeUs(datetime.datetime):
     """Provides a distinct representation for Comdb2's DATETIMEUS type.
 
     Historically, Comdb2 provided a DATETIME type with millisecond precision.
@@ -80,40 +87,51 @@ class DatetimeUs(datetime):
     `.fromdatetime` alternate constructor, or any of the other alternate
     constructors inherited from `datetime.datetime`.
     """
+
     @classmethod
-    def fromdatetime(cls, dt):
+    def fromdatetime(cls, dt: datetime.datetime) -> DatetimeUs:
         """Return a `DatetimeUs` copied from a given `datetime.datetime`"""
-        fold = getattr(dt, 'fold', None)
+        fold = getattr(dt, "fold", None)
         kwargs = {}
         if fold is not None:
-            kwargs['fold'] = fold
+            kwargs["fold"] = fold
 
-        return DatetimeUs(dt.year, dt.month, dt.day,
-                          dt.hour, dt.minute, dt.second, dt.microsecond,
-                          dt.tzinfo, **kwargs)
+        return DatetimeUs(
+            dt.year,
+            dt.month,
+            dt.day,
+            dt.hour,
+            dt.minute,
+            dt.second,
+            dt.microsecond,
+            dt.tzinfo,
+            **kwargs,
+        )
 
-    def __add__(self, other):
+    def __add__(self, other: datetime.timedelta) -> DatetimeUs:
         ret = super().__add__(other)
-        if isinstance(ret, datetime):
+        if isinstance(ret, datetime.datetime):
             return DatetimeUs.fromdatetime(ret)
         return ret  # must be a timedelta
 
-    def __sub__(self, other):
+    def __sub__(self, other: datetime.timedelta) -> DatetimeUs:
         ret = super().__sub__(other)
-        if isinstance(ret, datetime):
+        if isinstance(ret, datetime.datetime):
             return DatetimeUs.fromdatetime(ret)
         return ret  # must be a timedelta
 
-    def __radd__(self, other):
+    def __radd__(self, other: datetime.timedelta) -> DatetimeUs:
         return self + other
 
     @classmethod
-    def now(cls, tz=None):
+    def now(cls, tz: datetime.tzinfo | None = None) -> DatetimeUs:
         ret = super().now(tz)
         return DatetimeUs.fromdatetime(ret)
 
     @classmethod
-    def fromtimestamp(cls, timestamp, tz=None):
+    def fromtimestamp(
+        cls, timestamp: float, tz: datetime.tzinfo | None = None
+    ) -> DatetimeUs:
         ret = super().fromtimestamp(timestamp, tz)
         return DatetimeUs.fromdatetime(ret)
 
