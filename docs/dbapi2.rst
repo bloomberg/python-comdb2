@@ -124,6 +124,11 @@ for consistency with the required DATETIME constructors documented above.
         after the Unix epoch, with microsecond precision
     :rtype: `DatetimeUs`
 
+.. class:: ColumnType
+
+    This is an alias for `comdb2.cdb2.ColumnType`, reexported from
+    ``comdb2.dbapi2`` for convenience.
+
 .. _Exceptions:
 
 Exceptions

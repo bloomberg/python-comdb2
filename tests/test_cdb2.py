@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 
 from comdb2 import cdb2
 from comdb2.factories import dict_row_factory
@@ -301,3 +302,43 @@ def test_parameter_name_in_binding_errors_noexception():
     assert exc.value.args[1] == (
         "Can't map complex value (5+6j) for parameter 'param' to a Comdb2 type"
     )
+
+
+def test_specifying_column_types():
+    # GIVEN
+    hndl = cdb2.Handle("mattdb", "dev")
+    column_types = [
+        cdb2.ColumnType.INT,
+        cdb2.ColumnType.REAL,
+        cdb2.ColumnType.TEXT,
+        cdb2.ColumnType.BLOB,
+        cdb2.ColumnType.DATETIME,
+        cdb2.ColumnType.DATETIMEUS,
+    ]
+    sql = "select 0, 0, 0, 0, 0, 0"
+
+    # WHEN
+    (row,) = hndl.execute(sql, column_types=column_types)
+
+    # THEN
+    assert row is not None
+    assert type(row[0]) is int
+    assert type(row[1]) is float
+    assert type(row[2]) is str
+    assert type(row[3]) is bytes
+    assert type(row[4]) is datetime.datetime
+    assert type(row[5]) is cdb2.DatetimeUs
+
+
+def test_providing_empty_column_types_array():
+    # GIVEN
+    hndl = cdb2.Handle("mattdb", "dev")
+    column_types = []
+    sql = "select 0"
+
+    # WHEN
+    (row,) = hndl.execute(sql, column_types=column_types)
+
+    # THEN
+    assert row is not None
+    assert type(row[0]) is int
