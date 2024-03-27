@@ -128,48 +128,82 @@ Note:
     Make sure to carefully read :ref:`String and Blob Types` on that page.
 """
 
-from ._cdb2_types import Error, Effects, DatetimeUs
+from __future__ import annotations
+
+import array
+import datetime
+from typing import Any, Callable, Iterator, List, Mapping, Sequence, Tuple, Union
+from ._cdb2_types import Error, Effects, DatetimeUs, ColumnType, ConnectionFlags
 from ._ccdb2 import Handle as CHandle
 
-__all__ = ['Error', 'Handle', 'Effects', 'DatetimeUs',
-           'ERROR_CODE', 'TYPE', 'HANDLE_FLAGS']
+__all__ = [
+    "Error",
+    "Handle",
+    "Effects",
+    "DatetimeUs",
+    "ERROR_CODE",
+    "TYPE",
+    "HANDLE_FLAGS",
+    "ColumnType",
+    "ConnectionFlags",
+]
+
+Value = Union[
+    None,
+    int,
+    float,
+    bytes,
+    str,
+    datetime.datetime,
+    DatetimeUs,
+    List[int],
+    List[float],
+    List[bytes],
+    List[str],
+    Tuple[int, ...],
+    Tuple[float, ...],
+    Tuple[bytes, ...],
+    Tuple[str, ...],
+]
+Row = Any
 
 # Pull all comdb2 error codes from cdb2api.h into our namespace
-ERROR_CODE = {'CONNECT_ERROR'         : -1,
-              'NOTCONNECTED'          : -2,
-              'PREPARE_ERROR'         : -3,
-              'IO_ERROR'              : -4,
-              'INTERNAL'              : -5,
-              'NOSTATEMENT'           : -6,
-              'BADCOLUMN'             : -7,
-              'BADSTATE'              : -8,
-              'ASYNCERR'              : -9,
-              'INVALID_ID'            : -12,
-              'RECORD_OUT_OF_RANGE'   : -13,
-              'REJECTED'              : -15,
-              'STOPPED'               : -16,
-              'BADREQ'                : -17,
-              'DBCREATE_FAILED'       : -18,
-              'THREADPOOL_INTERNAL'   : -20,
-              'READONLY'              : -21,
-              'NOMASTER'              : -101,
-              'UNTAGGED_DATABASE'     : -102,
-              'CONSTRAINTS'           : -103,
-              'DEADLOCK'              : 203,
-              'TRAN_IO_ERROR'         : -105,
-              'ACCESS'                : -106,
-              'TRAN_MODE_UNSUPPORTED' : -107,
-              'VERIFY_ERROR'          : 2,
-              'FKEY_VIOLATION'        : 3,
-              'NULL_CONSTRAINT'       : 4,
-              'CONV_FAIL'             : 113,
-              'NONKLESS'              : 114,
-              'MALLOC'                : 115,
-              'NOTSUPPORTED'          : 116,
-              'DUPLICATE'             : 299,
-              'TZNAME_FAIL'           : 401,
-              'UNKNOWN'               : 300,
-             }
+ERROR_CODE = {
+    "CONNECT_ERROR": -1,
+    "NOTCONNECTED": -2,
+    "PREPARE_ERROR": -3,
+    "IO_ERROR": -4,
+    "INTERNAL": -5,
+    "NOSTATEMENT": -6,
+    "BADCOLUMN": -7,
+    "BADSTATE": -8,
+    "ASYNCERR": -9,
+    "INVALID_ID": -12,
+    "RECORD_OUT_OF_RANGE": -13,
+    "REJECTED": -15,
+    "STOPPED": -16,
+    "BADREQ": -17,
+    "DBCREATE_FAILED": -18,
+    "THREADPOOL_INTERNAL": -20,
+    "READONLY": -21,
+    "NOMASTER": -101,
+    "UNTAGGED_DATABASE": -102,
+    "CONSTRAINTS": -103,
+    "DEADLOCK": 203,
+    "TRAN_IO_ERROR": -105,
+    "ACCESS": -106,
+    "TRAN_MODE_UNSUPPORTED": -107,
+    "VERIFY_ERROR": 2,
+    "FKEY_VIOLATION": 3,
+    "NULL_CONSTRAINT": 4,
+    "CONV_FAIL": 113,
+    "NONKLESS": 114,
+    "MALLOC": 115,
+    "NOTSUPPORTED": 116,
+    "DUPLICATE": 299,
+    "TZNAME_FAIL": 401,
+    "UNKNOWN": 300,
+}
 """This dict maps all known Comdb2 error names to their respective values.
 
 The value returned in `Error.error_code` will generally be the value
@@ -179,34 +213,19 @@ time.
 """
 
 # Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {'INTEGER'      : 1,
-        'REAL'         : 2,
-        'CSTRING'      : 3,
-        'BLOB'         : 4,
-        'DATETIME'     : 6,
-        'INTERVALYM'   : 7,
-        'INTERVALDS'   : 8,
-        'DATETIMEUS'   : 9,
-        'INTERVALDSUS' : 10,
-       }
+TYPE = {e.name: e.value for e in ColumnType}
 """This dict maps all known Comdb2 types to their enumeration value.
 
-Each value in the list returned by `Handle.column_types` will generally be the
-value corresponding to one of the keys in this dict, though that's not always
-guaranteed because new types can be added to the Comdb2 server at any time.
+It predates the `ColumnType` enum and is retained only for backwards
+compatibility. The `ColumnType` enum should be preferred for new usage.
 """
 
 # Pull comdb2 handle flags from cdb2api.h into our namespace
-HANDLE_FLAGS = {'READ_INTRANS_RESULTS' : 2,
-                'DIRECT_CPU'           : 4,
-                'RANDOM'               : 8,
-                'RANDOMROOM'           : 16,
-                'ROOM'                 : 32,
-               }
-"""This dict maps all known Comdb2 flags to their enumeration value.
+HANDLE_FLAGS = {e.name: e.value for e in ConnectionFlags}
+"""This dict maps connection flags to their enumeration value.
 
-These values can be passed directly to `Handle`, though values not in this dict
-can be passed as well (such as the bitwise OR of two different flags).
+It predates the `ConnectionFlags` enum and is retained only for backwards
+compatibility. The `ConnectionFlags` enum should be preferred for new usage.
 """
 
 
@@ -247,23 +266,31 @@ class Handle:
             use a machine-specific default.
     """
 
-    def __init__(self, database_name, tier="default", flags=0, tz='UTC',
-                 host=None):
+    def __init__(
+        self,
+        database_name: str | bytes,
+        tier: str | bytes = "default",
+        flags: int = 0,
+        tz: str = "UTC",
+        host: str | bytes | None = None,
+    ) -> None:
         if host is not None:
             if tier != "default":
-                raise Error(ERROR_CODE['NOTSUPPORTED'],
-                            "Connecting to a host by name and to a "
-                            "cluster by tier are mutually exclusive")
+                raise Error(
+                    ERROR_CODE["NOTSUPPORTED"],
+                    "Connecting to a host by name and to a "
+                    "cluster by tier are mutually exclusive",
+                )
             else:
                 tier = host
-                flags |= HANDLE_FLAGS['DIRECT_CPU']
+                flags |= HANDLE_FLAGS["DIRECT_CPU"]
 
         self._hndl = CHandle(database_name, tier, flags)
         if tz is not None:
             self._hndl.execute("set timezone %s" % tz, {})
         self._cursor = iter([])
 
-    def close(self, ack_current_event=True):
+    def close(self, ack_current_event: bool = True) -> None:
         """Gracefully close the Comdb2 connection.
 
         Once a `Handle` has been closed, no further operations may be performed
@@ -294,7 +321,7 @@ class Handle:
         self._hndl.close(ack_current_event=ack_current_event)
 
     @property
-    def row_factory(self):
+    def row_factory(self) -> Callable[[list[str]], Callable[[list[Value]], Row]]:
         """Factory used when constructing result rows.
 
         By default, or when set to ``None``, each row is returned as a `list`
@@ -314,10 +341,18 @@ class Handle:
         return self._hndl.row_factory
 
     @row_factory.setter
-    def row_factory(self, value):
+    def row_factory(
+        self, value: Callable[[list[str]], Callable[[list[Value]], Row]]
+    ) -> None:
         self._hndl.row_factory = value
 
-    def execute(self, sql, parameters=None):
+    def execute(
+        self,
+        sql: str | bytes,
+        parameters: Mapping[str, Value] | None = None,
+        *,
+        column_types: Sequence[ColumnType] | None = None,
+    ) -> Handle:
         """Execute a database operation (query or command).
 
         The ``sql`` string may have placeholders for parameters to be passed.
@@ -326,10 +361,20 @@ class Handle:
         Placeholders for named parameters must be in Comdb2's native format,
         ``@param_name``.
 
+        If ``column_types`` is provided, it must be a sequence of members of
+        the `ColumnType` enumeration. The database will coerce the data in the
+        Nth column of the result set to the Nth given column type. An error
+        will be raised if the number of elements in ``column_types`` doesn't
+        match the number of columns in the result set, or if one of the
+        elements is not a supported column type, or if coercion fails.
+
         Args:
             sql (str): The SQL string to execute.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+            column_types (Sequence[int]): An optional sequence of types (values
+                of the `ColumnType` enumeration) which the columns of the
+                result set will be coerced to.
 
         Returns:
             Handle: This method returns the `Handle` that it was called on,
@@ -350,10 +395,17 @@ class Handle:
         """
         if parameters is None:
             parameters = {}
-        self._cursor = iter(self._hndl.execute(sql, parameters))
+
+        column_types_array: Sequence[int] | None = None
+        if column_types is not None:
+            column_types_array = array.array("i", column_types)
+        if not column_types_array:
+            column_types_array = None
+
+        self._cursor = iter(self._hndl.execute(sql, parameters, column_types_array))
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Row]:
         """Iterate over all remaining rows in the current result set.
 
         By default each row is returned as a `list`, where the elements in the
@@ -374,9 +426,10 @@ class Handle:
         # compatibility for a user who did something like:
         #   next(handle.execute("select 1"))
         return next(self._cursor)
+
     next = __next__
 
-    def get_effects(self):
+    def get_effects(self) -> Effects:
         """Return counts of rows affected by executed queries.
 
         Within a transaction, these counts are a running total from the start
@@ -399,7 +452,7 @@ class Handle:
         """
         return self._hndl.get_effects()
 
-    def column_names(self):
+    def column_names(self) -> list[str]:
         """Returns the names of the columns of the current result set.
 
         Returns:
@@ -407,7 +460,7 @@ class Handle:
         """
         return self._hndl.column_names()
 
-    def column_types(self):
+    def column_types(self) -> list[int]:
         """Returns the type codes of the columns of the current result set.
 
         Returns:

@@ -240,6 +240,8 @@ specific exceptions:
    cursor for that connection.
 """
 
+from __future__ import annotations
+
 import functools
 import itertools
 import weakref
@@ -247,17 +249,43 @@ import datetime
 import re
 
 from . import cdb2
+from .cdb2 import ColumnType, Row, Value
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
-__all__ = ['apilevel', 'threadsafety', 'paramstyle',
-           'connect', 'Connection', 'Cursor',
-           'STRING', 'BINARY', 'NUMBER', 'DATETIME', 'ROWID',
-           'Datetime', 'DatetimeUs', 'Binary', 'Timestamp', 'TimestampUs',
-           'DatetimeFromTicks', 'DatetimeUsFromTicks', 'TimestampFromTicks',
-           'Error', 'Warning', 'InterfaceError', 'DatabaseError',
-           'InternalError', 'OperationalError', 'ProgrammingError',
-           'IntegrityError', 'DataError', 'NotSupportedError',
-           'UniqueKeyConstraintError', 'ForeignKeyConstraintError',
-           'NonNullConstraintError']
+__all__ = [
+    "apilevel",
+    "threadsafety",
+    "paramstyle",
+    "connect",
+    "Connection",
+    "Cursor",
+    "STRING",
+    "BINARY",
+    "NUMBER",
+    "DATETIME",
+    "ROWID",
+    "Datetime",
+    "DatetimeUs",
+    "Binary",
+    "Timestamp",
+    "TimestampUs",
+    "DatetimeFromTicks",
+    "DatetimeUsFromTicks",
+    "TimestampFromTicks",
+    "Error",
+    "Warning",
+    "InterfaceError",
+    "DatabaseError",
+    "InternalError",
+    "OperationalError",
+    "ProgrammingError",
+    "IntegrityError",
+    "DataError",
+    "NotSupportedError",
+    "UniqueKeyConstraintError",
+    "ForeignKeyConstraintError",
+    "NonNullConstraintError",
+]
 
 apilevel = "2.0"
 """This module conforms to the Python Database API Specification 2.0."""
@@ -298,7 +326,7 @@ _FIRST_WORD_OF_STMT = re.compile(
     """,
     re.VERBOSE | re.DOTALL | re.ASCII,
 )
-_VALID_SP_NAME = re.compile(r'^[A-Za-z0-9_.]+$')
+_VALID_SP_NAME = re.compile(r"^[A-Za-z0-9_.]+$")
 
 
 @functools.total_ordering
@@ -314,24 +342,25 @@ class _TypeObject:
         return self != other and other < self.values
 
     def __repr__(self):
-        return 'TypeObject' + str(self.value_names)
+        return "TypeObject" + str(self.value_names)
 
 
-def _binary(string):
+def _binary(string: str | bytes) -> bytes:
     if isinstance(string, str):
-        return string.encode('utf-8')
+        return string.encode("utf-8")
     return bytes(string)
 
-STRING = _TypeObject('CSTRING')
+
+STRING = _TypeObject("CSTRING")
 """The type codes of TEXT result columns compare equal to this constant."""
 
-BINARY = _TypeObject('BLOB')
+BINARY = _TypeObject("BLOB")
 """The type codes of BLOB result columns compare equal to this constant."""
 
-NUMBER = _TypeObject('INTEGER', 'REAL')
+NUMBER = _TypeObject("INTEGER", "REAL")
 """The type codes of numeric result columns compare equal to this constant."""
 
-DATETIME = _TypeObject('DATETIME', 'DATETIMEUS')
+DATETIME = _TypeObject("DATETIME", "DATETIMEUS")
 """The type codes of datetime result columns compare equal to this constant."""
 
 ROWID = STRING
@@ -359,6 +388,7 @@ class Error(UserException):
     `Connection` objects, to simplify error handling in environments where
     multiple connections from different modules are used.
     """
+
     pass
 
 
@@ -367,21 +397,25 @@ class Warning(UserException):
 
     This is required to exist by the DB-API interface, but we never raise it.
     """
+
     pass
 
 
 class InterfaceError(Error):
     """Exception raised for errors caused by misuse of this module."""
+
     pass
 
 
 class DatabaseError(Error):
     """Base class for all errors reported by the database."""
+
     pass
 
 
 class InternalError(DatabaseError):
     """Exception raised for internal errors reported by the database."""
+
     pass
 
 
@@ -391,6 +425,7 @@ class OperationalError(DatabaseError):
     These errors are not necessarily the result of a bug either in the
     application or in the database - for example, dropped connections.
     """
+
     pass
 
 
@@ -400,6 +435,7 @@ class ProgrammingError(DatabaseError):
     For example, this will be raised for syntactically incorrect SQL, or for
     passing a different number of parameters than are required by the query.
     """
+
     pass
 
 
@@ -411,6 +447,7 @@ class IntegrityError(DatabaseError):
     an index may not have duplicates.  Other types of constraint violations may
     raise this type directly.
     """
+
     pass
 
 
@@ -423,6 +460,7 @@ class UniqueKeyConstraintError(IntegrityError):
 
     .. versionadded:: 1.1
     """
+
     pass
 
 
@@ -439,6 +477,7 @@ class ForeignKeyConstraintError(IntegrityError):
 
     .. versionadded:: 1.1
     """
+
     pass
 
 
@@ -451,6 +490,7 @@ class NonNullConstraintError(IntegrityError):
 
     .. versionadded:: 1.1
     """
+
     pass
 
 
@@ -461,65 +501,57 @@ class DataError(DatabaseError):
     of range for the column type that would store it, or if you specify an
     invalid timezone name for the connection.
     """
+
     pass
 
 
 class NotSupportedError(DatabaseError):
     """Exception raised when unsupported operations are attempted."""
+
     pass
 
 
 _EXCEPTION_BY_RC = {
-    cdb2.ERROR_CODE['CONNECT_ERROR']         : OperationalError,
-    cdb2.ERROR_CODE['NOTCONNECTED']          : ProgrammingError,
-    cdb2.ERROR_CODE['PREPARE_ERROR']         : ProgrammingError,
-    cdb2.ERROR_CODE['IO_ERROR']              : OperationalError,
-    cdb2.ERROR_CODE['INTERNAL']              : InternalError,
-    cdb2.ERROR_CODE['NOSTATEMENT']           : ProgrammingError,
-    cdb2.ERROR_CODE['BADCOLUMN']             : ProgrammingError,
-    cdb2.ERROR_CODE['BADSTATE']              : ProgrammingError,
-    cdb2.ERROR_CODE['ASYNCERR']              : OperationalError,
-
-    cdb2.ERROR_CODE['INVALID_ID']            : InternalError,
-    cdb2.ERROR_CODE['RECORD_OUT_OF_RANGE']   : OperationalError,
-
-    cdb2.ERROR_CODE['REJECTED']              : OperationalError,
-    cdb2.ERROR_CODE['STOPPED']               : OperationalError,
-    cdb2.ERROR_CODE['BADREQ']                : OperationalError,
-    cdb2.ERROR_CODE['DBCREATE_FAILED']       : OperationalError,
-
-    cdb2.ERROR_CODE['THREADPOOL_INTERNAL']   : OperationalError,
-    cdb2.ERROR_CODE['READONLY']              : NotSupportedError,
-
-    cdb2.ERROR_CODE['NOMASTER']              : InternalError,
-    cdb2.ERROR_CODE['UNTAGGED_DATABASE']     : NotSupportedError,
-    cdb2.ERROR_CODE['CONSTRAINTS']           : IntegrityError,
-    cdb2.ERROR_CODE['DEADLOCK']              : OperationalError,
-
-    cdb2.ERROR_CODE['TRAN_IO_ERROR']         : OperationalError,
-    cdb2.ERROR_CODE['ACCESS']                : OperationalError,
-
-    cdb2.ERROR_CODE['TRAN_MODE_UNSUPPORTED'] : NotSupportedError,
-
-    cdb2.ERROR_CODE['VERIFY_ERROR']          : OperationalError,
-    cdb2.ERROR_CODE['FKEY_VIOLATION']        : ForeignKeyConstraintError,
-    cdb2.ERROR_CODE['NULL_CONSTRAINT']       : NonNullConstraintError,
-
-    cdb2.ERROR_CODE['CONV_FAIL']             : DataError,
-    cdb2.ERROR_CODE['NONKLESS']              : NotSupportedError,
-    cdb2.ERROR_CODE['MALLOC']                : OperationalError,
-    cdb2.ERROR_CODE['NOTSUPPORTED']          : NotSupportedError,
-
-    cdb2.ERROR_CODE['DUPLICATE']             : UniqueKeyConstraintError,
-    cdb2.ERROR_CODE['TZNAME_FAIL']           : DataError,
-
-    cdb2.ERROR_CODE['UNKNOWN']               : OperationalError,
+    cdb2.ERROR_CODE["CONNECT_ERROR"]: OperationalError,
+    cdb2.ERROR_CODE["NOTCONNECTED"]: ProgrammingError,
+    cdb2.ERROR_CODE["PREPARE_ERROR"]: ProgrammingError,
+    cdb2.ERROR_CODE["IO_ERROR"]: OperationalError,
+    cdb2.ERROR_CODE["INTERNAL"]: InternalError,
+    cdb2.ERROR_CODE["NOSTATEMENT"]: ProgrammingError,
+    cdb2.ERROR_CODE["BADCOLUMN"]: ProgrammingError,
+    cdb2.ERROR_CODE["BADSTATE"]: ProgrammingError,
+    cdb2.ERROR_CODE["ASYNCERR"]: OperationalError,
+    cdb2.ERROR_CODE["INVALID_ID"]: InternalError,
+    cdb2.ERROR_CODE["RECORD_OUT_OF_RANGE"]: OperationalError,
+    cdb2.ERROR_CODE["REJECTED"]: OperationalError,
+    cdb2.ERROR_CODE["STOPPED"]: OperationalError,
+    cdb2.ERROR_CODE["BADREQ"]: OperationalError,
+    cdb2.ERROR_CODE["DBCREATE_FAILED"]: OperationalError,
+    cdb2.ERROR_CODE["THREADPOOL_INTERNAL"]: OperationalError,
+    cdb2.ERROR_CODE["READONLY"]: NotSupportedError,
+    cdb2.ERROR_CODE["NOMASTER"]: InternalError,
+    cdb2.ERROR_CODE["UNTAGGED_DATABASE"]: NotSupportedError,
+    cdb2.ERROR_CODE["CONSTRAINTS"]: IntegrityError,
+    cdb2.ERROR_CODE["DEADLOCK"]: OperationalError,
+    cdb2.ERROR_CODE["TRAN_IO_ERROR"]: OperationalError,
+    cdb2.ERROR_CODE["ACCESS"]: OperationalError,
+    cdb2.ERROR_CODE["TRAN_MODE_UNSUPPORTED"]: NotSupportedError,
+    cdb2.ERROR_CODE["VERIFY_ERROR"]: OperationalError,
+    cdb2.ERROR_CODE["FKEY_VIOLATION"]: ForeignKeyConstraintError,
+    cdb2.ERROR_CODE["NULL_CONSTRAINT"]: NonNullConstraintError,
+    cdb2.ERROR_CODE["CONV_FAIL"]: DataError,
+    cdb2.ERROR_CODE["NONKLESS"]: NotSupportedError,
+    cdb2.ERROR_CODE["MALLOC"]: OperationalError,
+    cdb2.ERROR_CODE["NOTSUPPORTED"]: NotSupportedError,
+    cdb2.ERROR_CODE["DUPLICATE"]: UniqueKeyConstraintError,
+    cdb2.ERROR_CODE["TZNAME_FAIL"]: DataError,
+    cdb2.ERROR_CODE["UNKNOWN"]: OperationalError,
 }
 
 
 def _raise_wrapped_exception(exc):
     code = exc.error_code
-    msg = '%s (cdb2api rc %d)' % (exc.error_message, code)
+    msg = "%s (cdb2api rc %d)" % (exc.error_message, code)
     if "null constraint violation" in msg:
         raise NonNullConstraintError(msg) from exc  # DRQS 86013831
     raise _EXCEPTION_BY_RC.get(code, OperationalError)(msg) from exc
@@ -533,7 +565,7 @@ def _sql_operation(sql):
 
 
 def _operation_ends_transaction(operation):
-    return operation == 'commit' or operation == 'rollback'
+    return operation == "commit" or operation == "rollback"
 
 
 def _modifies_rows(operation):
@@ -541,10 +573,15 @@ def _modifies_rows(operation):
     # exec is deliberately excluded because it might return a result set, and
     # this function is used to determine whether it's safe to call
     # cdb2_get_effects after running the operation.
-    return operation in ('commit', 'insert', 'update', 'delete')
+    return operation in ("commit", "insert", "update", "delete")
 
 
-def connect(*args, **kwargs):
+def connect(
+    database_name: str | bytes,
+    tier: str | bytes = "default",
+    autocommit: bool = False,
+    host: str | bytes | None = None,
+) -> Connection:
     """Establish a connection to a Comdb2 database.
 
     All arguments are passed directly through to the `Connection` constructor.
@@ -558,7 +595,12 @@ def connect(*args, **kwargs):
     Returns:
         Connection: A handle for the newly established connection.
     """
-    return Connection(*args, **kwargs)
+    return Connection(
+        database_name=database_name,
+        tier=tier,
+        autocommit=autocommit,
+        host=host,
+    )
 
 
 class Connection:
@@ -619,11 +661,18 @@ class Connection:
             statements, disabling DB-API 2.0's automatic implicit transactions.
     """
 
-    def __init__(self, database_name, tier="default", autocommit=False,
-                 host=None):
+    def __init__(
+        self,
+        database_name: str | bytes,
+        tier: str | bytes = "default",
+        autocommit: bool = False,
+        host: str | bytes | None = None,
+    ) -> None:
         if host is not None and tier != "default":
-            raise InterfaceError("Connecting to a host by name and to a "
-                                 "cluster by tier are mutually exclusive")
+            raise InterfaceError(
+                "Connecting to a host by name and to a "
+                "cluster by tier are mutually exclusive"
+            )
 
         self._active_cursor = None
         self._in_transaction = False
@@ -638,7 +687,7 @@ class Connection:
             raise InterfaceError("Attempted to use a closed Connection")
 
     @property
-    def row_factory(self):
+    def row_factory(self) -> Callable[[list[str]], Callable[[list[Value]], Row]]:
         """Factory used when constructing result rows.
 
         By default, or when set to ``None``, each row is returned as a `list`
@@ -660,7 +709,9 @@ class Connection:
         return self._hndl.row_factory
 
     @row_factory.setter
-    def row_factory(self, value):
+    def row_factory(
+        self, value: Callable[[list[str]], Callable[[list[Value]], Row]]
+    ) -> None:
         self._check_closed()
         self._hndl.row_factory = value
 
@@ -678,7 +729,7 @@ class Connection:
             cursor = self.cursor()
         cursor._execute(operation, operation)
 
-    def close(self, ack_current_event=True):
+    def close(self, ack_current_event: bool = True) -> None:
         """Gracefully close the Comdb2 connection.
 
         Once a `Connection` has been closed, no further operations may be
@@ -711,7 +762,7 @@ class Connection:
         self._hndl.close(ack_current_event=ack_current_event)
         self._hndl = None
 
-    def commit(self):
+    def commit(self) -> None:
         """Commit any pending transaction to the database.
 
         This method will fail if the `Connection` is in ``autocommit`` mode and
@@ -720,7 +771,7 @@ class Connection:
         self._check_closed()
         self._execute("commit")
 
-    def rollback(self):
+    def rollback(self) -> None:
         """Rollback the current transaction.
 
         This method will fail if the `Connection` is in ``autocommit`` mode and
@@ -736,7 +787,7 @@ class Connection:
         self._check_closed()
         self._execute("rollback")
 
-    def cursor(self):
+    def cursor(self) -> Cursor:
         """Return a new `Cursor` for this connection.
 
         This calls `Cursor.close` on any outstanding `Cursor`; only one
@@ -787,12 +838,12 @@ class Cursor:
     """
 
     _ErrorMessagesByOperation = {
-        'begin': "Transactions may not be started explicitly",
-        'commit': "Use Connection.commit to commit transactions",
-        'rollback': "Use Connection.rollback to roll back transactions",
+        "begin": "Transactions may not be started explicitly",
+        "commit": "Use Connection.commit to commit transactions",
+        "rollback": "Use Connection.rollback to roll back transactions",
     }
 
-    def __init__(self, conn):
+    def __init__(self, conn: Connection) -> None:
         self._arraysize = 1
         self._conn = conn
         self._hndl = conn._hndl
@@ -805,7 +856,7 @@ class Cursor:
             raise InterfaceError("Attempted to use a closed cursor")
 
     @property
-    def arraysize(self):
+    def arraysize(self) -> int:
         """Controls the number of rows to fetch at a time with `fetchmany`.
 
         The default is ``1``, meaning that a single row will be fetched at
@@ -814,11 +865,13 @@ class Cursor:
         return self._arraysize
 
     @arraysize.setter
-    def arraysize(self, value):
+    def arraysize(self, value: int) -> None:
         self._arraysize = value
 
     @property
-    def description(self):
+    def description(
+        self,
+    ) -> tuple[tuple[str, object, None, None, None, None, None], ...]:
         """Provides the name and type of each column in the latest result set.
 
         This read-only attribute will contain one element per column in the
@@ -853,7 +906,7 @@ class Cursor:
         return self._description
 
     @property
-    def rowcount(self):
+    def rowcount(self) -> int:
         """Provides the count of rows modified by the last transaction.
 
         For `Cursor` objects on a `Connection` that is not using ``autocommit``
@@ -882,12 +935,12 @@ class Cursor:
 
     # Optional DB API Extension
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         """Return a reference to the `Connection` that this `Cursor` uses."""
         self._check_closed()
         return self._conn
 
-    def close(self):
+    def close(self) -> None:
         """Close the cursor now.
 
         From this point forward an exception will be raised if any
@@ -903,7 +956,7 @@ class Cursor:
         self._description = None
         self._closed = True
 
-    def callproc(self, procname, parameters):
+    def callproc(self, procname: str, parameters: Sequence[Value]) -> Sequence[Value]:
         """Call a stored procedure with the given name.
 
         The ``parameters`` sequence must contain one entry for each argument
@@ -926,13 +979,23 @@ class Cursor:
         if not _VALID_SP_NAME.match(procname):
             raise NotSupportedError("Invalid procedure name '%s'" % procname)
         params_as_dict = {str(i): e for i, e in enumerate(parameters)}
-        sql = ("exec procedure " + procname + "("
-              + ", ".join("%%(%d)s" % i for i in range(len(params_as_dict)))
-              + ")")
+        sql = (
+            "exec procedure "
+            + procname
+            + "("
+            + ", ".join("%%(%d)s" % i for i in range(len(params_as_dict)))
+            + ")"
+        )
         self.execute(sql, params_as_dict)
         return parameters[:]
 
-    def execute(self, sql, parameters=None):
+    def execute(
+        self,
+        sql: str,
+        parameters: Mapping[str, Value] | None = None,
+        *,
+        column_types: Sequence[ColumnType] | None = None,
+    ) -> Cursor:
         """Execute a database operation (query or command).
 
         The ``sql`` string must be provided as a Python format string, with
@@ -945,10 +1008,20 @@ class Cursor:
             vulnerabilities, and is faster than dynamically building SQL
             strings.
 
+        If ``column_types`` is provided, it must be a sequence of members of
+        the `comdb2.cdb2.ColumnType` enumeration. The database will coerce the
+        data in the Nth column of the result set to the Nth given column type.
+        An error will be raised if the number of elements in ``column_types``
+        doesn't match the number of columns in the result set, or if one of the
+        elements is not a supported column type, or if coercion fails.
+
         Args:
             sql (str): The SQL string to execute, as a Python format string.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+            column_types (Sequence[int]): An optional sequence of types (values
+                of the `comdb2.cdb2.ColumnType` enumeration) which the columns
+                of the result set will be coerced to.
 
         Returns:
             Cursor: As a nonstandard DB-API 2.0 extension, this method returns
@@ -977,14 +1050,16 @@ class Cursor:
             if errmsg:
                 raise InterfaceError(errmsg)
 
-        self._execute(operation, sql, parameters)
+        self._execute(operation, sql, parameters, column_types=column_types)
         if self._rowcount == -1:
             self._load_description()
         # Optional DB API Extension: execute's return value is unspecified.  We
         # return an iterable over the rows, but this isn't portable across DBs.
         return self
 
-    def executemany(self, sql, seq_of_parameters):
+    def executemany(
+        self, sql: str, seq_of_parameters: Sequence[Mapping[str, Value]]
+    ) -> None:
         """Execute the same SQL statement repeatedly with different parameters.
 
         This is currently equivalent to calling execute multiple times, once
@@ -1002,7 +1077,7 @@ class Cursor:
         for parameters in seq_of_parameters:
             self.execute(sql, parameters)
 
-    def _execute(self, operation, sql, parameters=None):
+    def _execute(self, operation, sql, parameters=None, *, column_types=None):
         self._rowcount = -1
 
         if not self._conn._autocommit:
@@ -1032,11 +1107,11 @@ class Cursor:
             self._conn._in_transaction = False  # txn ends, even on failure
 
         try:
-            self._hndl.execute(sql, parameters)
+            self._hndl.execute(sql, parameters, column_types=column_types)
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 
-        if operation == 'begin':
+        if operation == "begin":
             self._conn._in_transaction = True  # txn successfully started
         elif not self._conn._in_transaction and _modifies_rows(operation):
             # We're not in a transaction, and the last statement could have
@@ -1045,11 +1120,11 @@ class Cursor:
             # an explicit transaction.  We can get the count of affected rows.
             self._update_rowcount()
 
-    def setinputsizes(self, sizes):
+    def setinputsizes(self, sizes: Sequence[Any]) -> None:
         """No-op; implemented for PEP-249 compliance."""
         self._check_closed()
 
-    def setoutputsize(self, size, column=None):
+    def setoutputsize(self, size: Any, column: int = None) -> None:
         """No-op; implemented for PEP-249 compliance."""
         self._check_closed()
 
@@ -1062,12 +1137,14 @@ class Cursor:
     def _load_description(self):
         names = self._hndl.column_names()
         types = self._hndl.column_types()
-        self._description = tuple((name, type, None, None, None, None, None)
-                                  for name, type in zip(names, types))
+        self._description = tuple(
+            (name, type, None, None, None, None, None)
+            for name, type in zip(names, types)
+        )
         if not self._description:
             self._description = None
 
-    def fetchone(self):
+    def fetchone(self) -> Row | None:
         """Fetch the next row of the current result set.
 
         Returns:
@@ -1082,7 +1159,7 @@ class Cursor:
         except StopIteration:
             return None
 
-    def fetchmany(self, n=None):
+    def fetchmany(self, n: int | None = None) -> Sequence[Row]:
         """Fetch the next set of rows of the current result set.
 
         Args:
@@ -1102,7 +1179,7 @@ class Cursor:
             n = self._arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
-    def fetchall(self):
+    def fetchall(self) -> Sequence[Row]:
         """Fetch all remaining rows of the current result set.
 
         Returns:
@@ -1115,7 +1192,7 @@ class Cursor:
         return [x for x in self]
 
     # Optional DB API Extension
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Row]:
         """Iterate over all rows in a result set.
 
         By default each row is returned as a `list`, where the elements in the

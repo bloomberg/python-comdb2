@@ -28,4 +28,6 @@ anticipate a need to interact with libraries that require DB-API compliant
 connections, this module may be simpler to get started with.
 """
 
-from ._about import *
+from ._about import __version__
+
+__all__ = ["__version__"]

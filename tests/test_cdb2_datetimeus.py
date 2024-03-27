@@ -84,7 +84,7 @@ def test_datetimeus_fromtimestamp():
 
 
 def test_datetimeus_astimezone():
-    eastern = pytz.timezone('US/Eastern')
+    eastern = pytz.timezone("US/Eastern")
     loc_dt = eastern.localize(datetime.datetime(2002, 10, 27, 6, 0, 0))
     dtu = cdb2.DatetimeUs.fromdatetime(loc_dt)
 
@@ -95,7 +95,7 @@ def test_datetimeus_type_stickiness():
     def check(obj):
         assert isinstance(obj, cdb2.DatetimeUs)
 
-    new_york = pytz.timezone('America/New_York')
+    new_york = pytz.timezone("America/New_York")
     utc = pytz.UTC
 
     check(new_york.localize(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456)))
@@ -119,16 +119,17 @@ def test_datetimeus_type_stickiness():
     check(cdb2.DatetimeUs.now(utc).astimezone(new_york))
 
 
-@pytest.mark.skipif(not hasattr(datetime.datetime, 'fold'),
-                    reason='Skipped before PEP 495')
+@pytest.mark.skipif(
+    not hasattr(datetime.datetime, "fold"), reason="Skipped before PEP 495"
+)
 def test_datetimeus_fold():
-    NYC = dateutil.tz.gettz('America/New_York')
+    NYC = dateutil.tz.gettz("America/New_York")
     dt = datetime.datetime(2004, 10, 31, 1, 30, fold=1, tzinfo=NYC)
 
     dtus = cdb2.DatetimeUs.fromdatetime(dt)
 
-    assert dtus.fold == 1    # Check that it handles fold correctly
+    assert dtus.fold == 1  # Check that it handles fold correctly
 
     # Make sure that the time is correctly disambiguating
-    assert dt.tzname() == "EST"     # Just in case it's not a DatetimeUs problem
+    assert dt.tzname() == "EST"  # Just in case it's not a DatetimeUs problem
     assert dtus.tzname() == "EST"

@@ -46,8 +46,12 @@ Enumerations
 Several mappings are provided to expose enumerations from ``cdb2api.h`` to
 Python.
 
- .. autodata:: TYPE
+.. autoclass:: ColumnType
 
- .. autodata:: HANDLE_FLAGS
+.. autodata:: TYPE
 
- .. autodata:: ERROR_CODE
+.. autoclass:: ConnectionFlags
+
+.. autodata:: HANDLE_FLAGS
+
+.. autodata:: ERROR_CODE
