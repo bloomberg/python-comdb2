@@ -130,10 +130,11 @@ Note:
 
 from __future__ import annotations
 
+import array
 import datetime
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Any, List, Tuple, Union
-from ._cdb2_types import Error, Effects, DatetimeUs
+from ._cdb2_types import Error, Effects, DatetimeUs, ColumnType, ConnectionFlags
 from ._ccdb2 import Handle as CHandle
 
 __all__ = [
@@ -144,6 +145,8 @@ __all__ = [
     "ERROR_CODE",
     "TYPE",
     "HANDLE_FLAGS",
+    "ColumnType",
+    "ConnectionFlags",
 ]
 
 Value = Union[
@@ -210,37 +213,18 @@ guaranteed because new error codes can be added to the Comdb2 server at any
 time.
 """
 
-# Pull comdb2 column types from cdb2api.h into our namespace
-TYPE = {
-    "INTEGER": 1,
-    "REAL": 2,
-    "CSTRING": 3,
-    "BLOB": 4,
-    "DATETIME": 6,
-    "INTERVALYM": 7,
-    "INTERVALDS": 8,
-    "DATETIMEUS": 9,
-    "INTERVALDSUS": 10,
-}
+TYPE = {e.name: e.value for e in ColumnType}
 """This dict maps all known Comdb2 types to their enumeration value.
 
-Each value in the list returned by `Handle.column_types` will generally be the
-value corresponding to one of the keys in this dict, though that's not always
-guaranteed because new types can be added to the Comdb2 server at any time.
+It predates the `ColumnType` enum and is retained only for backwards
+compatibility. The `ColumnType` enum should be preferred for new usage.
 """
 
-# Pull comdb2 handle flags from cdb2api.h into our namespace
-HANDLE_FLAGS = {
-    "READ_INTRANS_RESULTS": 2,
-    "DIRECT_CPU": 4,
-    "RANDOM": 8,
-    "RANDOMROOM": 16,
-    "ROOM": 32,
-}
-"""This dict maps all known Comdb2 flags to their enumeration value.
+HANDLE_FLAGS = {e.name: e.value for e in ConnectionFlags}
+"""This dict maps connection flags to their enumeration value.
 
-These values can be passed directly to `Handle`, though values not in this dict
-can be passed as well (such as the bitwise OR of two different flags).
+It predates the `ConnectionFlags` enum and is retained only for backwards
+compatibility. The `ConnectionFlags` enum should be preferred for new usage.
 """
 
 
@@ -362,7 +346,11 @@ class Handle:
         self._hndl.row_factory = value
 
     def execute(
-        self, sql: str | bytes, parameters: Mapping[str, Value] | None = None
+        self,
+        sql: str | bytes,
+        parameters: Mapping[str, Value] | None = None,
+        *,
+        column_types: Sequence[ColumnType] | None = None,
     ) -> Handle:
         """Execute a database operation (query or command).
 
@@ -372,10 +360,21 @@ class Handle:
         Placeholders for named parameters must be in Comdb2's native format,
         ``@param_name``.
 
+        If ``column_types`` is provided and non-empty, it must be a sequence of
+        members of the `ColumnType` enumeration. The database will coerce the
+        data in the Nth column of the result set to the Nth given column type.
+        An error will be raised if the number of elements in ``column_types``
+        doesn't match the number of columns in the result set, or if one of the
+        elements is not a supported column type, or if coercion fails. If
+        ``column_types`` is empty or not provided, no coercion is performed.
+
         Args:
             sql (str): The SQL string to execute.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+            column_types (Sequence[int]): An optional sequence of types (values
+                of the `ColumnType` enumeration) which the columns of the
+                result set will be coerced to.
 
         Returns:
             Handle: This method returns the `Handle` that it was called on,
@@ -396,7 +395,14 @@ class Handle:
         """
         if parameters is None:
             parameters = {}
-        self._cursor = iter(self._hndl.execute(sql, parameters))
+
+        column_types_array: Sequence[int] | None = None
+        if column_types is not None:
+            column_types_array = array.array("i", column_types)
+        if not column_types_array:
+            column_types_array = None
+
+        self._cursor = iter(self._hndl.execute(sql, parameters, column_types_array))
         return self
 
     def __iter__(self) -> Iterator[Row]:

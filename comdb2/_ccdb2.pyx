@@ -391,8 +391,8 @@ cdef class Handle(object):
         self.hndl = NULL
         _errchk(rc, self.hndl)
 
-    def execute(self, sql, parameters=None):
-        """execute(sql, params) -> Cursor over a SQL statement's result set"""
+    def execute(self, sql, parameters=None, int[::1] column_types=None):
+        """execute(sql, params, types) -> Cursor over a SQL statement's result set"""
         if not self.hndl: raise _closed_connection_error('execute')
         self.cursor = NULL
         sql = _string_as_bytes(sql)
@@ -417,7 +417,12 @@ cdef class Handle(object):
             with nogil:
                 while lib.cdb2_next_record(self.hndl) == lib.CDB2_OK:
                     pass  # consume any previous result set
-                rc = lib.cdb2_run_statement(self.hndl, c_sql)
+                if column_types is None:
+                    rc = lib.cdb2_run_statement(self.hndl, c_sql)
+                else:
+                    rc = lib.cdb2_run_statement_typed(
+                        self.hndl, c_sql, len(column_types), &column_types[0]
+                    )
             _errchk(rc, self.hndl)
         finally:
             rc = lib.cdb2_clearbindings(self.hndl)

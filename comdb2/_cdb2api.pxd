@@ -68,6 +68,7 @@ cdef extern from "cdb2api.h" nogil:
     int cdb2_get_effects(cdb2_hndl_tp *hndl, cdb2_effects_tp *effects);
     int cdb2_close(cdb2_hndl_tp* hndl);
     int cdb2_run_statement(cdb2_hndl_tp *hndl, const char *sql);
+    int cdb2_run_statement_typed(cdb2_hndl_tp *hndl, const char *sql, int num_types, int *types);
     int cdb2_numcolumns(cdb2_hndl_tp* hndl);
     const char* cdb2_column_name(cdb2_hndl_tp* hndl, int col);
     int cdb2_column_type(cdb2_hndl_tp* hndl, int col);

@@ -10,36 +10,38 @@
 # limitations under the License.
 
 
-from comdb2.dbapi2 import _sql_operation
-from comdb2.dbapi2 import NUMBER
-from comdb2.dbapi2 import BINARY
-from comdb2.dbapi2 import STRING
-from comdb2.dbapi2 import DATETIME
-from comdb2.dbapi2 import connect
-from comdb2.dbapi2 import Binary
-from comdb2.dbapi2 import Datetime
-from comdb2.dbapi2 import DatetimeUs
-from comdb2.dbapi2 import Timestamp
-from comdb2.dbapi2 import TimestampUs
-from comdb2.dbapi2 import DataError
-from comdb2.dbapi2 import OperationalError
-from comdb2.dbapi2 import IntegrityError
-from comdb2.dbapi2 import ForeignKeyConstraintError
-from comdb2.dbapi2 import NonNullConstraintError
-from comdb2.dbapi2 import UniqueKeyConstraintError
-from comdb2.dbapi2 import InterfaceError
-from comdb2.dbapi2 import NotSupportedError
-from comdb2.dbapi2 import ProgrammingError
-from comdb2 import cdb2
-from comdb2.factories import dict_row_factory
-from comdb2.factories import namedtuple_row_factory
-import pytest
 import datetime
-import pytz
 import re
 from functools import partial
-
 from unittest.mock import patch
+
+import pytest
+import pytz
+
+from comdb2 import cdb2
+from comdb2.dbapi2 import (
+    BINARY,
+    DATETIME,
+    NUMBER,
+    STRING,
+    Binary,
+    DataError,
+    Datetime,
+    DatetimeUs,
+    ForeignKeyConstraintError,
+    IntegrityError,
+    InterfaceError,
+    NonNullConstraintError,
+    NotSupportedError,
+    OperationalError,
+    ProgrammingError,
+    Timestamp,
+    TimestampUs,
+    UniqueKeyConstraintError,
+    _sql_operation,
+    connect,
+)
+from comdb2.factories import dict_row_factory, namedtuple_row_factory
 
 COLUMN_LIST = (
     "short_col u_short_col int_col u_int_col longlong_col"
@@ -663,7 +665,7 @@ def test_exceptions_containing_unicode_error_messages():
             raise
 
 
-def throw_on(expected_stmt, stmt, parameters=None):
+def throw_on(expected_stmt, stmt, parameters=None, column_types=None):
     if stmt == expected_stmt:
         raise cdb2.Error(42, "Not supported error")
 
@@ -965,3 +967,45 @@ def test_parameter_binding_invalid_arrays(values, exc_msg):
     # WHEN/THEN
     with pytest.raises(DataError, match=re.escape(exc_msg)):
         cursor.execute("select * from carray(%(values)s)", dict(values=values))
+
+
+def test_specifying_column_types():
+    # GIVEN
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+    column_types = [
+        cdb2.ColumnType.INT,
+        cdb2.ColumnType.REAL,
+        cdb2.ColumnType.TEXT,
+        cdb2.ColumnType.BLOB,
+        cdb2.ColumnType.DATETIME,
+        cdb2.ColumnType.DATETIMEUS,
+    ]
+    sql = "select 0, 0, 0, 0, 0, 0"
+
+    # WHEN
+    cursor.execute(sql, column_types=column_types)
+    row = cursor.fetchone()
+
+    # THEN
+    assert row is not None
+    assert type(row[0]) is int
+    assert type(row[1]) is float
+    assert type(row[2]) is str
+    assert type(row[3]) is bytes
+    assert type(row[4]) is datetime.datetime
+    assert type(row[5]) is cdb2.DatetimeUs
+
+
+def test_providing_empty_column_types_array():
+    # GIVEN
+    hndl = cdb2.Handle("mattdb", "dev")
+    column_types = []
+    sql = "select 0"
+
+    # WHEN
+    (row,) = hndl.execute(sql, column_types=column_types)
+
+    # THEN
+    assert row is not None
+    assert type(row[0]) is int
