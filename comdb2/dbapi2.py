@@ -249,7 +249,7 @@ import datetime
 import re
 
 from . import cdb2
-from .cdb2 import Row, Value
+from .cdb2 import ColumnType, Row, Value
 from typing import Any, Callable, Iterator, Mapping, Sequence
 
 __all__ = [
@@ -990,7 +990,11 @@ class Cursor:
         return parameters[:]
 
     def execute(
-        self, sql: str, parameters: Mapping[str, Value] | None = None
+        self,
+        sql: str,
+        parameters: Mapping[str, Value] | None = None,
+        *,
+        column_types: Sequence[ColumnType] | None = None,
     ) -> Cursor:
         """Execute a database operation (query or command).
 
@@ -1004,10 +1008,20 @@ class Cursor:
             vulnerabilities, and is faster than dynamically building SQL
             strings.
 
+        If ``column_types`` is provided, it must be a sequence of members of
+        the `comdb2.cdb2.ColumnType` enumeration. The database will coerce the
+        data in the Nth column of the result set to the Nth given column type.
+        An error will be raised if the number of elements in ``column_types``
+        doesn't match the number of columns in the result set, or if one of the
+        elements is not a supported column type, or if coercion fails.
+
         Args:
             sql (str): The SQL string to execute, as a Python format string.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+            column_types (Sequence[int]): An optional sequence of types (values
+                of the `comdb2.cdb2.ColumnType` enumeration) which the columns
+                of the result set will be coerced to.
 
         Returns:
             Cursor: As a nonstandard DB-API 2.0 extension, this method returns
@@ -1036,7 +1050,7 @@ class Cursor:
             if errmsg:
                 raise InterfaceError(errmsg)
 
-        self._execute(operation, sql, parameters)
+        self._execute(operation, sql, parameters, column_types=column_types)
         if self._rowcount == -1:
             self._load_description()
         # Optional DB API Extension: execute's return value is unspecified.  We
@@ -1063,7 +1077,7 @@ class Cursor:
         for parameters in seq_of_parameters:
             self.execute(sql, parameters)
 
-    def _execute(self, operation, sql, parameters=None):
+    def _execute(self, operation, sql, parameters=None, *, column_types=None):
         self._rowcount = -1
 
         if not self._conn._autocommit:
@@ -1093,7 +1107,7 @@ class Cursor:
             self._conn._in_transaction = False  # txn ends, even on failure
 
         try:
-            self._hndl.execute(sql, parameters)
+            self._hndl.execute(sql, parameters, column_types=column_types)
         except cdb2.Error as e:
             _raise_wrapped_exception(e)
 

@@ -9,7 +9,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import pkgconfig
 
 from setuptools import setup, Extension
@@ -36,7 +35,7 @@ def make_static_extension(name, **kwargs):
 
 ccdb2 = make_static_extension(
     "comdb2._ccdb2",
-    extra_compile_args=["-std=c99"],
+    language="c++",
     libraries=["cdb2api"],
     sources=["comdb2/_ccdb2.pyx"],
 )

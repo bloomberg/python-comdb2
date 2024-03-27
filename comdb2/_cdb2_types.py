@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import datetime
+import enum
 from typing import NamedTuple
 
 __name__ = "comdb2.cdb2"
@@ -49,20 +50,19 @@ class Effects(NamedTuple):
     """Type used to represent the count of rows affected by a SQL query.
 
     An object of this type is returned by `Handle.get_effects`.
-
-    Attributes:
-        num_affected (int): The total number of rows that were affected.
-        num_selected (int): The number of rows that were selected.
-        num_updated (int): The number of rows that were updated.
-        num_deleted (int): The number of rows that were deleted.
-        num_inserted (int): The number of rows that were inserted.
     """
-
     num_affected: int
     num_selected: int
     num_updated: int
     num_deleted: int
     num_inserted: int
+
+
+Effects.num_affected.__doc__ = """The total number of rows that were affected."""
+Effects.num_selected.__doc__ = """The number of rows that were selected."""
+Effects.num_updated.__doc__ = """The number of rows that were updated."""
+Effects.num_deleted.__doc__ = """The number of rows that were deleted."""
+Effects.num_inserted.__doc__ = """The number of rows that were inserted."""
 
 
 class DatetimeUs(datetime.datetime):
@@ -144,3 +144,46 @@ class DatetimeUs(datetime.datetime):
         # this returns a DatetimeUs or a datetime.
         dt = super().replace(*args, **kwargs)
         return self.fromdatetime(dt)
+
+
+class ColumnType(enum.IntEnum):
+    """This enum represents all known Comdb2 column types.
+
+    Each value in the list returned by `Handle.column_types` will generally be
+    the value corresponding to one of the members of this enumeration, though
+    that's not always guaranteed because new types can be added to the Comdb2
+    server at any time.
+
+    A sequence of consisting of members of this enum can be passed as the
+    *column_types* parameter of `Handle.execute`. The database will coerce the
+    returned data to the given column types, or return an error if it cannot.
+    """
+
+    INTEGER = 1
+    REAL = 2
+    CSTRING = 3
+    BLOB = 4
+    DATETIME = 6
+    INTERVALYM = 7
+    INTERVALDS = 8
+    DATETIMEUS = 9
+    INTERVALDSUS = 10
+    INT = INTEGER
+    FLOAT = REAL
+    STRING = CSTRING
+    TEXT = CSTRING
+    BYTES = BLOB
+
+
+class ConnectionFlags(enum.IntEnum):
+    """This enum represents connection flags.
+
+    These values can be passed to the `Handle` constructor, either individually
+    or as a bitwise OR of multiple flags.
+    """
+
+    READ_INTRANS_RESULTS = 2
+    DIRECT_CPU = 4
+    RANDOM = 8
+    RANDOMROOM = 16
+    ROOM = 32
