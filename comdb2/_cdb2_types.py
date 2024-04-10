@@ -49,13 +49,6 @@ class Effects(NamedTuple):
     """Type used to represent the count of rows affected by a SQL query.
 
     An object of this type is returned by `Handle.get_effects`.
-
-    Attributes:
-        num_affected (int): The total number of rows that were affected.
-        num_selected (int): The number of rows that were selected.
-        num_updated (int): The number of rows that were updated.
-        num_deleted (int): The number of rows that were deleted.
-        num_inserted (int): The number of rows that were inserted.
     """
 
     num_affected: int
@@ -63,6 +56,14 @@ class Effects(NamedTuple):
     num_updated: int
     num_deleted: int
     num_inserted: int
+
+
+# Override the auto-generated docstrings with more informative ones.
+Effects.num_affected.__doc__ = "The total number of rows that were affected."
+Effects.num_selected.__doc__ = "The number of rows that were selected."
+Effects.num_updated.__doc__ = "The number of rows that were updated."
+Effects.num_deleted.__doc__ = "The number of rows that were deleted."
+Effects.num_inserted.__doc__ = "The number of rows that were inserted."
 
 
 class DatetimeUs(datetime.datetime):
