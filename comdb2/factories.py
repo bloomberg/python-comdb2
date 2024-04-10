@@ -27,7 +27,8 @@ from __future__ import annotations
 from collections import namedtuple
 from collections import Counter
 from .cdb2 import Value
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 
 def namedtuple_row_factory(col_names: list[str]) -> Callable[[list[Value]], NamedTuple]:

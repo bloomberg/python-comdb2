@@ -131,7 +131,8 @@ Note:
 from __future__ import annotations
 
 import datetime
-from typing import Any, Callable, Iterator, List, Mapping, Tuple, Union
+from collections.abc import Callable, Iterator, Mapping
+from typing import Any, List, Tuple, Union
 from ._cdb2_types import Error, Effects, DatetimeUs
 from ._ccdb2 import Handle as CHandle
 

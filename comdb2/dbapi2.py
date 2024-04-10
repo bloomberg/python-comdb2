@@ -250,7 +250,8 @@ import re
 
 from . import cdb2
 from .cdb2 import Row, Value
-from typing import Any, Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any
 
 __all__ = [
     "apilevel",
