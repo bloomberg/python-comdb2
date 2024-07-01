@@ -41,7 +41,6 @@ ctypedef fused client_datetime:
 
 cdef struct blob_descriptor:
     size_t size
-    char* data
 
 
 cdef _string_as_bytes(s):
