@@ -180,10 +180,10 @@ jobs:
             echo "Creating $table_name from $table_file"
             /opt/bb/bin/cdb2sql "$COMDB2_DBNAME" local "create table $table_name { $(cat $table_file) }"
           done
-      - name: Set up Python ${{matrix.python_version}}
+      - name: Set up Python ${{matrix.python-version}}
         uses: actions/setup-python@v4  # note that this step overwrites the PKG_CONFIG_PATH variable
         with:
-          python-version: "${{matrix.python_version}}"
+          python-version: "${{matrix.python-version}}"
       - name: Install python-comdb2 from the sdist
         run: '
           sudo apt-get install -qy pkg-config &&
