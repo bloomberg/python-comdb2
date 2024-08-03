@@ -251,7 +251,7 @@ import re
 from . import cdb2
 from .cdb2 import ColumnType, Row, Value
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Any
+from typing import Any, List
 
 __all__ = [
     "apilevel",
@@ -1167,7 +1167,7 @@ class Cursor:
         except StopIteration:
             return None
 
-    def fetchmany(self, n: int | None = None) -> Sequence[Row]:
+    def fetchmany(self, n: int | None = None) -> List[Row]:
         """Fetch the next set of rows of the current result set.
 
         Args:
@@ -1187,7 +1187,7 @@ class Cursor:
             n = self._arraysize
         return [x for x in itertools.islice(self, 0, n)]
 
-    def fetchall(self) -> Sequence[Row]:
+    def fetchall(self) -> List[Row]:
         """Fetch all remaining rows of the current result set.
 
         Returns:
