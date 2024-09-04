@@ -56,6 +56,13 @@ Best Practices, Tips, and Tricks
 
    Because of this: https://xkcd.com/327/
 
+   When using comdb2 R8, you can even bind a `list` or `tuple` object like so::
+
+       c.execute(
+           "SELECT %(needle)s IN CARRAY(%(haystack)s)",
+           {'needle': 5, 'haystack': [1, 2, 3, 4, 5]}
+       )
+
    .. note::
        The two modules provided by this package use different syntax for SQL
        placeholders.  See `.dbapi2.Cursor.execute` and `.cdb2.Handle.execute`
@@ -79,8 +86,23 @@ Best Practices, Tips, and Tricks
    `.cdb2.Handle` (any isolation level higher than ``READ COMMITTED`` would
    obviously work as well).
 
-#. The underlying API doesn't currently allow binding lists. The following snippet
-   will be useful for a ``$var in $list`` query with a dynamically generated list::
+#. When using comdb2 R8, the library supports binding of (non-empty) `list` or
+   `tuple` objects with the help of the ``CARRAY`` function, as long as all
+   elements of the sequence are of the same type::
+
+        from comdb2.dbapi2 import connect
+
+        def search_in_list(needle, haystack):
+            params = {'needle': needle, 'haystack': haystack}
+            sql = "select %(needle)s in CARRAY(%(haystack)s)"
+            print(connect('mattdb').cursor().execute(sql, params).fetchall())
+
+        haystack = [1, 2, 3, 4, 5]
+        search_in_list(0, haystack)
+        search_in_list(5, haystack)
+
+  If you still need to use R7, you would want to generate the query
+  dynamically, for example::
 
         from comdb2.dbapi2 import connect
 
