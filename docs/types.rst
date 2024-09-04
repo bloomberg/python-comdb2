@@ -18,6 +18,7 @@ blob           `bytes`
 text           `str`
 datetime       `datetime.datetime`
 datetimeus     `~.cdb2.DatetimeUs`
+carray         `list` or `tuple` of exactly one of the types above (R8 only)
 intervalym     not supported
 intervalds     not supported
 intervaldsus   not supported
@@ -111,3 +112,25 @@ string columns.  That currently makes it impossible to map them to Python's
 `decimal.Decimal` type as we would like to.  If ``libcdb2api`` is ever changed
 to properly distinguish between DECIMAL and TEXT columns this package will be
 enhanced to properly expose DECIMAL columns.
+
+C Array Types
+=============
+
+.. note::
+   This only works with comdb2 R8. If you need to connect to a database that is
+   still running comdb2 R7, the queries using this feature will fail.
+
+Often in SQL queries, it is useful to bind an array of elements of the same
+type, for example when using the ``IN`` operator. In this case, you can use a
+(non-empty) `list` or `tuple`, as long as all elements of the sequence are of
+the same type (and one of the above Python types). Note that nested sequences
+are not allowed.
+
+Note that when binding an element of that type, you want to use the ``CARRAY``
+function, like so::
+
+   params = {'arr': [1, 2, 3, 4]}
+   # dbapi2
+   c.execute("select 2 in CARRAY(%(arr)s)", params)
+   # cdb2
+   h.execute("select 2 in CARRAY(@arr)", params)
