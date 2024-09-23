@@ -147,9 +147,20 @@ __all__ = [
     "HANDLE_FLAGS",
     "ColumnType",
     "ConnectionFlags",
+    "Value",
+    "ParameterValue",
 ]
 
 Value = Union[
+    None,
+    int,
+    float,
+    bytes,
+    str,
+    datetime.datetime,
+    DatetimeUs,
+]
+ParameterValue = Union[
     None,
     int,
     float,
@@ -348,7 +359,7 @@ class Handle:
     def execute(
         self,
         sql: str | bytes,
-        parameters: Mapping[str, Value] | None = None,
+        parameters: Mapping[str, ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Handle:

@@ -249,7 +249,7 @@ import datetime
 import re
 
 from . import cdb2
-from .cdb2 import ColumnType, Row, Value
+from .cdb2 import ColumnType, Row, Value, ParameterValue
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Any, List
 
@@ -287,6 +287,8 @@ __all__ = [
     "UniqueKeyConstraintError",
     "ForeignKeyConstraintError",
     "NonNullConstraintError",
+    "Value",
+    "ParameterValue",
 ]
 
 apilevel = "2.0"
@@ -958,7 +960,7 @@ class Cursor:
         self._description = None
         self._closed = True
 
-    def callproc(self, procname: str, parameters: Sequence[Value]) -> Sequence[Value]:
+    def callproc(self, procname: str, parameters: Sequence[ParameterValue]) -> Sequence[ParameterValue]:
         """Call a stored procedure with the given name.
 
         The ``parameters`` sequence must contain one entry for each argument
@@ -994,7 +996,7 @@ class Cursor:
     def execute(
         self,
         sql: str,
-        parameters: Mapping[str, Value] | None = None,
+        parameters: Mapping[str, ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Cursor:
@@ -1066,7 +1068,7 @@ class Cursor:
         return self
 
     def executemany(
-        self, sql: str, seq_of_parameters: Sequence[Mapping[str, Value]]
+        self, sql: str, seq_of_parameters: Sequence[Mapping[str, ParameterValue]]
     ) -> None:
         """Execute the same SQL statement repeatedly with different parameters.
 
