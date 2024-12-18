@@ -401,15 +401,24 @@ cdef class Handle(object):
         param_guards = []
         try:
             if parameters is not None:
-                for key, val in parameters.items():
-                    ckey = _string_as_bytes(key)
+                bind_by_index = isinstance(parameters, (list, tuple))
+                items = enumerate(parameters, 1) if bind_by_index \
+                        else parameters.items()
+                for key, val in items:
+                    ckey = _string_as_bytes(key) if not bind_by_index else key
                     cval = _ParameterValue(val, key)
                     param_guards.append(ckey)
                     param_guards.append(cval)
                     if cval.list_size == -1:
-                        rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
-                                                cval.type, cval.data, cval.size)
+                        if bind_by_index:
+                            rc = lib.cdb2_bind_index(self.hndl, ckey,
+                                                    cval.type, cval.data, cval.size)
+                        else:
+                            rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
+                                                    cval.type, cval.data, cval.size)
                     else:
+                        if bind_by_index:
+                            raise ValueError("Binding arrays by index is currently unsupported. Bind arrays by name.")
                         # Bind Array if cval is an array
                         rc = lib.cdb2_bind_array(self.hndl, <char*>ckey, cval.type, cval.data, cval.list_size, cval.size)
                     _errchk(rc, self.hndl)

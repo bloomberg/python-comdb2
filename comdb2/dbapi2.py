@@ -120,10 +120,23 @@ returned.
 When we run the same query with parameter ``b`` bound to ``23``, a ``0`` is
 returned instead, because ``20 <= 25 <= 23`` is false.
 
+Alternatively, you can also bind by index instead of by name, by providing a list/tuple
+with placeholders specified using ``?`` in the same order as the elements in the list/tuple.
+Note that binding an array by index is currently not supported, these must be bound by name.  For example:
+
+    >>> query = "select 25 between ? and ?"
+    >>> print(conn.cursor().execute(query, [20, 42]).fetchall())
+    [[1]]
+
+In this example, we execute the query with the first ``?`` bound to 20 and the second
+``?`` bound to 42. Thus, a ``1`` is returned like in the previous example.
+
 Note:
-    Because parameters are bound using ``%(name)s``, other ``%`` signs in
+    Because parameters by name are bound using ``%(name)s``, other ``%`` signs in
     a query must be escaped.  For example, ``WHERE name like 'M%'`` becomes
     ``WHERE name LIKE 'M%%'``.
+    However, this does not apply when binding parameters by index. ``%`` does not
+    need to be escaped in this case, and only in this case.
 
 Types
 -----
@@ -314,6 +327,9 @@ Note:
     Because SQL strings for this module use the ``pyformat`` placeholder style,
     any literal ``%`` characters in a query must be escaped by doubling them.
     ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
+
+This module also has support for ``qmark`` if binding by index.
+``%`` does not need to be escaped if binding by position.
 """
 
 _FIRST_WORD_OF_STMT = re.compile(
@@ -996,7 +1012,7 @@ class Cursor:
     def execute(
         self,
         sql: str,
-        parameters: Mapping[str, ParameterValue] | None = None,
+        parameters: Mapping[str, ParameterValue] | Sequence[ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Cursor:
@@ -1005,6 +1021,8 @@ class Cursor:
         The ``sql`` string must be provided as a Python format string, with
         parameter placeholders represented as ``%(name)s`` and all other ``%``
         signs escaped as ``%%``.
+        HOWEVER, if binding by index (parameter placeholders represented as ``?``),
+        ``%`` does not need to be escaped. This is the only time it does not need to be escaped.
 
         Note:
             Using placeholders should always be the preferred method of
@@ -1029,6 +1047,8 @@ class Cursor:
             sql (str): The SQL string to execute, as a Python format string.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+                (Sequence[Any]): Can also use sequence with ``?`` with parameters executed in sequence.
+                Note that binding arrays by index is currently not supported. These must be bound by name.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.
@@ -1047,6 +1067,11 @@ class Cursor:
         Example:
             >>> cursor.execute("select 1, 2 UNION ALL select %(x)s, %(y)s",
             ...                {'x': 2, 'y': 4})
+            >>> cursor.fetchall()
+            [[1, 2], [2, 4]]
+
+            >>> cursor.execute("select 1, 2 UNION ALL select ?, ?",
+            ...                [2, 4]])
             >>> cursor.fetchall()
             [[1, 2], [2, 4]]
         """
@@ -1068,7 +1093,7 @@ class Cursor:
         return self
 
     def executemany(
-        self, sql: str, seq_of_parameters: Sequence[Mapping[str, ParameterValue]]
+        self, sql: str, seq_of_parameters: Sequence[Mapping[str, ParameterValue]] | Sequence[Sequence[ParameterValue]]
     ) -> None:
         """Execute the same SQL statement repeatedly with different parameters.
 
@@ -1078,10 +1103,10 @@ class Cursor:
         Args:
             sql (str): The SQL string to execute, as a Python format string of
                 the format expected by `execute`.
-            seq_of_parameters (Sequence[Mapping[str, Any]]): A sequence of
+            seq_of_parameters (Sequence[Mapping[str, Any]] | Sequence[Sequence[Any]]): A sequence of
                 mappings from parameter names to the values to be bound for
-                them.  The ``sql`` statement will be run once per element in
-                this sequence.
+                them or a sequence of a sequence of parameter values if binding by index.
+                The ``sql`` statement will be run once per element in this sequence.
         """
         self._check_closed()
         for parameters in seq_of_parameters:
@@ -1105,7 +1130,9 @@ class Cursor:
         try:
             # If variable interpolation fails, then translate the exception to
             # an InterfaceError to signal that it's a client-side problem.
-            sql = sql % {name: "@" + name for name in parameters}
+            # If binding by index then no need to modify sql
+            if not isinstance(parameters, (list, tuple)):
+                sql = sql % {name: "@" + name for name in parameters}
         except KeyError as keyerr:
             msg = "No value provided for parameter %s" % keyerr
             raise InterfaceError(msg) from keyerr

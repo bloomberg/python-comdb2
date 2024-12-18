@@ -99,6 +99,14 @@ is returned instead, because ``20 <= 25 <= 23`` is false.  In both of these
 examples we make use of the `list` constructor to turn the iterable returned
 by `Handle.execute` into a list of result rows.
 
+You can also bind by index by providing a sequence
+instead of by name with placeholders specified using ``?`` in sequence.
+Note that binding an array by index is currently not supported. For example:
+
+    >>> query = "select 25 between ? and ?"
+    >>> print(list(hndl.execute(query, [20, 42])))
+    [[1]]
+
 Types
 -----
 
@@ -359,7 +367,7 @@ class Handle:
     def execute(
         self,
         sql: str | bytes,
-        parameters: Mapping[str, ParameterValue] | None = None,
+        parameters: Mapping[str, ParameterValue] | Sequence[ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Handle:
@@ -369,7 +377,7 @@ class Handle:
         This should always be the preferred method of parameterizing the SQL
         query, as it prevents SQL injection vulnerabilities and is faster.
         Placeholders for named parameters must be in Comdb2's native format,
-        ``@param_name``.
+        ``@param_name``, or with ``?`` for positional parameters.
 
         If ``column_types`` is provided and non-empty, it must be a sequence of
         members of the `ColumnType` enumeration. The database will coerce the
@@ -383,6 +391,8 @@ class Handle:
             sql (str): The SQL string to execute.
             parameters (Mapping[str, Any]): An optional mapping from parameter
                 names to the values to be bound for them.
+                (Sequence[Any]): Can also use sequence with ``?`` with parameters executed in sequence.
+                Note that binding arrays by index is currently not supported. These must be bound by name.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.
@@ -400,6 +410,12 @@ class Handle:
         Example:
             >>> for row in hndl.execute("select 1, 2 UNION ALL select @x, @y",
             ...                         {'x': 2, 'y': 4}):
+            ...     print(row)
+            [1, 2]
+            [2, 4]
+
+            >>> for row in hndl.execute("select 1, 2 UNION ALL select ?, ?",
+            ...                         [2, 4]):
             ...     print(row)
             [1, 2]
             [2, 4]
