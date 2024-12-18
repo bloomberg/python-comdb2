@@ -68,14 +68,29 @@ Best Practices, Tips, and Tricks
        placeholders.  See `.dbapi2.Cursor.execute` and `.cdb2.Handle.execute`
        for details.
 
-#. For `.dbapi2`, be sure to escape any ``%`` signs in a query by doubling
-   them.  That is, instead of::
+#. When using `.dbapi2` but not parameter binding by position be sure to escape
+   any literal ``%`` signs in a query by doubling them.  That is, instead of::
 
-       c.execute("select * from tbl where col like 'foo%'")
+        cursor.execute(
+            "select * from log where msg like 'ERROR: %' and pid = %(pid)s",
+            {"pid": 1234},
+        )
 
    You need to write::
 
-       c.execute("select * from tbl where col like 'foo%%'")
+        cursor.execute(
+            "select * from log where msg like 'ERROR: %%' and pid = %(pid)s",
+            {"pid": 1234},
+        )
+
+   Also, if you don't want to pass any parameters to a `.dbapi2` query, it's
+   better to pass ``()`` than the default ``None`` value, because this removes
+   the need to escape any literal ``%`` signs that appear in the query::
+
+        cursor.execute(
+            "select * from log where msg like 'ERROR: %'",
+            (),
+        )
 
    See `.dbapi2.paramstyle` for an explanation of why.
 

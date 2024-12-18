@@ -76,6 +76,8 @@ cdef extern from "cdb2api.h" nogil:
     void* cdb2_column_value(cdb2_hndl_tp* hndl, int col) except +
     const char* cdb2_errstr(cdb2_hndl_tp* hndl) except +
     int cdb2_bind_param(cdb2_hndl_tp *hndl, const char *name, int type, const void *varaddr, int length) except +
+    int cdb2_bind_index(cdb2_hndl_tp *hndl, int index, int type, const void *varaddr, int length) except +
     int cdb2_bind_array(cdb2_hndl_tp *hndl, const char *name, cdb2_coltype, const void *varaddr, size_t count, size_t typelen) except +
+    int cdb2_bind_array_index(cdb2_hndl_tp *hndl, int index, cdb2_coltype, const void *varaddr, size_t count, size_t typelen) except +
     int cdb2_clearbindings(cdb2_hndl_tp *hndl) except +
     int cdb2_clear_ack(cdb2_hndl_tp *hndl) except +

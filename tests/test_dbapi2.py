@@ -28,6 +28,7 @@ from comdb2.dbapi2 import (
     DataError,
     Datetime,
     DatetimeUs,
+    Error,
     ForeignKeyConstraintError,
     IntegrityError,
     InterfaceError,
@@ -256,12 +257,51 @@ def test_extra_percent_arg():
         cursor.execute("insert into simple(key, val) values(%(k)s, %(v)s)", dict(k=3))
 
 
-def test_unescaped_percent():
+def test_binding_no_parameters():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
-    cursor.execute("select 1%%2")  # Should work
+
+    rows = list(cursor.execute("select 1 %% 10"))
+    assert rows == [[1]]
+
+    rows = list(cursor.execute("select 2 %% 10", {}))
+    assert rows == [[2]]
+
+    rows = list(cursor.execute("select 3 % 10", ()))
+    assert rows == [[3]]
+
+    rows = list(cursor.execute("select 4 % 10", []))
+    assert rows == [[4]]
+
+
+def test_incorrect_escaping_of_percent_signs():
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+
     with pytest.raises(InterfaceError):
-        cursor.execute("select 1%2")
+        cursor.execute("select 1 % 10")
+
+    with pytest.raises(InterfaceError):
+        cursor.execute("select 2 % 10", {})
+
+    with pytest.raises(ProgrammingError):
+        cursor.execute("select 3 %% 10", ())
+
+    with pytest.raises(ProgrammingError):
+        cursor.execute("select 4 %% 10", [])
+
+
+def test_binding_different_sequence_types():
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+    cursor.execute("select ?, ?", [1, 2])
+    assert cursor.fetchall() == [[1, 2]]
+
+    cursor.execute("select ?, ?", (1, 2))
+    assert cursor.fetchall() == [[1, 2]]
+
+    cursor.execute("select ?, ?", "hi")
+    assert cursor.fetchall() == [["h", "i"]]
 
 
 def test_reading_and_writing_datetimes():
@@ -377,6 +417,22 @@ def test_all_datatypes_as_parameters():
     assert row == list(v for k, v in params)
     assert cursor.fetchone() is None
 
+    cursor.execute("delete from all_datatypes")
+    conn.commit()
+
+    cursor.execute(
+        "insert into all_datatypes(" + ", ".join(COLUMN_LIST) + ")"
+        " values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [v for _, v in params],
+    )
+
+    conn.commit()
+
+    cursor.execute("select * from all_datatypes")
+    row2 = cursor.fetchone()
+    assert row2 == row
+    assert cursor.fetchone() is None
+
 
 def test_naive_datetime_as_parameter():
     conn = connect("mattdb", "dev")
@@ -414,6 +470,22 @@ def test_naive_datetime_as_parameter():
     assert row == [Datetime(2009, 2, 13, 18, 31, 30, 234000, pytz.UTC)]
     assert cursor.fetchone() is None
 
+    cursor.execute("delete from all_datatypes")
+    conn.commit()
+
+    cursor.execute(
+        "insert into all_datatypes(" + ", ".join(COLUMN_LIST) + ")"
+        " values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        list(v for k, v in params),
+    )
+
+    conn.commit()
+
+    cursor.execute("select datetime_col from all_datatypes")
+    row2 = cursor.fetchone()
+    assert row2 == row
+    assert cursor.fetchone() is None
+
 
 def test_datetime_with_non_olson_tzname():
     conn = connect("mattdb", "dev")
@@ -431,6 +503,12 @@ def test_datetime_with_non_olson_tzname():
     assert row[1].tzname() == "UTC"
     assert row[1] == edt_dt
 
+    row = cursor.execute("select ?, ?", [est_dt, edt_dt]).fetchone()
+    assert row[0].tzname() == "UTC"
+    assert row[0] == est_dt
+    assert row[1].tzname() == "UTC"
+    assert row[1] == edt_dt
+
 
 def test_rounding_datetime_to_nearest_millisecond():
     conn = connect("mattdb", "dev")
@@ -443,8 +521,14 @@ def test_rounding_datetime_to_nearest_millisecond():
     cursor.execute("select @date", {"date": curr_microsecond})
     assert cursor.fetchall() == [[prev_millisecond]]
 
+    cursor.execute("select ?", [curr_microsecond])
+    assert cursor.fetchall() == [[prev_millisecond]]
+
     curr_microsecond += datetime.timedelta(microseconds=1)
     cursor.execute("select @date", {"date": curr_microsecond})
+    assert cursor.fetchall() == [[next_millisecond]]
+
+    cursor.execute("select ?", [curr_microsecond])
     assert cursor.fetchall() == [[next_millisecond]]
 
 
@@ -500,6 +584,9 @@ def test_binding_number_that_overflows_long_long():
     cursor = conn.cursor()
     with pytest.raises(DataError):
         cursor.execute("select @i", dict(i=2**64 + 1))
+
+    with pytest.raises(DataError):
+        cursor.execute("select ?", [2**64 + 1])
 
 
 def test_retrieving_null():
@@ -926,6 +1013,13 @@ def test_parameter_binding_arrays(values):
 
     # THEN
     assert results == [[v] for v in values]
+
+    # WHEN
+    cursor.execute("select * from carray(?)", [values])
+    results = cursor.fetchall()
+
+    # THEN
+    assert results == [[v] for v in values]
     conn.close()
 
 
@@ -934,27 +1028,27 @@ def test_parameter_binding_arrays(values):
     [
         (
             [],
-            "Can't bind list value [] for parameter 'values': "
+            "Can't bind list value [] for parameter {}: "
             + "ValueError: empty lists cannot be bound",
         ),
         (
             (),
-            "Can't bind tuple value () for parameter 'values': "
+            "Can't bind tuple value () for parameter {}: "
             + "ValueError: empty tuples cannot be bound",
         ),
         (
             [1, "hello"],
-            "Can't bind list value [1, 'hello'] for parameter 'values': "
+            "Can't bind list value [1, 'hello'] for parameter {}: "
             + "ValueError: all list elements must be the same type",
         ),
         (
             (1j,),
-            "Can't bind tuple value (1j,) for parameter 'values': "
+            "Can't bind tuple value (1j,) for parameter {}: "
             + "ValueError: Cannot bind a tuple of complex",
         ),
         (
             ((1, 2, 3),),
-            "Can't bind tuple value ((1, 2, 3),) for parameter 'values': "
+            "Can't bind tuple value ((1, 2, 3),) for parameter {}: "
             + "ValueError: Cannot bind a tuple of tuple",
         ),
     ],
@@ -965,8 +1059,12 @@ def test_parameter_binding_invalid_arrays(values, exc_msg):
     cursor = conn.cursor()
 
     # WHEN/THEN
-    with pytest.raises(DataError, match=re.escape(exc_msg)):
+    with pytest.raises(DataError, match=re.escape(exc_msg.format("'values'"))):
         cursor.execute("select * from carray(%(values)s)", dict(values=values))
+
+    # WHEN/THEN
+    with pytest.raises(DataError, match=re.escape(exc_msg.format("1"))):
+        cursor.execute("select * from carray(?)", [values])
 
 
 def test_specifying_column_types():

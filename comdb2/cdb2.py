@@ -77,9 +77,14 @@ Parameter Binding
 -----------------
 
 In real applications you'll often need to pass parameters into a SQL query.
-This is done using parameter binding - in the query, placeholders are specified
-using ``@name``, and a mapping of names to values is passed to `Handle.execute`
-along with the query.  For example:
+This is done using parameter binding, either by name or by position.
+
+By Name
+~~~~~~~
+
+In the query, placeholders are specified using ``@name`` or ``:name``, and a
+mapping of names to values is passed to `Handle.execute` along with the query.
+For example:
 
     >>> query = "select 25 between @a and @b"
     >>> print(list(hndl.execute(query, {'a': 20, 'b': 42})))
@@ -88,16 +93,33 @@ along with the query.  For example:
     >>> print(list(hndl.execute(query, params)))
     [[0]]
 
-In this example, we run the query with two different sets of
-parameters, producing different results.  First, we execute
-the query with ``@a`` bound to ``20`` and ``@b`` bound to ``42``.  In this
-case, because ``20 <= 25 <= 42``, the expression evaluates to true, and a ``1``
-is returned.
+In this example, we run the query with two different sets of parameters,
+producing different results.  First, we execute the query with ``@a`` bound to
+``20`` and ``@b`` bound to ``42``.  In this case, because ``20 <= 25 <= 42``,
+the expression evaluates to true, and a single row with a single column
+set to ``1`` is returned.
 
-When we run the same query with ``@b`` bound to ``23``, a ``0``
-is returned instead, because ``20 <= 25 <= 23`` is false.  In both of these
-examples we make use of the `list` constructor to turn the iterable returned
-by `Handle.execute` into a list of result rows.
+When we run the same query with ``@b`` bound to ``23``, a row with a column
+set to ``0`` is returned instead, because ``20 <= 25 <= 23`` is false.
+
+Note:
+    In both of these examples we make use of the `list` constructor to turn
+    the iterable returned by `Handle.execute` into a list of result rows.
+
+By Position
+~~~~~~~~~~~
+
+You can bind parameters positionally rather than by name, by using ``?``
+for each placeholder and providing a list or tuple of parameter values.
+For example:
+
+    >>> query = "select 25 between ? and ?"
+    >>> print(list(hndl.execute(query, [20, 42])))
+    [[1]]
+
+Here, we execute the query with the first ``?`` bound to 20 and the second
+``?`` bound to 42, so a row with a single column set to ``1`` is returned
+like in the previous example.
 
 Types
 -----
@@ -359,7 +381,7 @@ class Handle:
     def execute(
         self,
         sql: str | bytes,
-        parameters: Mapping[str, ParameterValue] | None = None,
+        parameters: Mapping[str, ParameterValue] | Sequence[ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Handle:
@@ -368,8 +390,10 @@ class Handle:
         The ``sql`` string may have placeholders for parameters to be passed.
         This should always be the preferred method of parameterizing the SQL
         query, as it prevents SQL injection vulnerabilities and is faster.
-        Placeholders for named parameters must be in Comdb2's native format,
-        ``@param_name``.
+        Placeholders for named parameters must be in one of Comdb2's native
+        formats, either ``@param_name`` or ``:param_name``. Alternatively, you
+        can use ``?`` for each placeholder to bind parameters positionally
+        instead of by name.
 
         If ``column_types`` is provided and non-empty, it must be a sequence of
         members of the `ColumnType` enumeration. The database will coerce the
@@ -381,8 +405,11 @@ class Handle:
 
         Args:
             sql (str): The SQL string to execute.
-            parameters (Mapping[str, Any]): An optional mapping from parameter
-                names to the values to be bound for them.
+            parameters (Mapping[str, Any] | Sequence[Any]):
+                If the SQL statement has ``@param_name`` or ``:param_name``
+                style placeholders, you must pass a mapping from parameter name
+                to value. If the SQL statement has ``?`` style placeholders,
+                you must instead pass an ordered sequence of parameter values.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.
@@ -399,7 +426,12 @@ class Handle:
 
         Example:
             >>> for row in hndl.execute("select 1, 2 UNION ALL select @x, @y",
-            ...                         {'x': 2, 'y': 4}):
+            ...                         {"x": 2, "y": 4}):
+            ...     print(row)
+            [1, 2]
+            [2, 4]
+
+            >>> for row in hndl.execute("select 1, 2 UNION ALL select ?, ?", [2, 4]):
             ...     print(row)
             [1, 2]
             [2, 4]

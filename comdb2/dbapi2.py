@@ -99,10 +99,15 @@ Parameter Binding
 -----------------
 
 In real applications you'll often need to pass parameters into a SQL query.
-This is done using parameter binding - in the query, placeholders are specified
-using ``%(name)s``, and a mapping of ``name`` to parameter value is passed to
-`Cursor.execute` along with the query.  The ``%(`` and ``)s`` are fixed, and
-the ``name`` between them varies for each parameter.  For example:
+This is done using parameter binding, either by name or by position.
+
+By Name
+~~~~~~~
+
+In the query, placeholders are specified using ``%(name)s``, and a mapping of
+``name`` to parameter value is passed to `Cursor.execute` along with the query.
+The ``%(`` and ``)s`` are fixed, and the ``name`` inside them varies for each
+parameter.  For example:
 
     >>> query = "select 25 between %(a)s and %(b)s"
     >>> print(conn.cursor().execute(query, {'a': 20, 'b': 42}).fetchall())
@@ -114,16 +119,58 @@ the ``name`` between them varies for each parameter.  For example:
 In this example, we run the query with two different sets of
 parameters, producing different results.  First, we execute the query with
 parameter ``a`` bound to ``20`` and ``b`` bound to ``42``.  In this case,
-because ``20 <= 25 <= 42``, the expression evaluates to true, and a ``1`` is
-returned.
+because ``20 <= 25 <= 42``, the expression evaluates to true, and a row
+containing a single column with a value of ``1`` is returned.
 
-When we run the same query with parameter ``b`` bound to ``23``, a ``0`` is
-returned instead, because ``20 <= 25 <= 23`` is false.
+When we run the same query with parameter ``b`` bound to ``23``, a row
+containing a single column with a value of ``0`` is returned instead, because
+``20 <= 25 <= 23`` is false.
 
-Note:
-    Because parameters are bound using ``%(name)s``, other ``%`` signs in
+Warning:
+    Because named parameters are bound using ``%(name)s``, other ``%`` signs in
     a query must be escaped.  For example, ``WHERE name like 'M%'`` becomes
     ``WHERE name LIKE 'M%%'``.
+
+Danger:
+    This applies even when no parameters are passed at all - passing ``None``
+    or no parameters behaves the same as passing an empty `dict`.
+
+By Position
+~~~~~~~~~~~
+
+You can bind parameters positionally rather than by name, by using ``?``
+for each placeholder and providing a list or tuple of parameter values.
+For example:
+
+    >>> query = "select 25 between ? and ?"
+    >>> print(conn.cursor().execute(query, [20, 42]).fetchall())
+    [[1]]
+
+In this example, we execute the query with the first ``?`` bound to 20 and the
+second ``?`` bound to 42, so a row with a single column with a value of ``1``
+is returned like in the previous example.
+
+Warning:
+    Unlike when binding parameters by name, you must not escape ``%`` signs in
+    the SQL when binding parameters positionally.
+
+    For example, you could do ``WHERE val % 5 = ?``, but not ``WHERE val %% 5 = ?``.
+
+Tip:
+    You can pass an empty tuple of parameters to avoid the need to escape ``%``
+    signs in the SQL even when you don't want to bind any parameters, like:
+
+    >>> query = "select 42 % 20"
+    >>> print(conn.cursor().execute(query, ()).fetchall())
+    [[2]]
+
+    Compare this against what happens if you don't pass any parameters at all:
+
+    >>> print(conn.cursor().execute(query).fetchall())
+    Traceback (most recent call last):
+    ...
+    comdb2.dbapi2.InterfaceError: Invalid Python format string for query
+
 
 Types
 -----
@@ -303,17 +350,31 @@ paramstyle = "pyformat"
 Comdb2's native placeholder format is ``@name``, but that cannot be used by
 this module because it's not an acceptable `DB-API 2.0 placeholder style
 <https://www.python.org/dev/peps/pep-0249/#paramstyle>`_.  This module uses
-``pyformat`` because it is the only DB-API 2.0 paramstyle that we can translate
-into Comdb2's placeholder format without needing a SQL parser.
+``pyformat`` for named parameters because it is the only DB-API 2.0 paramstyle
+that we can translate into Comdb2's placeholder format without needing
+a SQL parser. This module also supports the ``qmark`` parameter style for
+binding parameters positionally.
 
 Note:
     An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last
     character is always ``s``.
 
 Note:
-    Because SQL strings for this module use the ``pyformat`` placeholder style,
-    any literal ``%`` characters in a query must be escaped by doubling them.
-    ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
+    When binding parameters by name, any ``%`` sign is recognized as the start
+    of a ``pyformat`` style placeholder, and so any literal ``%`` characters in
+    a SQL statement must be escaped by doubling. ``WHERE name like 'M%'``
+    becomes ``WHERE name LIKE 'M%%'``. This does not apply when binding
+    parameters positionally with ``?`` placeholders, nor when the literal ``%``
+    appears in a parameter value as opposed to literally in the query.
+    In either of those cases, the ``%`` characters must not be escaped.
+
+Warning:
+    Literal ``%`` signs in the query must be escaped when no parameters are
+    passed at all -- passing ``None`` or no parameters behaves the same as
+    passing an empty `dict`. You can avoid the need to escape ``%`` signs in
+    an unparametrized query by instead passing an empty `tuple` as parameters,
+    which causes the statement to be treated as having ``qmark`` placeholders
+    instead of ``pyformat`` placeholders.
 """
 
 _FIRST_WORD_OF_STMT = re.compile(
@@ -996,15 +1057,22 @@ class Cursor:
     def execute(
         self,
         sql: str,
-        parameters: Mapping[str, ParameterValue] | None = None,
+        parameters: Mapping[str, ParameterValue] | Sequence[ParameterValue] | None = None,
         *,
         column_types: Sequence[ColumnType] | None = None,
     ) -> Cursor:
         """Execute a database operation (query or command).
 
-        The ``sql`` string must be provided as a Python format string, with
-        parameter placeholders represented as ``%(name)s`` and all other ``%``
-        signs escaped as ``%%``.
+        The ``sql`` string may contain either named placeholders represented
+        as ``%(name)s`` or positionally ordered placeholders represented
+        as ``?``.
+
+        When the parameters are a mapping or ``None``, named placeholders are
+        being used, and so any literal ``%`` signs in the statement must be
+        escaped by doubling them, to distinguish them from the start of a named
+        placeholder. When a sequence of parameters is provided instead, any
+        placeholders must be positional ``?`` placeholders, and literal ``%``
+        signs in the SQL must not be escaped.
 
         Note:
             Using placeholders should always be the preferred method of
@@ -1027,8 +1095,11 @@ class Cursor:
 
         Args:
             sql (str): The SQL string to execute, as a Python format string.
-            parameters (Mapping[str, Any]): An optional mapping from parameter
-                names to the values to be bound for them.
+            parameters (Mapping[str, Any] | Sequence[Any]):
+                If the SQL statement has ``%(param_name)s`` style placeholders,
+                you must pass a mapping from parameter name to value.
+                If the SQL statement has ``?`` style placeholders, you must
+                instead pass an ordered sequence of parameter values.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.
@@ -1047,6 +1118,10 @@ class Cursor:
         Example:
             >>> cursor.execute("select 1, 2 UNION ALL select %(x)s, %(y)s",
             ...                {'x': 2, 'y': 4})
+            >>> cursor.fetchall()
+            [[1, 2], [2, 4]]
+
+            >>> cursor.execute("select 1, 2 UNION ALL select ?, ?", [2, 4]])
             >>> cursor.fetchall()
             [[1, 2], [2, 4]]
         """
@@ -1068,7 +1143,7 @@ class Cursor:
         return self
 
     def executemany(
-        self, sql: str, seq_of_parameters: Sequence[Mapping[str, ParameterValue]]
+        self, sql: str, seq_of_parameters: Sequence[Mapping[str, ParameterValue]] | Sequence[Sequence[ParameterValue]]
     ) -> None:
         """Execute the same SQL statement repeatedly with different parameters.
 
@@ -1078,10 +1153,10 @@ class Cursor:
         Args:
             sql (str): The SQL string to execute, as a Python format string of
                 the format expected by `execute`.
-            seq_of_parameters (Sequence[Mapping[str, Any]]): A sequence of
-                mappings from parameter names to the values to be bound for
-                them.  The ``sql`` statement will be run once per element in
-                this sequence.
+            seq_of_parameters (Sequence[Mapping[str, Any]] | Sequence[Sequence[Any]]):
+                The ``sql`` statement will be executed once per element in this
+                sequence, using each successive element as the parameter values
+                for the corresponding call to `.execute`.
         """
         self._check_closed()
         for parameters in seq_of_parameters:
@@ -1105,7 +1180,10 @@ class Cursor:
         try:
             # If variable interpolation fails, then translate the exception to
             # an InterfaceError to signal that it's a client-side problem.
-            sql = sql % {name: "@" + name for name in parameters}
+            # If binding by index then no need to modify sql
+            by_name = hasattr(parameters, "items")
+            if by_name:
+                sql = sql % {name: "@" + name for name in parameters}
         except KeyError as keyerr:
             msg = "No value provided for parameter %s" % keyerr
             raise InterfaceError(msg) from keyerr
