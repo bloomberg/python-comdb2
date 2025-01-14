@@ -91,6 +91,20 @@ def test_datetimeus_astimezone():
     assert type(dtu.astimezone(pytz.utc)) == cdb2.DatetimeUs
 
 
+def test_datetimeus_as_datetime_naive():
+    dtu = cdb2.DatetimeUs.fromtimestamp(time.time())
+    dt = dtu.as_datetime()
+    assert type(dt) == datetime.datetime
+    assert dt == dtu
+
+
+def test_datetimeus_as_datetime_with_tz():
+    dtu = cdb2.DatetimeUs.fromtimestamp(time.time(), tz=pytz.UTC)
+    dt = dtu.as_datetime()
+    assert type(dt) == datetime.datetime
+    assert dt == dtu
+
+
 def test_datetimeus_type_stickiness():
     def check(obj):
         assert isinstance(obj, cdb2.DatetimeUs)

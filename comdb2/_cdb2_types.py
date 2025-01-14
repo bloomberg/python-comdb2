@@ -147,6 +147,20 @@ class DatetimeUs(datetime.datetime):
         dt = super().replace(*args, **kwargs)
         return self.fromdatetime(dt)
 
+    def as_datetime(self) -> datetime.datetime:
+        """Return a `datetime` representation."""
+        return datetime.datetime(
+            year=self.year,
+            day=self.day,
+            month=self.month,
+            hour=self.hour,
+            minute=self.minute,
+            second=self.second,
+            microsecond=self.microsecond,
+            tzinfo=self.tzinfo,
+            fold=self.fold,
+        )
+
 
 class ColumnType(enum.IntEnum):
     """This enum represents all known Comdb2 column types.
