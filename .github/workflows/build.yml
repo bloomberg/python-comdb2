@@ -55,12 +55,13 @@ jobs:
             mkdir bloomberg-comdb2/build &&
             cd bloomberg-comdb2/build &&
             cmake .. &&
-            make
+            make &&
+            sudo make install
           )
         '
       - name: Archive bloomberg-comdb2 repo with build artifacts
-        run: 'tar czvf bloomberg-comdb2.tar.gz bloomberg-comdb2/'
-      - name: Upload bloomberg-comdb2 repo with build artifacts
+        run: 'tar -C /opt -czvf bloomberg-comdb2.tar.gz bb'
+      - name: Upload built bloomberg-comdb2
         uses: actions/upload-artifact@v4
         with:
           name: bloomberg-comdb2
@@ -78,17 +79,10 @@ jobs:
           path: .
       - name: Install bloomberg-comdb2
         run: '
-          sudo apt-get install -qy
-            libevent-dev
-            liblz4-dev
-            libprotobuf-c-dev
-            libsqlite3-dev
-            libssl-dev
-            libunwind-dev
-            zlib1g-dev &&
-          tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install) &&
-          sudo rm -rf bloomberg-comdb2/ bloomberg-comdb2.tar.gz
+          sudo apt-get install -qy libprotobuf-c-dev libssl-dev libunwind-dev &&
+          sudo tar -C /opt -xzf bloomberg-comdb2.tar.gz &&
+          find /opt/bb &&
+          rm bloomberg-comdb2.tar.gz
         '
       - uses: actions/checkout@v4
       - name: 'Set up Python 3.7'
@@ -129,17 +123,10 @@ jobs:
           path: .
       - name: Install bloomberg-comdb2
         run: '
-          sudo apt-get install -qy
-            libevent-dev
-            liblz4-dev
-            libprotobuf-c-dev
-            libsqlite3-dev
-            libssl-dev
-            libunwind-dev
-            zlib1g-dev &&
-          tar xvf bloomberg-comdb2.tar.gz &&
-          (cd bloomberg-comdb2/build && sudo make install) &&
-          sudo rm -rf bloomberg-comdb2/ bloomberg-comdb2.tar.gz
+          sudo apt-get install -qy libprotobuf-c-dev libssl-dev libunwind-dev &&
+          sudo tar -C /opt -xzf bloomberg-comdb2.tar.gz &&
+          find /opt/bb &&
+          rm bloomberg-comdb2.tar.gz
         '
       - name: Start local comdb2 instance
         run: '
