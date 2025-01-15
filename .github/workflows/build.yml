@@ -85,10 +85,10 @@ jobs:
           rm bloomberg-comdb2.tar.gz
         '
       - uses: actions/checkout@v4
-      - name: 'Set up Python 3.7'
+      - name: 'Set up Python 3.8'
         uses: actions/setup-python@v5  # note that this step overwrites the PKG_CONFIG_PATH variable
         with:
-          python-version: '3.7'  # the lowest version that we support in CI
+          python-version: '3.8'  # the lowest version that we support in CI
       - name: Build sdist
         run: '
           sudo apt-get install -qy pkg-config &&
@@ -114,7 +114,6 @@ jobs:
           - '3.10'
           - '3.9'
           - '3.8'
-          - '3.7'
     steps:
       - name: Download comdb2 repo with build artifacts
         uses: actions/download-artifact@v4
