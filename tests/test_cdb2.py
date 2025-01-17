@@ -314,7 +314,8 @@ def test_binding_array_by_index():
         hndl.execute("select * from carray(?)", [[1, 2, 3]])
 
     assert exc.value.args[0] == (
-        "Binding arrays by index is currently unsupported. Bind arrays by name."
+        "Binding arrays by index is currently unsupported. "
+        "You must bind by name when binding arrays."
     )
 
 

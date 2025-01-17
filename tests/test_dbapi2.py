@@ -273,14 +273,14 @@ def test_unescaped_percent():
 def test_different_sequences():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
-    cursor.execute("select ?, ?", [1,2])
+    cursor.execute("select ?, ?", [1, 2])
     assert cursor.fetchall() == [[1, 2]]
 
-    cursor.execute("select ?, ?", (1,2))
+    cursor.execute("select ?, ?", (1, 2))
     assert cursor.fetchall() == [[1, 2]]
 
-    with pytest.raises(AttributeError):
-        cursor.execute("select ?, ?", "hi")
+    cursor.execute("select ?, ?", "hi")
+    assert cursor.fetchall() == [["h", "i"]]
 
 
 def test_reading_and_writing_datetimes():
@@ -402,7 +402,7 @@ def test_all_datatypes_as_parameters():
     cursor.execute(
         "insert into all_datatypes(" + ", ".join(COLUMN_LIST) + ")"
         " values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        list(v for k, v in params),
+        [v for _, v in params],
     )
 
     conn.commit()

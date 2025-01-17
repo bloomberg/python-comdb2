@@ -120,23 +120,26 @@ returned.
 When we run the same query with parameter ``b`` bound to ``23``, a ``0`` is
 returned instead, because ``20 <= 25 <= 23`` is false.
 
-Alternatively, you can also bind by index instead of by name, by providing a list/tuple
-with placeholders specified using ``?`` in the same order as the elements in the list/tuple.
-Note that binding an array by index is currently not supported, these must be bound by name.  For example:
+Note:
+    Because named parameters are bound using ``%(name)s``, other ``%`` signs in
+    a query must be escaped.  For example, ``WHERE name like 'M%'`` becomes
+    ``WHERE name LIKE 'M%%'``. Conversely, when named parameters are not being
+    used, ``%`` signs in the SQL statement must not be escaped.
+
+You can bind parameters positionally rather than by name, by using ``?``
+for each placeholder and providing a list or tuple of parameter values.
+For example:
 
     >>> query = "select 25 between ? and ?"
     >>> print(conn.cursor().execute(query, [20, 42]).fetchall())
     [[1]]
 
-In this example, we execute the query with the first ``?`` bound to 20 and the second
-``?`` bound to 42. Thus, a ``1`` is returned like in the previous example.
+In this example, we execute the query with the first ``?`` bound to 20 and the
+second ``?`` bound to 42, so a ``1`` is returned like in the previous example.
 
 Note:
-    Because parameters by name are bound using ``%(name)s``, other ``%`` signs in
-    a query must be escaped.  For example, ``WHERE name like 'M%'`` becomes
-    ``WHERE name LIKE 'M%%'``.
-    However, this does not apply when binding parameters by index. ``%`` does not
-    need to be escaped in this case, and only in this case.
+
+    Arrays can currently only be bound by name, not positionally.
 
 Types
 -----
@@ -316,20 +319,22 @@ paramstyle = "pyformat"
 Comdb2's native placeholder format is ``@name``, but that cannot be used by
 this module because it's not an acceptable `DB-API 2.0 placeholder style
 <https://www.python.org/dev/peps/pep-0249/#paramstyle>`_.  This module uses
-``pyformat`` because it is the only DB-API 2.0 paramstyle that we can translate
-into Comdb2's placeholder format without needing a SQL parser.
+``pyformat`` for named parameters because it is the only DB-API 2.0 paramstyle
+that we can translate into Comdb2's placeholder format without needing
+a SQL parser. This module also supports the ``qmark`` parameter style for
+binding parameters positionally.
 
 Note:
     An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last
     character is always ``s``.
 
 Note:
-    Because SQL strings for this module use the ``pyformat`` placeholder style,
-    any literal ``%`` characters in a query must be escaped by doubling them.
-    ``WHERE name like 'M%'`` becomes ``WHERE name LIKE 'M%%'``.
-
-This module also has support for ``qmark`` if binding by index.
-``%`` does not need to be escaped if binding by position.
+    When binding parameters by name, any ``%`` sign is recognized as the start
+    of a ``pyformat`` style placeholder, and so any literal ``%`` characters in
+    a query must be escaped by doubling. ``WHERE name like 'M%'`` becomes
+    ``WHERE name LIKE 'M%%'``. This is not necessary when binding parameters
+    positionally with ``?`` placeholders, nor when the literal ``%`` appears in
+    a parameter value as opposed to literally in the query.
 """
 
 _FIRST_WORD_OF_STMT = re.compile(
@@ -1018,11 +1023,13 @@ class Cursor:
     ) -> Cursor:
         """Execute a database operation (query or command).
 
-        The ``sql`` string must be provided as a Python format string, with
-        parameter placeholders represented as ``%(name)s`` and all other ``%``
-        signs escaped as ``%%``.
-        HOWEVER, if binding by index (parameter placeholders represented as ``?``),
-        ``%`` does not need to be escaped. This is the only time it does not need to be escaped.
+        The ``sql`` string may contain either named placeholders represented
+        as ``%(name)s`` or positionally ordered placeholders represented
+        as ``?``. When named placeholders are used, any literal ``%`` signs in
+        the statement must be escaped by doubling them, to distinguish them
+        from the start of a named placeholder. When no placeholders are used
+        or when positional ``?`` placeholders are used, literal ``%`` signs in
+        the SQL must not be escaped.
 
         Note:
             Using placeholders should always be the preferred method of
@@ -1045,10 +1052,12 @@ class Cursor:
 
         Args:
             sql (str): The SQL string to execute, as a Python format string.
-            parameters (Mapping[str, Any]): An optional mapping from parameter
-                names to the values to be bound for them.
-                (Sequence[Any]): Can also use sequence with ``?`` with parameters executed in sequence.
-                Note that binding arrays by index is currently not supported. These must be bound by name.
+            parameters (Mapping[str, Any] | Sequence[Any]):
+                If the SQL statement has ``%(param_name)s`` style placeholders,
+                you must pass a mapping from parameter name to value.
+                If the SQL statement has ``?`` style placeholders, you must
+                instead pass an ordered sequence of parameter values.
+                Note that arrays can currently only be bound by name.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.
@@ -1070,8 +1079,7 @@ class Cursor:
             >>> cursor.fetchall()
             [[1, 2], [2, 4]]
 
-            >>> cursor.execute("select 1, 2 UNION ALL select ?, ?",
-            ...                [2, 4]])
+            >>> cursor.execute("select 1, 2 UNION ALL select ?, ?", [2, 4]])
             >>> cursor.fetchall()
             [[1, 2], [2, 4]]
         """
@@ -1103,10 +1111,10 @@ class Cursor:
         Args:
             sql (str): The SQL string to execute, as a Python format string of
                 the format expected by `execute`.
-            seq_of_parameters (Sequence[Mapping[str, Any]] | Sequence[Sequence[Any]]): A sequence of
-                mappings from parameter names to the values to be bound for
-                them or a sequence of a sequence of parameter values if binding by index.
-                The ``sql`` statement will be run once per element in this sequence.
+            seq_of_parameters (Sequence[Mapping[str, Any]] | Sequence[Sequence[Any]]):
+                The ``sql`` statement will be executed once per element in this
+                sequence, using each successive element as the parameter values
+                for the corresponding call to `.execute`.
         """
         self._check_closed()
         for parameters in seq_of_parameters:
@@ -1131,7 +1139,11 @@ class Cursor:
             # If variable interpolation fails, then translate the exception to
             # an InterfaceError to signal that it's a client-side problem.
             # If binding by index then no need to modify sql
-            if not isinstance(parameters, (list, tuple)):
+            try:
+                by_name = hasattr(parameters, "items")
+            except Exception:
+                by_name = False
+            if by_name:
                 sql = sql % {name: "@" + name for name in parameters}
         except KeyError as keyerr:
             msg = "No value provided for parameter %s" % keyerr

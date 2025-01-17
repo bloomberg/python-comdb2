@@ -223,7 +223,7 @@ cdef class _ParameterValue(object):
         exc_desc = _describe_exception(exc)
 
         if exc is not None:
-            errmsg = "Can't bind %s value %r for parameter '%s': %s" % (
+            errmsg = "Can't bind %s value %r for parameter %r: %s" % (
                 type(obj).__name__,
                 obj,
                 param_name,
@@ -231,7 +231,7 @@ cdef class _ParameterValue(object):
             )
             raise Error(lib.CDB2ERR_CONV_FAIL, errmsg) from exc
         else:
-            errmsg = "Can't map %s value %r for parameter '%s' to a Comdb2 type" % (
+            errmsg = "Can't map %s value %r for parameter %r to a Comdb2 type" % (
                 type(obj).__name__,
                 obj,
                 param_name,
@@ -401,26 +401,33 @@ cdef class Handle(object):
         param_guards = []
         try:
             if parameters is not None:
-                bind_by_index = isinstance(parameters, (list, tuple))
-                items = enumerate(parameters, 1) if bind_by_index \
-                        else parameters.items()
+                try:
+                    items = parameters.items()
+                    bind_by_index = False
+                except Exception:
+                    items = enumerate(parameters, 1)
+                    bind_by_index = True
                 for key, val in items:
-                    ckey = _string_as_bytes(key) if not bind_by_index else key
+                    ckey = key if bind_by_index else _string_as_bytes(key)
                     cval = _ParameterValue(val, key)
                     param_guards.append(ckey)
                     param_guards.append(cval)
                     if cval.list_size == -1:
                         if bind_by_index:
                             rc = lib.cdb2_bind_index(self.hndl, ckey,
-                                                    cval.type, cval.data, cval.size)
+                                                     cval.type, cval.data, cval.size)
                         else:
                             rc = lib.cdb2_bind_param(self.hndl, <char*>ckey,
-                                                    cval.type, cval.data, cval.size)
+                                                     cval.type, cval.data, cval.size)
                     else:
                         if bind_by_index:
-                            raise ValueError("Binding arrays by index is currently unsupported. Bind arrays by name.")
-                        # Bind Array if cval is an array
-                        rc = lib.cdb2_bind_array(self.hndl, <char*>ckey, cval.type, cval.data, cval.list_size, cval.size)
+                            raise ValueError(
+                                "Binding arrays by index is currently unsupported."
+                                " You must bind by name when binding arrays."
+                            )
+                        rc = lib.cdb2_bind_array(self.hndl, <char*>ckey,
+                                                 cval.type, cval.data,
+                                                 cval.list_size, cval.size)
                     _errchk(rc, self.hndl)
 
             with nogil:
