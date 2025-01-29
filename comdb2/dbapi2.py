@@ -137,10 +137,6 @@ For example:
 In this example, we execute the query with the first ``?`` bound to 20 and the
 second ``?`` bound to 42, so a ``1`` is returned like in the previous example.
 
-Note:
-
-    Arrays can currently only be bound by name, not positionally.
-
 Types
 -----
 
@@ -1057,7 +1053,6 @@ class Cursor:
                 you must pass a mapping from parameter name to value.
                 If the SQL statement has ``?`` style placeholders, you must
                 instead pass an ordered sequence of parameter values.
-                Note that arrays can currently only be bound by name.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.

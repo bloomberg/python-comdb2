@@ -421,13 +421,13 @@ cdef class Handle(object):
                                                      cval.type, cval.data, cval.size)
                     else:
                         if bind_by_index:
-                            raise ValueError(
-                                "Binding arrays by index is currently unsupported."
-                                " You must bind by name when binding arrays."
-                            )
-                        rc = lib.cdb2_bind_array(self.hndl, <char*>ckey,
-                                                 cval.type, cval.data,
-                                                 cval.list_size, cval.size)
+                            rc = lib.cdb2_bind_array_index(self.hndl, ckey,
+                                                           cval.type, cval.data,
+                                                           cval.list_size, cval.size)
+                        else:
+                            rc = lib.cdb2_bind_array(self.hndl, <char*>ckey,
+                                                     cval.type, cval.data,
+                                                     cval.list_size, cval.size)
                     _errchk(rc, self.hndl)
 
             with nogil:

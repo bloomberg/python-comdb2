@@ -107,10 +107,6 @@ For example:
     >>> print(list(hndl.execute(query, [20, 42])))
     [[1]]
 
-Note:
-
-    Arrays can currently only be bound by name, not positionally.
-
 Types
 -----
 
@@ -400,7 +396,6 @@ class Handle:
                 you must pass a mapping from parameter name to value.
                 If the SQL statement has ``?`` style placeholders, you must
                 instead pass an ordered sequence of parameter values.
-                Note that arrays can currently only be bound by name.
             column_types (Sequence[int]): An optional sequence of types (values
                 of the `ColumnType` enumeration) which the columns of the
                 result set will be coerced to.

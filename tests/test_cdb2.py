@@ -307,18 +307,6 @@ def test_parameter_name_in_binding_errors_noexception():
     )
 
 
-def test_binding_array_by_index():
-    hndl = cdb2.Handle("mattdb", "dev")
-
-    with pytest.raises(Exception) as exc:
-        hndl.execute("select * from carray(?)", [[1, 2, 3]])
-
-    assert exc.value.args[0] == (
-        "Binding arrays by index is currently unsupported. "
-        "You must bind by name when binding arrays."
-    )
-
-
 def test_specifying_column_types():
     # GIVEN
     hndl = cdb2.Handle("mattdb", "dev")

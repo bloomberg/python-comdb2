@@ -992,6 +992,13 @@ def test_parameter_binding_arrays(values):
 
     # THEN
     assert results == [[v] for v in values]
+
+    # WHEN
+    cursor.execute("select * from carray(?)", [values])
+    results = cursor.fetchall()
+
+    # THEN
+    assert results == [[v] for v in values]
     conn.close()
 
 
@@ -1000,27 +1007,27 @@ def test_parameter_binding_arrays(values):
     [
         (
             [],
-            "Can't bind list value [] for parameter 'values': "
+            "Can't bind list value [] for parameter {}: "
             + "ValueError: empty lists cannot be bound",
         ),
         (
             (),
-            "Can't bind tuple value () for parameter 'values': "
+            "Can't bind tuple value () for parameter {}: "
             + "ValueError: empty tuples cannot be bound",
         ),
         (
             [1, "hello"],
-            "Can't bind list value [1, 'hello'] for parameter 'values': "
+            "Can't bind list value [1, 'hello'] for parameter {}: "
             + "ValueError: all list elements must be the same type",
         ),
         (
             (1j,),
-            "Can't bind tuple value (1j,) for parameter 'values': "
+            "Can't bind tuple value (1j,) for parameter {}: "
             + "ValueError: Cannot bind a tuple of complex",
         ),
         (
             ((1, 2, 3),),
-            "Can't bind tuple value ((1, 2, 3),) for parameter 'values': "
+            "Can't bind tuple value ((1, 2, 3),) for parameter {}: "
             + "ValueError: Cannot bind a tuple of tuple",
         ),
     ],
@@ -1031,18 +1038,12 @@ def test_parameter_binding_invalid_arrays(values, exc_msg):
     cursor = conn.cursor()
 
     # WHEN/THEN
-    with pytest.raises(DataError, match=re.escape(exc_msg)):
+    with pytest.raises(DataError, match=re.escape(exc_msg.format("'values'"))):
         cursor.execute("select * from carray(%(values)s)", dict(values=values))
 
-
-def test_parameter_binding_arrays_by_index():
-    # GIVEN
-    conn = connect("mattdb", "dev")
-    cursor = conn.cursor()
-
     # WHEN/THEN
-    with pytest.raises(ValueError) as exc:
-        cursor.execute("select * from carray(?)", [[1, 2, 3]])
+    with pytest.raises(DataError, match=re.escape(exc_msg.format("1"))):
+        cursor.execute("select * from carray(?)", [values])
 
 
 def test_specifying_column_types():
