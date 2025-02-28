@@ -264,9 +264,6 @@ htmlhelp_basename = "Comdb2doc"
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
-# Don't highlight the code for the Python standard library datetime module.
-viewcode_import = False
-
 # Don't automatically infer types from type annotations.
 autodoc_typehints = "none"
 
