@@ -62,8 +62,11 @@ def test_binding_parameters():
     hndl.execute("insert into simple(key, val) values(@k, @v)", dict(k=3, v=4))
     assert hndl.get_effects()[0] == 1
 
+    hndl.execute("insert into simple(key, val) values(?, ?)", [5, 6])
+    assert hndl.get_effects()[0] == 1
+
     rows = list(hndl.execute("select key, val from simple order by key"))
-    assert rows == [[1, 2], [3, 4]]
+    assert rows == [[1, 2], [3, 4], [5, 6]]
 
 
 def test_commit_failures():
