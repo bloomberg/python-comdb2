@@ -936,7 +936,7 @@ class Cursor:
     @property
     def description(
         self,
-    ) -> tuple[tuple[str, object, None, None, None, None, None], ...]:
+    ) -> tuple[tuple[str, object, None, None, None, None, None], ...] | None:
         """Provides the name and type of each column in the latest result set.
 
         This read-only attribute will contain one element per column in the
