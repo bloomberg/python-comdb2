@@ -298,7 +298,7 @@ import re
 from . import cdb2
 from .cdb2 import ColumnType, Row, Value, ParameterValue
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Any, List
+from typing import Any, List, Optional
 
 __all__ = [
     "apilevel",
@@ -936,7 +936,7 @@ class Cursor:
     @property
     def description(
         self,
-    ) -> tuple[tuple[str, object, None, None, None, None, None], ...]:
+    ) -> Optional[tuple[tuple[str, object, None, None, None, None, None], ...]]:
         """Provides the name and type of each column in the latest result set.
 
         This read-only attribute will contain one element per column in the
