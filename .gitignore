@@ -1,4 +1,5 @@
 /build
+/comdb2.egg-info/
 /dist
 /python_comdb2.egg-info
 *.pyc

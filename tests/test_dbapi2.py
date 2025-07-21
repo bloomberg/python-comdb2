@@ -28,7 +28,6 @@ from comdb2.dbapi2 import (
     DataError,
     Datetime,
     DatetimeUs,
-    Error,
     ForeignKeyConstraintError,
     IntegrityError,
     InterfaceError,
@@ -793,6 +792,21 @@ def test_get_effect_throws_error(handle):
     conn.commit()
 
 
+@patch("comdb2.cdb2.Handle")
+def test_error_wraps_underlying(handle):
+    handle.return_value.execute.side_effect = partial(throw_on, "begin")
+
+    conn = connect("mattdb", "dev")
+    cursor = conn.cursor()
+
+    with pytest.raises(OperationalError) as exc_info:
+        cursor.execute("insert into simple(key, val) values(1, 2)")
+
+    assert isinstance(exc_info.value.__cause__, cdb2.Error)
+    underlying = exc_info.value.__cause__
+    assert underlying.error_code == 42
+
+
 def test_autocommit_handles():
     conn = connect("mattdb", "dev", autocommit=True)
     cursor = conn.cursor()
@@ -936,8 +950,7 @@ def test_unsupported_column_decode_exception():
         cursor.fetchall()
 
     errmsg = (
-        "Failed to decode CDB2_INTERVALDS column 0 ('delta'):"
-        " Unsupported column type"
+        "Failed to decode CDB2_INTERVALDS column 0 ('delta'): Unsupported column type"
     )
     assert errmsg in str(exc_info.value)
 
