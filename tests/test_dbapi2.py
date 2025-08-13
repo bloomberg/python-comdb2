@@ -937,7 +937,11 @@ def test_date_column_decode_exception():
 
     exc_str = str(exc_info.value)
     assert "Failed to decode CDB2_DATETIME column 0 ('date'):" in exc_str
-    assert " out of range" in exc_str
+    # Check for both old and new error message formats
+    # Python < 3.14: "year 0 is out of range"
+    # Python >= 3.14: "year must be in MINYEAR..MAXYEAR, not 0"
+    # See: https://github.com/python/cpython/commit/3e222e3a15959690a41847a1177ac424427815e5#diff-3ee250e3806e884518fd872e9148baf532de6ec54c1cdb4e7679fbb2869d9c47
+    assert (" out of range" in exc_str or "year must be in" in exc_str)
 
 
 def test_unsupported_column_decode_exception():
