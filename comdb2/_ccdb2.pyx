@@ -82,6 +82,11 @@ cdef _describe_exception(exc):
 
 
 cdef _bind_datetime(obj, client_datetime *val):
+    if obj.tzinfo is None:
+        obj = obj.replace(tzinfo=datetime.timezone.utc)
+    else:
+        obj = obj.astimezone(datetime.timezone.utc)
+
     if client_datetime is lib.cdb2_client_datetimeus_t:
         val.usec = obj.microsecond
     else:
