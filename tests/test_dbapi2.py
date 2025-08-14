@@ -16,7 +16,7 @@ from functools import partial
 from unittest.mock import patch
 
 import pytest
-import pytz
+from dateutil.tz import gettz
 
 from comdb2 import cdb2
 from comdb2.dbapi2 import (
@@ -306,7 +306,7 @@ def test_binding_different_sequence_types():
 def test_reading_and_writing_datetimes():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
-    ts_obj = Timestamp(2015, 1, 2, 3, 4, 5, 123000, pytz.UTC)
+    ts_obj = Timestamp(2015, 1, 2, 3, 4, 5, 123000, datetime.timezone.utc)
     ts_str_in = "2015-01-02T03:04:05.12345"
     ts_str_out = "2015-01-02T030405.123 UTC"
 
@@ -320,7 +320,7 @@ def test_reading_and_writing_datetimes():
 def test_reading_and_writing_datetimeus():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
-    ts_obj = TimestampUs(2015, 1, 2, 3, 4, 5, 123456, pytz.UTC)
+    ts_obj = TimestampUs(2015, 1, 2, 3, 4, 5, 123456, datetime.timezone.utc)
     ts_str_in = "2015-01-02T03:04:05.123456"
     ts_str_out = "2015-01-02T030405.123456 UTC"
 
@@ -367,9 +367,7 @@ def test_inserting_one_row_with_all_datatypes_without_parameters():
         "hello",
         "goodbye",
         Binary("\x01\x02\x03\x04\x05\x06\x07"),
-        pytz.timezone("America/New_York").localize(
-            Datetime(2009, 2, 13, 18, 31, 30, 234000)
-        ),
+        Datetime(2009, 2, 13, 18, 31, 30, 234000, gettz("America/New_York")),
         "hello world",
     ]
     assert cursor.fetchone() is None
@@ -393,9 +391,7 @@ def test_all_datatypes_as_parameters():
         ("blob_col", Binary("")),
         (
             "datetime_col",
-            pytz.timezone("America/New_York").localize(
-                Datetime(2009, 2, 13, 18, 31, 30, 234000)
-            ),
+            Datetime(2009, 2, 13, 18, 31, 30, 234000, gettz("America/New_York"))
         ),
         ("vutf8_col", "foo" * 50),
     )
@@ -466,7 +462,7 @@ def test_naive_datetime_as_parameter():
     cursor.connection.commit()
     cursor.execute("select datetime_col from all_datatypes")
     row = cursor.fetchone()
-    assert row == [Datetime(2009, 2, 13, 18, 31, 30, 234000, pytz.UTC)]
+    assert row == [Datetime(2009, 2, 13, 18, 31, 30, 234000, datetime.timezone.utc)]
     assert cursor.fetchone() is None
 
     cursor.execute("delete from all_datatypes")
@@ -489,33 +485,33 @@ def test_naive_datetime_as_parameter():
 def test_datetime_with_non_olson_tzname():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
-    tz = pytz.timezone("America/New_York")
+    tz = gettz("America/New_York")
     dt = datetime.datetime(2016, 11, 6, 1, 30, 0, 123000)
-    est_dt = tz.localize(dt, is_dst=False)
-    edt_dt = tz.localize(dt, is_dst=True)
+    est_dt = dt.replace(tzinfo=tz, fold=1)
+    edt_dt = dt.replace(tzinfo=tz, fold=0)
     assert est_dt.tzname() == "EST"
     assert edt_dt.tzname() == "EDT"
     params = {"est_dt": est_dt, "edt_dt": edt_dt}
     row = cursor.execute("select @est_dt, @edt_dt", params).fetchone()
     assert row[0].tzname() == "UTC"
-    assert row[0] == est_dt
+    assert row[0] == est_dt.astimezone(datetime.timezone.utc)
     assert row[1].tzname() == "UTC"
-    assert row[1] == edt_dt
+    assert row[1] == edt_dt.astimezone(datetime.timezone.utc)
 
     row = cursor.execute("select ?, ?", [est_dt, edt_dt]).fetchone()
     assert row[0].tzname() == "UTC"
-    assert row[0] == est_dt
+    assert row[0] == est_dt.astimezone(datetime.timezone.utc)
     assert row[1].tzname() == "UTC"
-    assert row[1] == edt_dt
+    assert row[1] == edt_dt.astimezone(datetime.timezone.utc)
 
 
 def test_rounding_datetime_to_nearest_millisecond():
     conn = connect("mattdb", "dev")
     cursor = conn.cursor()
 
-    curr_microsecond = Datetime(2016, 2, 28, 23, 59, 59, 999499, pytz.UTC)
-    prev_millisecond = Datetime(2016, 2, 28, 23, 59, 59, 999000, pytz.UTC)
-    next_millisecond = Datetime(2016, 2, 29, 0, 0, 0, 0, pytz.UTC)
+    curr_microsecond = Datetime(2016, 2, 28, 23, 59, 59, 999499, datetime.timezone.utc)
+    prev_millisecond = Datetime(2016, 2, 28, 23, 59, 59, 999000, datetime.timezone.utc)
+    next_millisecond = Datetime(2016, 2, 29, 0, 0, 0, 0, datetime.timezone.utc)
 
     cursor.execute("select @date", {"date": curr_microsecond})
     assert cursor.fetchall() == [[prev_millisecond]]
@@ -964,7 +960,7 @@ def test_datetimeus():
     hndl = connect("mattdb", "dev")
     cursor = hndl.cursor()
 
-    sent = DatetimeUs(2017, 8, 16, 19, 32, 2, 825022, tzinfo=pytz.UTC)
+    sent = DatetimeUs(2017, 8, 16, 19, 32, 2, 825022, tzinfo=datetime.timezone.utc)
     cursor.execute(query, dict(date=sent))
     rcvd = cursor.fetchall()[0][0]
 

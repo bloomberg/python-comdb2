@@ -11,7 +11,6 @@
 
 
 from comdb2 import cdb2
-import pytz
 import dateutil.tz
 import pytest
 
@@ -84,11 +83,11 @@ def test_datetimeus_fromtimestamp():
 
 
 def test_datetimeus_astimezone():
-    eastern = pytz.timezone("US/Eastern")
-    loc_dt = eastern.localize(datetime.datetime(2002, 10, 27, 6, 0, 0))
+    eastern = dateutil.tz.gettz("US/Eastern")
+    loc_dt = datetime.datetime(2002, 10, 27, 6, 0, 0, tzinfo=eastern)
     dtu = cdb2.DatetimeUs.fromdatetime(loc_dt)
 
-    assert type(dtu.astimezone(pytz.utc)) == cdb2.DatetimeUs
+    assert type(dtu.astimezone(datetime.timezone.utc)) == cdb2.DatetimeUs
 
 
 def test_datetimeus_as_datetime_naive():
@@ -99,7 +98,7 @@ def test_datetimeus_as_datetime_naive():
 
 
 def test_datetimeus_as_datetime_with_tz():
-    dtu = cdb2.DatetimeUs.fromtimestamp(time.time(), tz=pytz.UTC)
+    dtu = cdb2.DatetimeUs.fromtimestamp(time.time(), tz=datetime.timezone.utc)
     dt = dtu.as_datetime()
     assert type(dt) == datetime.datetime
     assert dt == dtu
@@ -109,10 +108,9 @@ def test_datetimeus_type_stickiness():
     def check(obj):
         assert isinstance(obj, cdb2.DatetimeUs)
 
-    new_york = pytz.timezone("America/New_York")
-    utc = pytz.UTC
+    new_york = dateutil.tz.gettz("America/New_York")
+    utc = datetime.timezone.utc
 
-    check(new_york.localize(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456)))
     check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456, new_york))
     check(cdb2.DatetimeUs(2016, 8, 15, 18, 47, 15, 123456))
     check(cdb2.DatetimeUs.today())

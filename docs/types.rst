@@ -91,9 +91,8 @@ Whenever either type of datetime is retrieved as a result column, the returned
 `datetime.datetime` object will be aware, meaning it will be associated with
 a timezone (namely, the current timezone of the Comdb2 connection). Whenever
 either type of datetime is sent as a query parameter, it is permitted to be
-naïve, in which case it uses the current timezone of the Comdb2 connection.  By
-default that timezone is UTC but it can be changed on a per-connection basis if
-needed.
+naïve, in which case it is treated as UTC (and *not* as the system's local
+time, which is the more common interpretation in newer Python libraries).
 
 Comdb2 additionally supports three types for representing time intervals. One
 represents an exact number of elapsed milliseconds between two times
