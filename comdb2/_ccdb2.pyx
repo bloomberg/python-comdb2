@@ -20,8 +20,7 @@ from cpython.ref cimport Py_TYPE, PyObject
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 import datetime
-
-from pytz import timezone, UTC
+import sys
 
 from ._cdb2_types import Error, Effects, DatetimeUs
 from . cimport _cdb2api as lib
@@ -266,11 +265,13 @@ cdef _make_datetime(client_datetime *val):
                     val.tm.tm_min,
                     val.tm.tm_sec,
                     usec,
-                    UTC,
+                    datetime.timezone.utc,
                     pytype)
 
-    return timezone(val.tzname).localize(
-        PyDateTimeAPI.DateTime_FromDateAndTime(
+    if sys.version_info >= (3, 14):
+        from zoneinfo import ZoneInfo
+
+        return PyDateTimeAPI.DateTime_FromDateAndTimeAndFold(
                     val.tm.tm_year + 1900,
                     val.tm.tm_mon + 1,
                     val.tm.tm_mday,
@@ -278,9 +279,24 @@ cdef _make_datetime(client_datetime *val):
                     val.tm.tm_min,
                     val.tm.tm_sec,
                     usec,
-                    None,
-                    pytype),
-        val.tm.tm_isdst)
+                    ZoneInfo(val.tzname),
+                    not val.tm.tm_isdst,
+                    pytype)
+    else:
+        from pytz import timezone
+
+        return timezone(val.tzname).localize(
+            PyDateTimeAPI.DateTime_FromDateAndTime(
+                        val.tm.tm_year + 1900,
+                        val.tm.tm_mon + 1,
+                        val.tm.tm_mday,
+                        val.tm.tm_hour,
+                        val.tm.tm_min,
+                        val.tm.tm_sec,
+                        usec,
+                        None,
+                        pytype),
+            val.tm.tm_isdst)
 
 
 cdef _column_value(lib.cdb2_hndl_tp *hndl, int col):

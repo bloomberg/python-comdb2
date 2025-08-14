@@ -47,7 +47,7 @@ setup(
     author="Alex Chamberlain",
     author_email="achamberlai9@bloomberg.net",
     packages=["comdb2"],
-    install_requires=["pytz"],
+    install_requires=["pytz; python_version < '3.14'"],
     extras_require={"tests": ["python-dateutil>=2.6.0", "pytest"]},
     python_requires=">=3.8",
     ext_modules=[ccdb2],
