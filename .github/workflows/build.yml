@@ -87,7 +87,7 @@ jobs:
         '
       - uses: actions/checkout@v5
       - name: 'Set up Python 3.8'
-        uses: actions/setup-python@v5  # note that this step overwrites the PKG_CONFIG_PATH variable
+        uses: actions/setup-python@v6  # note that this step overwrites the PKG_CONFIG_PATH variable
         with:
           python-version: '3.8'  # the lowest version that we support in CI
       - name: Build sdist
@@ -169,7 +169,7 @@ jobs:
             /opt/bb/bin/cdb2sql "$COMDB2_DBNAME" local "create table $table_name { $(cat $table_file) }"
           done
       - name: Set up Python ${{matrix.python-version}}
-        uses: actions/setup-python@v5  # note that this step overwrites the PKG_CONFIG_PATH variable
+        uses: actions/setup-python@v6  # note that this step overwrites the PKG_CONFIG_PATH variable
         with:
           python-version: "${{matrix.python-version}}"
       - name: Install python-comdb2 from the sdist
