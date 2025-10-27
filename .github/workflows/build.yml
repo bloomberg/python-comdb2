@@ -63,7 +63,7 @@ jobs:
       - name: Archive bloomberg-comdb2 repo with build artifacts
         run: 'tar -C /opt -czvf bloomberg-comdb2.tar.gz bb'
       - name: Upload built bloomberg-comdb2
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bloomberg-comdb2
           path: ./bloomberg-comdb2.tar.gz
@@ -97,7 +97,7 @@ jobs:
           pipx run build --sdist
         '
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: python-comdb2-sdist
           path: dist/*.tar.gz
