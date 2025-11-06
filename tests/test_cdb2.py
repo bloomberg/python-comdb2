@@ -38,7 +38,9 @@ def delete_all_rows():
 
 
 def test_garbage_collecting_unused_handle():
-    cdb2.Handle("mattdb", "dev").execute("select 1 union select 2")
+    cdb2.Handle("mattdb", "dev").execute(
+        "select /*CURSOR DRAIN TEST*/ 1 union select 2"
+    )
 
 
 def test_commit_on_unused_connection():
