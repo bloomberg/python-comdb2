@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to the python-comdb2 documentation! &mdash; Comdb2 1.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=60b3a732"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API" href="dbapi2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Comdb2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdb2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Comdb2 to Python Type Mappings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Best Practices, Tips, and Tricks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Comdb2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to the python-comdb2 documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-the-python-comdb2-documentation">
+<h1>Welcome to the python-comdb2 documentation!<a class="headerlink" href="#welcome-to-the-python-comdb2-documentation" title="Link to this heading"></a></h1>
+<section id="module-comdb2">
+<span id="comdb2-python-interfaces-to-comdb2-databases"></span><h2><a class="reference internal" href="#module-comdb2" title="comdb2: Python interfaces to Comdb2 databases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2</span></code></a> Python interfaces to Comdb2 databases<a class="headerlink" href="#module-comdb2" title="Link to this heading"></a></h2>
+<p>This package provides Python interfaces to Comdb2 databases.</p>
+<p>Two different Python submodules are provided for interacting with Comdb2
+databases.</p>
+<p><a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code></a> provides an interface that conforms to <a class="reference external" href="https://www.python.org/dev/peps/pep-0249/">the Python Database API
+Specification v2.0</a>.  If you’re
+already familiar with the Python DB-API, or if you intend to use libraries that
+expect to be given DB-API compliant connections, this module is likely to be
+the best fit for you.  Additionally, if a better way of communicating with
+a Comdb2 database than <code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code> is ever introduced, this module will be
+upgraded to it under the hood.</p>
+<p><a class="reference internal" href="cdb2.html#module-comdb2.cdb2" title="comdb2.cdb2: Thin, pythonic wrapper over cdb2api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code></a> provides a thin, pythonic wrapper over cdb2api.  If you’re more
+familiar with <code class="docutils literal notranslate"><span class="pre">libcdb2api</span></code> than with the Python DB-API and you don’t
+anticipate a need to interact with libraries that require DB-API compliant
+connections, this module may be simpler to get started with.</p>
+<section id="contents">
+<h3>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dbapi2.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#graceful-teardown-and-error-handling">Graceful Teardown and Error Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#controlling-the-type-used-for-result-rows">Controlling the Type Used For Result Rows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#parameter-binding">Parameter Binding</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#by-name">By Name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#by-position">By Position</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#types">Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#autocommit-mode">Autocommit Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#db-api-compliance">DB-API Compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dbapi2.html#api-documentation">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#constants">Constants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.apilevel"><code class="docutils literal notranslate"><span class="pre">apilevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.threadsafety"><code class="docutils literal notranslate"><span class="pre">threadsafety</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.paramstyle"><code class="docutils literal notranslate"><span class="pre">paramstyle</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#connections-and-cursors">Connections and Cursors</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.connect"><code class="docutils literal notranslate"><span class="pre">connect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection"><code class="docutils literal notranslate"><span class="pre">Connection</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.close"><code class="docutils literal notranslate"><span class="pre">Connection.close()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.commit"><code class="docutils literal notranslate"><span class="pre">Connection.commit()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.cursor"><code class="docutils literal notranslate"><span class="pre">Connection.cursor()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.rollback"><code class="docutils literal notranslate"><span class="pre">Connection.rollback()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.row_factory"><code class="docutils literal notranslate"><span class="pre">Connection.row_factory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor"><code class="docutils literal notranslate"><span class="pre">Cursor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.__iter__"><code class="docutils literal notranslate"><span class="pre">Cursor.__iter__()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.arraysize"><code class="docutils literal notranslate"><span class="pre">Cursor.arraysize</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.callproc"><code class="docutils literal notranslate"><span class="pre">Cursor.callproc()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.close"><code class="docutils literal notranslate"><span class="pre">Cursor.close()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.connection"><code class="docutils literal notranslate"><span class="pre">Cursor.connection</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.description"><code class="docutils literal notranslate"><span class="pre">Cursor.description</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.execute"><code class="docutils literal notranslate"><span class="pre">Cursor.execute()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.executemany"><code class="docutils literal notranslate"><span class="pre">Cursor.executemany()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.fetchall"><code class="docutils literal notranslate"><span class="pre">Cursor.fetchall()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.fetchmany"><code class="docutils literal notranslate"><span class="pre">Cursor.fetchmany()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.fetchone"><code class="docutils literal notranslate"><span class="pre">Cursor.fetchone()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.rowcount"><code class="docutils literal notranslate"><span class="pre">Cursor.rowcount</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.setinputsizes"><code class="docutils literal notranslate"><span class="pre">Cursor.setinputsizes()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.setoutputsize"><code class="docutils literal notranslate"><span class="pre">Cursor.setoutputsize()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#type-objects">Type Objects</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.STRING"><code class="docutils literal notranslate"><span class="pre">STRING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.BINARY"><code class="docutils literal notranslate"><span class="pre">BINARY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.NUMBER"><code class="docutils literal notranslate"><span class="pre">NUMBER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.DATETIME"><code class="docutils literal notranslate"><span class="pre">DATETIME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.ROWID"><code class="docutils literal notranslate"><span class="pre">ROWID</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#type-constructors">Type Constructors</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Timestamp"><code class="docutils literal notranslate"><span class="pre">Timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.TimestampFromTicks"><code class="docutils literal notranslate"><span class="pre">TimestampFromTicks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Binary"><code class="docutils literal notranslate"><span class="pre">Binary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#datetimeus">DatetimeUs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.DatetimeUs"><code class="docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.DatetimeUs.fromdatetime"><code class="docutils literal notranslate"><span class="pre">DatetimeUs.fromdatetime()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.TimestampUs"><code class="docutils literal notranslate"><span class="pre">TimestampUs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.TimestampUsFromTicks"><code class="docutils literal notranslate"><span class="pre">TimestampUsFromTicks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.ColumnType"><code class="docutils literal notranslate"><span class="pre">ColumnType</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dbapi2.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Error"><code class="docutils literal notranslate"><span class="pre">Error</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Warning"><code class="docutils literal notranslate"><span class="pre">Warning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.InterfaceError"><code class="docutils literal notranslate"><span class="pre">InterfaceError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.DatabaseError"><code class="docutils literal notranslate"><span class="pre">DatabaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.InternalError"><code class="docutils literal notranslate"><span class="pre">InternalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.OperationalError"><code class="docutils literal notranslate"><span class="pre">OperationalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.ProgrammingError"><code class="docutils literal notranslate"><span class="pre">ProgrammingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.IntegrityError"><code class="docutils literal notranslate"><span class="pre">IntegrityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.UniqueKeyConstraintError"><code class="docutils literal notranslate"><span class="pre">UniqueKeyConstraintError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.ForeignKeyConstraintError"><code class="docutils literal notranslate"><span class="pre">ForeignKeyConstraintError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.NonNullConstraintError"><code class="docutils literal notranslate"><span class="pre">NonNullConstraintError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.DataError"><code class="docutils literal notranslate"><span class="pre">DataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.NotSupportedError"><code class="docutils literal notranslate"><span class="pre">NotSupportedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.Error"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.Error</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.Warning"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.Warning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.InterfaceError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.InterfaceError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.DatabaseError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.DatabaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.InternalError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.InternalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.OperationalError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.OperationalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.ProgrammingError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.ProgrammingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.IntegrityError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.IntegrityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.DataError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.DataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dbapi2.html#comdb2.dbapi2.comdb2.dbapi2.Connection.NotSupportedError"><code class="docutils literal notranslate"><span class="pre">comdb2.dbapi2.Connection.NotSupportedError</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cdb2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cdb2.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#graceful-teardown-and-error-handling">Graceful Teardown and Error Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#controlling-the-type-used-for-result-rows">Controlling the Type Used For Result Rows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#parameter-binding">Parameter Binding</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#by-name">By Name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#by-position">By Position</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#types">Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdb2.html#api-documentation">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#handles">Handles</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle"><code class="docutils literal notranslate"><span class="pre">Handle</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.__iter__"><code class="docutils literal notranslate"><span class="pre">Handle.__iter__()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.close"><code class="docutils literal notranslate"><span class="pre">Handle.close()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.column_names"><code class="docutils literal notranslate"><span class="pre">Handle.column_names()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.column_types"><code class="docutils literal notranslate"><span class="pre">Handle.column_types()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.execute"><code class="docutils literal notranslate"><span class="pre">Handle.execute()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.get_effects"><code class="docutils literal notranslate"><span class="pre">Handle.get_effects()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.row_factory"><code class="docutils literal notranslate"><span class="pre">Handle.row_factory</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Error"><code class="docutils literal notranslate"><span class="pre">Error</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Error.error_code"><code class="docutils literal notranslate"><span class="pre">Error.error_code</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Error.error_message"><code class="docutils literal notranslate"><span class="pre">Error.error_message</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#datetimeus">DatetimeUs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.DatetimeUs"><code class="docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.DatetimeUs.fromdatetime"><code class="docutils literal notranslate"><span class="pre">DatetimeUs.fromdatetime()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#effects">Effects</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects"><code class="docutils literal notranslate"><span class="pre">Effects</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects.num_affected"><code class="docutils literal notranslate"><span class="pre">Effects.num_affected</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects.num_deleted"><code class="docutils literal notranslate"><span class="pre">Effects.num_deleted</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects.num_inserted"><code class="docutils literal notranslate"><span class="pre">Effects.num_inserted</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects.num_selected"><code class="docutils literal notranslate"><span class="pre">Effects.num_selected</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="cdb2.html#comdb2.cdb2.Effects.num_updated"><code class="docutils literal notranslate"><span class="pre">Effects.num_updated</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cdb2.html#enumerations">Enumerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.ColumnType"><code class="docutils literal notranslate"><span class="pre">ColumnType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.TYPE"><code class="docutils literal notranslate"><span class="pre">TYPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.ConnectionFlags"><code class="docutils literal notranslate"><span class="pre">ConnectionFlags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.HANDLE_FLAGS"><code class="docutils literal notranslate"><span class="pre">HANDLE_FLAGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cdb2.html#comdb2.cdb2.ERROR_CODE"><code class="docutils literal notranslate"><span class="pre">ERROR_CODE</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Comdb2 to Python Type Mappings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="types.html#null">NULL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#numeric-types">Numeric Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#string-and-blob-types">String and Blob Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#date-and-time-types">Date and Time Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#decimal-type">Decimal Type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html#c-array-types">C Array Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="factories.html#comdb2.factories.dict_row_factory"><code class="docutils literal notranslate"><span class="pre">dict_row_factory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="factories.html#comdb2.factories.namedtuple_row_factory"><code class="docutils literal notranslate"><span class="pre">namedtuple_row_factory()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Best Practices, Tips, and Tricks</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h3>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbapi2.html" class="btn btn-neutral float-right" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2017, Bloomberg LP.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

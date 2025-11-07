@@ -1,0 +1,692 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>comdb2.cdb2 Thin, pythonic wrapper over cdb2api &mdash; Comdb2 1.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=60b3a732"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Comdb2 to Python Type Mappings" href="types.html" />
+    <link rel="prev" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API" href="dbapi2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Comdb2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#graceful-teardown-and-error-handling">Graceful Teardown and Error Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#controlling-the-type-used-for-result-rows">Controlling the Type Used For Result Rows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-binding">Parameter Binding</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#by-name">By Name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#by-position">By Position</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#types">Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api-documentation">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#handles">Handles</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.Handle"><code class="docutils literal notranslate"><span class="pre">Handle</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.Error"><code class="docutils literal notranslate"><span class="pre">Error</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#datetimeus">DatetimeUs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.DatetimeUs"><code class="docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#effects">Effects</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.Effects"><code class="docutils literal notranslate"><span class="pre">Effects</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#enumerations">Enumerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.ColumnType"><code class="docutils literal notranslate"><span class="pre">ColumnType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.TYPE"><code class="docutils literal notranslate"><span class="pre">TYPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.ConnectionFlags"><code class="docutils literal notranslate"><span class="pre">ConnectionFlags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.HANDLE_FLAGS"><code class="docutils literal notranslate"><span class="pre">HANDLE_FLAGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comdb2.cdb2.ERROR_CODE"><code class="docutils literal notranslate"><span class="pre">ERROR_CODE</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Comdb2 to Python Type Mappings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Best Practices, Tips, and Tricks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Comdb2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cdb2.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-comdb2.cdb2">
+<span id="comdb2-cdb2-thin-pythonic-wrapper-over-cdb2api"></span><h1><a class="reference internal" href="#module-comdb2.cdb2" title="comdb2.cdb2: Thin, pythonic wrapper over cdb2api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code></a> Thin, pythonic wrapper over cdb2api<a class="headerlink" href="#module-comdb2.cdb2" title="Link to this heading"></a></h1>
+<p>This module provides a thin, pythonic wrapper over cdb2api.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<section id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<p>The main class used for interacting with a Comdb2 is <a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle</span></code></a>.  A basic usage
+example looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">cdb2</span>
+<span class="n">hndl</span> <span class="o">=</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which would result in the following output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="graceful-teardown-and-error-handling">
+<h3>Graceful Teardown and Error Handling<a class="headerlink" href="#graceful-teardown-and-error-handling" title="Link to this heading"></a></h3>
+<p>Non-trivial applications should guarantee that the handle is closed when it is
+no longer needed, preferably by using <a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.closing" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contextlib.closing</span></code></a>.  They should also
+be prepared to handle any errors returned by the database.  Failures that are
+encountered when connecting to or querying the database are raised as instances
+of the <a class="reference internal" href="#comdb2.cdb2.Error" title="comdb2.cdb2.Error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Error</span></code></a> class.  So, a more thorough version of the example above would
+be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">cdb2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">closing</span><span class="p">(</span><span class="n">cdb2</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">hndl</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Comdb2 exception encountered: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">exc</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this example, <a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.closing" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contextlib.closing</span></code></a> is used to guarantee that <a class="reference internal" href="#comdb2.cdb2.Handle.close" title="comdb2.cdb2.Handle.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.close</span></code></a>
+is called at the end of the <code class="docutils literal notranslate"><span class="pre">with</span></code> block, and an exception
+handler been added for exceptions of type <a class="reference internal" href="#comdb2.cdb2.Error" title="comdb2.cdb2.Error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Error</span></code></a>.</p>
+</section>
+<section id="controlling-the-type-used-for-result-rows">
+<h3>Controlling the Type Used For Result Rows<a class="headerlink" href="#controlling-the-type-used-for-result-rows" title="Link to this heading"></a></h3>
+<p>As you can see, rows are returned as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of column values in positional
+order.  If you’d prefer to get the columns back as some other type, you can set
+<a class="reference internal" href="#comdb2.cdb2.Handle.row_factory" title="comdb2.cdb2.Handle.row_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.row_factory</span></code></a> to one of the factories provided by
+<a class="reference internal" href="factories.html#module-comdb2.factories" title="comdb2.factories: Factory functions for use with Comdb2 handles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.factories</span></code></a> - for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">cdb2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comdb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">factories</span>
+<span class="n">hndl</span> <span class="o">=</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">)</span>
+<span class="n">hndl</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">factories</span><span class="o">.</span><span class="n">dict_row_factory</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1 as &#39;x&#39;, 2 as &#39;y&#39; union all select 3, 4&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This program will return each row as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> rather than a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="parameter-binding">
+<h3>Parameter Binding<a class="headerlink" href="#parameter-binding" title="Link to this heading"></a></h3>
+<p>In real applications you’ll often need to pass parameters into a SQL query.
+This is done using parameter binding, either by name or by position.</p>
+<section id="by-name">
+<h4>By Name<a class="headerlink" href="#by-name" title="Link to this heading"></a></h4>
+<p>In the query, placeholders are specified using <code class="docutils literal notranslate"><span class="pre">&#64;name</span></code> or <code class="docutils literal notranslate"><span class="pre">:name</span></code>, and a
+mapping of names to values is passed to <a class="reference internal" href="#comdb2.cdb2.Handle.execute" title="comdb2.cdb2.Handle.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.execute</span></code></a> along with the query.
+For example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;select 25 between @a and @b&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">})))</span>
+<span class="go">[[1]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">)))</span>
+<span class="go">[[0]]</span>
+</pre></div>
+</div>
+<p>In this example, we run the query with two different sets of parameters,
+producing different results.  First, we execute the query with <code class="docutils literal notranslate"><span class="pre">&#64;a</span></code> bound to
+<code class="docutils literal notranslate"><span class="pre">20</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;b</span></code> bound to <code class="docutils literal notranslate"><span class="pre">42</span></code>.  In this case, because <code class="docutils literal notranslate"><span class="pre">20</span> <span class="pre">&lt;=</span> <span class="pre">25</span> <span class="pre">&lt;=</span> <span class="pre">42</span></code>,
+the expression evaluates to true, and a single row with a single column
+set to <code class="docutils literal notranslate"><span class="pre">1</span></code> is returned.</p>
+<p>When we run the same query with <code class="docutils literal notranslate"><span class="pre">&#64;b</span></code> bound to <code class="docutils literal notranslate"><span class="pre">23</span></code>, a row with a column
+set to <code class="docutils literal notranslate"><span class="pre">0</span></code> is returned instead, because <code class="docutils literal notranslate"><span class="pre">20</span> <span class="pre">&lt;=</span> <span class="pre">25</span> <span class="pre">&lt;=</span> <span class="pre">23</span></code> is false.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In both of these examples we make use of the <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> constructor to turn
+the iterable returned by <a class="reference internal" href="#comdb2.cdb2.Handle.execute" title="comdb2.cdb2.Handle.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.execute</span></code></a> into a list of result rows.</p>
+</div>
+</section>
+<section id="by-position">
+<h4>By Position<a class="headerlink" href="#by-position" title="Link to this heading"></a></h4>
+<p>You can bind parameters positionally rather than by name, by using <code class="docutils literal notranslate"><span class="pre">?</span></code>
+for each placeholder and providing a list or tuple of parameter values.
+For example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;select 25 between ? and ?&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">42</span><span class="p">])))</span>
+<span class="go">[[1]]</span>
+</pre></div>
+</div>
+<p>Here, we execute the query with the first <code class="docutils literal notranslate"><span class="pre">?</span></code> bound to 20 and the second
+<code class="docutils literal notranslate"><span class="pre">?</span></code> bound to 42, so a row with a single column set to <code class="docutils literal notranslate"><span class="pre">1</span></code> is returned
+like in the previous example.</p>
+</section>
+</section>
+<section id="types">
+<h3>Types<a class="headerlink" href="#types" title="Link to this heading"></a></h3>
+<p>For all Comdb2 types, the same Python type is used for binding a parameter
+value as is returned for a SQL query result column of that type.  In brief, SQL
+types are mapped to Python types according to the following table:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>SQL type</p></th>
+<th class="head"><p>Python type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NULL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>integer</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>real</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>blob</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bytes</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>text</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>datetime</p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>datetimeus</p></td>
+<td><p><a class="reference internal" href="#comdb2.cdb2.DatetimeUs" title="comdb2.cdb2.DatetimeUs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>See <a class="reference internal" href="types.html#comdb2-to-python-type-mappings"><span class="std std-ref">Comdb2 to Python Type Mappings</span></a> for a thorough explanation of these
+type mappings and their implications.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This module uses byte strings to represent BLOB columns, and Unicode
+strings to represent TEXT columns.  This is a very common source of
+problems for new users.
+Make sure to carefully read <a class="reference internal" href="types.html#string-and-blob-types"><span class="std std-ref">String and Blob Types</span></a> on that page.</p>
+</div>
+</section>
+</section>
+<section id="api-documentation">
+<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading"></a></h2>
+<section id="handles">
+<h3>Handles<a class="headerlink" href="#handles" title="Link to this heading"></a></h3>
+<p>The user interacts with the database using <a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle</span></code></a> objects.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">Handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle" title="Link to this definition"></a></dt>
+<dd><p>Represents a connection to a database.</p>
+<p>By default, the connection will be made to the cluster configured as the
+machine-wide default for the given database.  This is almost always what
+you want.  If you need to connect to a database that’s running on your
+local machine rather than a cluster, you can pass “local” as the <code class="docutils literal notranslate"><span class="pre">tier</span></code>.
+It’s also permitted to specify “dev”, “alpha”, “beta”, or “prod” as the
+<code class="docutils literal notranslate"><span class="pre">tier</span></code>, which will connect you directly to the tier you specify (firewall
+permitting).</p>
+<p>Alternately, you can pass a machine name as the <code class="docutils literal notranslate"><span class="pre">host</span></code> argument, to
+connect directly to an instance of the given database on that host, rather
+than on a cluster or the local machine.</p>
+<p>By default, the connection will use UTC as its timezone.  This differs from
+cdb2api’s default behavior, where the timezone used by the query differs
+depending on the machine that it is run from.  If for some reason you need
+to have that machine-specific default timezone instead, you can pass
+<code class="docutils literal notranslate"><span class="pre">None</span></code> for the <code class="docutils literal notranslate"><span class="pre">tz</span></code> argument.  Any other valid timezone name may also
+be used instead of ‘UTC’.</p>
+<p>Note that Python does not guarantee that object finalizers will be called
+when the interpreter exits, so to ensure that the handle is cleanly
+released you should call the <a class="reference internal" href="#comdb2.cdb2.Handle.close" title="comdb2.cdb2.Handle.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code></a> method when you’re done with it.  You
+can use <a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.closing" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contextlib.closing</span></code></a> to guarantee the handle is released when
+a block completes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>database_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the database to connect to.</p></li>
+<li><p><strong>tier</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The cluster to connect to.</p></li>
+<li><p><strong>host</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Alternately, a single remote host to connect to.</p></li>
+<li><p><strong>flags</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – A flags value passed directly through to cdb2_open.</p></li>
+<li><p><strong>tz</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The timezone to be used by the new connection, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to
+use a machine-specific default.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.__iter__">
+<span class="sig-name descname"><span class="pre">__iter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.__iter__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.__iter__" title="Link to this definition"></a></dt>
+<dd><p>Iterate over all remaining rows in the current result set.</p>
+<p>By default each row is returned as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>, where the elements in the
+list correspond to the result row’s columns in positional order, but
+this can be changed with the <a class="reference internal" href="#comdb2.cdb2.Handle.row_factory" title="comdb2.cdb2.Handle.row_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">row_factory</span></code></a> property.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1, 2 UNION ALL select 3, 4&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">[1, 2]</span>
+<span class="go">[3, 4]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ack_current_event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.close" title="Link to this definition"></a></dt>
+<dd><p>Gracefully close the Comdb2 connection.</p>
+<p>Once a <a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle</span></code></a> has been closed, no further operations may be performed
+on it.</p>
+<p>If the handle was used to consume events from a <a class="reference external" href="https://bloomberg.github.io/comdb2/triggers.html#lua-consumers">Lua consumer</a>, then
+<em>ack_current_event</em> tells the database what to do with the last
+event that was delivered. By default it will be marked as consumed and
+won’t be redelivered, but if <code class="docutils literal notranslate"><span class="pre">ack_current_event=False</span></code> then the
+event will be redelivered to another consumer for processing.</p>
+<p>If a socket pool is running on the machine and the connection was in
+a clean state, this will turn over the connection to the socket pool.
+This cannot be done if the connection is in a transaction, or
+in the middle of retrieving a result set.  Other restrictions may apply
+as well.</p>
+<p>You can ensure that this gets called at the end of a block using
+something like:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">closing</span><span class="p">(</span><span class="n">Handle</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">hndl</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1&quot;</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">[1]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.column_names">
+<span class="sig-name descname"><span class="pre">column_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.column_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.column_names" title="Link to this definition"></a></dt>
+<dd><p>Returns the names of the columns of the current result set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of unicode strings, one per column in the result set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.column_types">
+<span class="sig-name descname"><span class="pre">column_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.column_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.column_types" title="Link to this definition"></a></dt>
+<dd><p>Returns the type codes of the columns of the current result set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of integers, one per column in the result set.
+Each generally corresponds to one of the types in the <a class="reference internal" href="#comdb2.cdb2.TYPE" title="comdb2.cdb2.TYPE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TYPE</span></code></a> global
+object exposed by this module.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.execute" title="Link to this definition"></a></dt>
+<dd><p>Execute a database operation (query or command).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">sql</span></code> string may have placeholders for parameters to be passed.
+This should always be the preferred method of parameterizing the SQL
+query, as it prevents SQL injection vulnerabilities and is faster.
+Placeholders for named parameters must be in one of Comdb2’s native
+formats, either <code class="docutils literal notranslate"><span class="pre">&#64;param_name</span></code> or <code class="docutils literal notranslate"><span class="pre">:param_name</span></code>. Alternatively, you
+can use <code class="docutils literal notranslate"><span class="pre">?</span></code> for each placeholder to bind parameters positionally
+instead of by name.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">column_types</span></code> is provided and non-empty, it must be a sequence of
+members of the <a class="reference internal" href="#comdb2.cdb2.ColumnType" title="comdb2.cdb2.ColumnType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnType</span></code></a> enumeration. The database will coerce the
+data in the Nth column of the result set to the Nth given column type.
+An error will be raised if the number of elements in <code class="docutils literal notranslate"><span class="pre">column_types</span></code>
+doesn’t match the number of columns in the result set, or if one of the
+elements is not a supported column type, or if coercion fails. If
+<code class="docutils literal notranslate"><span class="pre">column_types</span></code> is empty or not provided, no coercion is performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sql</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The SQL string to execute.</p></li>
+<li><p><strong>parameters</strong> (<em>Mapping</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>] </em><em>| </em><em>Sequence</em><em>[</em><em>Any</em><em>]</em>) – If the SQL statement has <code class="docutils literal notranslate"><span class="pre">&#64;param_name</span></code> or <code class="docutils literal notranslate"><span class="pre">:param_name</span></code>
+style placeholders, you must pass a mapping from parameter name
+to value. If the SQL statement has <code class="docutils literal notranslate"><span class="pre">?</span></code> style placeholders,
+you must instead pass an ordered sequence of parameter values.</p></li>
+<li><p><strong>column_types</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>) – An optional sequence of types (values
+of the <a class="reference internal" href="#comdb2.cdb2.ColumnType" title="comdb2.cdb2.ColumnType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnType</span></code></a> enumeration) which the columns of the
+result set will be coerced to.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>This method returns the <a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle</span></code></a> that it was called on,
+which can be used as an iterator over the result set returned by
+the query.  Iterating over it will yield one <code class="docutils literal notranslate"><span class="pre">list</span></code> per row in
+the result set, where the elements in the list correspond to the
+result columns within the row, in positional order.</p>
+<p>The <a class="reference internal" href="#comdb2.cdb2.Handle.row_factory" title="comdb2.cdb2.Handle.row_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">row_factory</span></code></a> property can be used to return rows as
+a different type, instead.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle">Handle</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1, 2 UNION ALL select @x, @y&quot;</span><span class="p">,</span>
+<span class="gp">... </span>                        <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">[1, 2]</span>
+<span class="go">[2, 4]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;select 1, 2 UNION ALL select ?, ?&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">[1, 2]</span>
+<span class="go">[2, 4]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.get_effects">
+<span class="sig-name descname"><span class="pre">get_effects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/comdb2/cdb2.html#Handle.get_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comdb2.cdb2.Handle.get_effects" title="Link to this definition"></a></dt>
+<dd><p>Return counts of rows affected by executed queries.</p>
+<p>Within a transaction, these counts are a running total from the start
+of the transaction up through the last executed SQL statement.  Outside
+of a transaction, these counts represent the rows affected by only the
+last executed SQL statement.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Calling this method consumes all remaining rows in the current
+result set.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The results within a transaction are not necessarily reliable
+unless the <code class="docutils literal notranslate"><span class="pre">VERIFYRETRY</span></code> setting is turned off.  All of the
+caveats of the <code class="docutils literal notranslate"><span class="pre">cdb2_get_effects</span></code> call apply.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An count of rows that have been affected, selected,
+updated, deleted, or inserted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#comdb2.cdb2.Effects" title="comdb2.cdb2.Effects">Effects</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="comdb2.cdb2.Handle.row_factory">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">row_factory</span></span><a class="headerlink" href="#comdb2.cdb2.Handle.row_factory" title="Link to this definition"></a></dt>
+<dd><p>Factory used when constructing result rows.</p>
+<p>By default, or when set to <code class="docutils literal notranslate"><span class="pre">None</span></code>, each row is returned as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>
+of column values.  If you’d prefer to receive rows as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> or as
+a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.namedtuple" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collections.namedtuple</span></code></a>, you can set this property to one of the
+factories provided by the <a class="reference internal" href="factories.html#module-comdb2.factories" title="comdb2.factories: Factory functions for use with Comdb2 handles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.factories</span></code></a> module.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2.factories</span><span class="w"> </span><span class="kn">import</span> <span class="n">dict_row_factory</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hndl</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_row_factory</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT 1 as &#39;foo&#39;, 2 as &#39;bar&#39;&quot;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="go">{&#39;foo&#39;: 1, &#39;bar&#39;: 2}</span>
+</pre></div>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.9.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="exceptions">
+<h3>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h3>
+<dl class="py exception">
+<dt class="sig sig-object py" id="comdb2.cdb2.Error">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">Error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.Error" title="Link to this definition"></a></dt>
+<dd><p>Exception type raised for all failed operations.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Error.error_code">
+<span class="sig-name descname"><span class="pre">error_code</span></span><a class="headerlink" href="#comdb2.cdb2.Error.error_code" title="Link to this definition"></a></dt>
+<dd><p>The error code from the failed cdb2api call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Error.error_message">
+<span class="sig-name descname"><span class="pre">error_message</span></span><a class="headerlink" href="#comdb2.cdb2.Error.error_message" title="Link to this definition"></a></dt>
+<dd><p>The string returned by cdb2api’s <code class="docutils literal notranslate"><span class="pre">cdb2_errstr</span></code>
+after the failed call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="datetimeus">
+<h3>DatetimeUs<a class="headerlink" href="#datetimeus" title="Link to this heading"></a></h3>
+<p>A class is provided for differentiating Comdb2’s DATETIMEUS type from its
+DATETIME type.</p>
+<blockquote>
+<div><dl class="py class">
+<dt class="sig sig-object py" id="comdb2.cdb2.DatetimeUs">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">DatetimeUs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">hour</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">minute</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">second</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">microsecond</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">tzinfo</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="optional">]</span><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.DatetimeUs" title="Link to this definition"></a></dt>
+<dd><p>Provides a distinct representation for Comdb2’s DATETIMEUS type.</p>
+<p>Historically, Comdb2 provided a DATETIME type with millisecond precision.
+Comdb2 R6 added a DATETIMEUS type, which instead has microsecond precision.</p>
+<p>This module represents each Comdb2 type with a distinct Python type.  For
+backwards compatibility with older Comdb2 databases, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> is
+mapped to the DATETIME type, and this class to the DATETIMEUS type.
+Because this is a subclass of <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a>, you don’t need to do
+anything special when reading a DATETIMEUS type out of the database.  You
+can use <a class="reference external" href="https://docs.python.org/3/library/functions.html#isinstance" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isinstance</span></code></a> if you need to check whether you’ve been given
+a <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> (meaning the column was of the DATETIME type) or
+a <a class="reference internal" href="#comdb2.cdb2.DatetimeUs" title="comdb2.cdb2.DatetimeUs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a> (meaning the column was of the DATETIMEUS type), but all the
+same methods will work on either.</p>
+<p>When binding a parameter of type DATETIMEUS, you must pass an instance of
+this class, as a <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> would instead be bound as a DATETIME.
+Instances of this class can be created using this constructor, or the
+<a class="reference internal" href="#comdb2.cdb2.DatetimeUs.fromdatetime" title="comdb2.cdb2.DatetimeUs.fromdatetime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fromdatetime</span></code></a> alternate constructor, or any of the other alternate
+constructors inherited from <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="comdb2.cdb2.DatetimeUs.fromdatetime">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fromdatetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datetime</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.DatetimeUs.fromdatetime" title="Link to this definition"></a></dt>
+<dd><p>Return a <a class="reference internal" href="#comdb2.cdb2.DatetimeUs" title="comdb2.cdb2.DatetimeUs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatetimeUs</span></code></a> copied from a given <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
+</section>
+<section id="effects">
+<h3>Effects<a class="headerlink" href="#effects" title="Link to this heading"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">Effects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_affected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_selected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_updated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_deleted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_inserted</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.Effects" title="Link to this definition"></a></dt>
+<dd><p>Type used to represent the count of rows affected by a SQL query.</p>
+<p>An object of this type is returned by <a class="reference internal" href="#comdb2.cdb2.Handle.get_effects" title="comdb2.cdb2.Handle.get_effects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.get_effects</span></code></a>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects.num_affected">
+<span class="sig-name descname"><span class="pre">num_affected</span></span><a class="headerlink" href="#comdb2.cdb2.Effects.num_affected" title="Link to this definition"></a></dt>
+<dd><p>The total number of rows that were affected.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects.num_deleted">
+<span class="sig-name descname"><span class="pre">num_deleted</span></span><a class="headerlink" href="#comdb2.cdb2.Effects.num_deleted" title="Link to this definition"></a></dt>
+<dd><p>The number of rows that were deleted.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects.num_inserted">
+<span class="sig-name descname"><span class="pre">num_inserted</span></span><a class="headerlink" href="#comdb2.cdb2.Effects.num_inserted" title="Link to this definition"></a></dt>
+<dd><p>The number of rows that were inserted.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects.num_selected">
+<span class="sig-name descname"><span class="pre">num_selected</span></span><a class="headerlink" href="#comdb2.cdb2.Effects.num_selected" title="Link to this definition"></a></dt>
+<dd><p>The number of rows that were selected.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comdb2.cdb2.Effects.num_updated">
+<span class="sig-name descname"><span class="pre">num_updated</span></span><a class="headerlink" href="#comdb2.cdb2.Effects.num_updated" title="Link to this definition"></a></dt>
+<dd><p>The number of rows that were updated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="enumerations">
+<h3>Enumerations<a class="headerlink" href="#enumerations" title="Link to this heading"></a></h3>
+<p>Several mappings are provided to expose enumerations from <code class="docutils literal notranslate"><span class="pre">cdb2api.h</span></code> to
+Python.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="comdb2.cdb2.ColumnType">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">ColumnType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.ColumnType" title="Link to this definition"></a></dt>
+<dd><p>This enum represents all known Comdb2 column types.</p>
+<p>Each value in the list returned by <a class="reference internal" href="#comdb2.cdb2.Handle.column_types" title="comdb2.cdb2.Handle.column_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.column_types</span></code></a> will generally be
+the value corresponding to one of the members of this enumeration, though
+that’s not always guaranteed because new types can be added to the Comdb2
+server at any time.</p>
+<p>A sequence of consisting of members of this enum can be passed as the
+<em>column_types</em> parameter of <a class="reference internal" href="#comdb2.cdb2.Handle.execute" title="comdb2.cdb2.Handle.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle.execute</span></code></a>. The database will coerce the
+returned data to the given column types, or return an error if it cannot.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="comdb2.cdb2.TYPE">
+<span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">TYPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BLOB':</span> <span class="pre">4,</span> <span class="pre">'CSTRING':</span> <span class="pre">3,</span> <span class="pre">'DATETIME':</span> <span class="pre">6,</span> <span class="pre">'DATETIMEUS':</span> <span class="pre">9,</span> <span class="pre">'INTEGER':</span> <span class="pre">1,</span> <span class="pre">'INTERVALDS':</span> <span class="pre">8,</span> <span class="pre">'INTERVALDSUS':</span> <span class="pre">10,</span> <span class="pre">'INTERVALYM':</span> <span class="pre">7,</span> <span class="pre">'REAL':</span> <span class="pre">2}</span></em><a class="headerlink" href="#comdb2.cdb2.TYPE" title="Link to this definition"></a></dt>
+<dd><p>This dict maps all known Comdb2 types to their enumeration value.</p>
+<p>It predates the <a class="reference internal" href="#comdb2.cdb2.ColumnType" title="comdb2.cdb2.ColumnType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnType</span></code></a> enum and is retained only for backwards
+compatibility. The <a class="reference internal" href="#comdb2.cdb2.ColumnType" title="comdb2.cdb2.ColumnType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnType</span></code></a> enum should be preferred for new usage.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comdb2.cdb2.ConnectionFlags">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">ConnectionFlags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comdb2.cdb2.ConnectionFlags" title="Link to this definition"></a></dt>
+<dd><p>This enum represents connection flags.</p>
+<p>These values can be passed to the <a class="reference internal" href="#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Handle</span></code></a> constructor, either individually
+or as a bitwise OR of multiple flags.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="comdb2.cdb2.HANDLE_FLAGS">
+<span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">HANDLE_FLAGS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'DIRECT_CPU':</span> <span class="pre">4,</span> <span class="pre">'RANDOM':</span> <span class="pre">8,</span> <span class="pre">'RANDOMROOM':</span> <span class="pre">16,</span> <span class="pre">'READ_INTRANS_RESULTS':</span> <span class="pre">2,</span> <span class="pre">'ROOM':</span> <span class="pre">32}</span></em><a class="headerlink" href="#comdb2.cdb2.HANDLE_FLAGS" title="Link to this definition"></a></dt>
+<dd><p>This dict maps connection flags to their enumeration value.</p>
+<p>It predates the <a class="reference internal" href="#comdb2.cdb2.ConnectionFlags" title="comdb2.cdb2.ConnectionFlags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConnectionFlags</span></code></a> enum and is retained only for backwards
+compatibility. The <a class="reference internal" href="#comdb2.cdb2.ConnectionFlags" title="comdb2.cdb2.ConnectionFlags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConnectionFlags</span></code></a> enum should be preferred for new usage.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="comdb2.cdb2.ERROR_CODE">
+<span class="sig-prename descclassname"><span class="pre">comdb2.cdb2.</span></span><span class="sig-name descname"><span class="pre">ERROR_CODE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ACCESS':</span> <span class="pre">-106,</span> <span class="pre">'ASYNCERR':</span> <span class="pre">-9,</span> <span class="pre">'BADCOLUMN':</span> <span class="pre">-7,</span> <span class="pre">'BADREQ':</span> <span class="pre">-17,</span> <span class="pre">'BADSTATE':</span> <span class="pre">-8,</span> <span class="pre">'CONNECT_ERROR':</span> <span class="pre">-1,</span> <span class="pre">'CONSTRAINTS':</span> <span class="pre">-103,</span> <span class="pre">'CONV_FAIL':</span> <span class="pre">113,</span> <span class="pre">'DBCREATE_FAILED':</span> <span class="pre">-18,</span> <span class="pre">'DEADLOCK':</span> <span class="pre">203,</span> <span class="pre">'DUPLICATE':</span> <span class="pre">299,</span> <span class="pre">'FKEY_VIOLATION':</span> <span class="pre">3,</span> <span class="pre">'INTERNAL':</span> <span class="pre">-5,</span> <span class="pre">'INVALID_ID':</span> <span class="pre">-12,</span> <span class="pre">'IO_ERROR':</span> <span class="pre">-4,</span> <span class="pre">'MALLOC':</span> <span class="pre">115,</span> <span class="pre">'NOMASTER':</span> <span class="pre">-101,</span> <span class="pre">'NONKLESS':</span> <span class="pre">114,</span> <span class="pre">'NOSTATEMENT':</span> <span class="pre">-6,</span> <span class="pre">'NOTCONNECTED':</span> <span class="pre">-2,</span> <span class="pre">'NOTSUPPORTED':</span> <span class="pre">116,</span> <span class="pre">'NULL_CONSTRAINT':</span> <span class="pre">4,</span> <span class="pre">'PREPARE_ERROR':</span> <span class="pre">-3,</span> <span class="pre">'READONLY':</span> <span class="pre">-21,</span> <span class="pre">'RECORD_OUT_OF_RANGE':</span> <span class="pre">-13,</span> <span class="pre">'REJECTED':</span> <span class="pre">-15,</span> <span class="pre">'STOPPED':</span> <span class="pre">-16,</span> <span class="pre">'THREADPOOL_INTERNAL':</span> <span class="pre">-20,</span> <span class="pre">'TRAN_IO_ERROR':</span> <span class="pre">-105,</span> <span class="pre">'TRAN_MODE_UNSUPPORTED':</span> <span class="pre">-107,</span> <span class="pre">'TZNAME_FAIL':</span> <span class="pre">401,</span> <span class="pre">'UNKNOWN':</span> <span class="pre">300,</span> <span class="pre">'UNTAGGED_DATABASE':</span> <span class="pre">-102,</span> <span class="pre">'VERIFY_ERROR':</span> <span class="pre">2}</span></em><a class="headerlink" href="#comdb2.cdb2.ERROR_CODE" title="Link to this definition"></a></dt>
+<dd><p>This dict maps all known Comdb2 error names to their respective values.</p>
+<p>The value returned in <a class="reference internal" href="#comdb2.cdb2.Error.error_code" title="comdb2.cdb2.Error.error_code"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Error.error_code</span></code></a> will generally be the value
+corresponding to one of the keys in this dict, though that’s not always
+guaranteed because new error codes can be added to the Comdb2 server at any
+time.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dbapi2.html" class="btn btn-neutral float-left" title="comdb2.dbapi2 DBAPI-2.0 compatible Comdb2 API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="types.html" class="btn btn-neutral float-right" title="Comdb2 to Python Type Mappings" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2017, Bloomberg LP.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

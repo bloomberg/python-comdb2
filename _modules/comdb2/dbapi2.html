@@ -1,0 +1,1509 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>comdb2.dbapi2 &mdash; Comdb2 1.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=60b3a732"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Comdb2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdb2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Comdb2 to Python Type Mappings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tips.html">Best Practices, Tips, and Tricks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Comdb2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">comdb2.dbapi2</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for comdb2.dbapi2</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Bloomberg Finance L.P.</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;This module provides a DB-API 2.0 compatible Comdb2 API.</span>
+
+<span class="sd">Overview</span>
+<span class="sd">========</span>
+
+<span class="sd">This module provides a Comdb2 interface that conforms to `the Python Database</span>
+<span class="sd">API Specification v2.0 &lt;https://www.python.org/dev/peps/pep-0249/&gt;`_.</span>
+
+<span class="sd">Basic Usage</span>
+<span class="sd">-----------</span>
+
+<span class="sd">The main class used for interacting with a Comdb2 is `Connection`, which you</span>
+<span class="sd">create by calling the `connect` factory function.  Any errors that are</span>
+<span class="sd">encountered when connecting to or querying the database are raised as instances</span>
+<span class="sd">of the `Error` class.</span>
+
+<span class="sd">A basic usage example looks like this::</span>
+
+<span class="sd">    from comdb2 import dbapi2</span>
+<span class="sd">    conn = dbapi2.connect(&#39;mattdb&#39;, autocommit=True)</span>
+<span class="sd">    cursor = conn.cursor()</span>
+<span class="sd">    cursor.execute(&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;)</span>
+<span class="sd">    for row in cursor.fetchall():</span>
+<span class="sd">        print(row)</span>
+
+<span class="sd">The above would result in the following output::</span>
+
+<span class="sd">    [1, &#39;a&#39;]</span>
+<span class="sd">    [2, &#39;b&#39;]</span>
+
+<span class="sd">To reduce the amount of boilerplate required for fetching result sets, we</span>
+<span class="sd">implement 2 extensions to the interface required by the Python DB-API: `Cursor`</span>
+<span class="sd">objects are iterable, yielding one row of the result set per iteration, and</span>
+<span class="sd">`Cursor.execute` returns the `Cursor` itself.  By utilizing these extensions,</span>
+<span class="sd">the basic example can be shortened to::</span>
+
+<span class="sd">    from comdb2 import dbapi2</span>
+<span class="sd">    conn = dbapi2.connect(&#39;mattdb&#39;, autocommit=True)</span>
+<span class="sd">    for row in conn.cursor().execute(&quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;):</span>
+<span class="sd">        print(row)</span>
+
+<span class="sd">Graceful Teardown and Error Handling</span>
+<span class="sd">------------------------------------</span>
+
+<span class="sd">Non-trivial applications should guarantee that the `Connection` is closed when</span>
+<span class="sd">it is no longer needed, preferably by using `contextlib.closing`.  They should</span>
+<span class="sd">also be prepared to handle any errors returned by the database.  So, a more</span>
+<span class="sd">thorough version of the example above would be::</span>
+
+<span class="sd">    from comdb2 import dbapi2</span>
+<span class="sd">    from contextlib import closing</span>
+<span class="sd">    try:</span>
+<span class="sd">        with closing(dbapi2.connect(&#39;mattdb&#39;, autocommit=True)) as conn:</span>
+<span class="sd">            query = &quot;select 1, &#39;a&#39; union all select 2, &#39;b&#39;&quot;</span>
+<span class="sd">            for row in conn.cursor().execute(query):</span>
+<span class="sd">                print(row)</span>
+<span class="sd">    except dbapi2.Error as exc:</span>
+<span class="sd">        print(&quot;Comdb2 exception encountered: %s&quot; % exc)</span>
+
+<span class="sd">In this example, `contextlib.closing` is used to guarantee that</span>
+<span class="sd">`Connection.close` is called at the end of the ``with`` block, and an exception</span>
+<span class="sd">handler been added for exceptions of type `Error`.  All exceptions raised by</span>
+<span class="sd">this module are subclasses of `Error`.  See :ref:`Exceptions` for details on</span>
+<span class="sd">when each exception type is raised.</span>
+
+<span class="sd">Controlling the Type Used For Result Rows</span>
+<span class="sd">-----------------------------------------</span>
+
+<span class="sd">As you can see, rows are returned as a `list` of column values in positional</span>
+<span class="sd">order.  If you&#39;d prefer to get the columns back as some other type, you can set</span>
+<span class="sd">`Connection.row_factory` to one of the factories provided by</span>
+<span class="sd">`comdb2.factories` - for example::</span>
+
+<span class="sd">    from comdb2 import dbapi2</span>
+<span class="sd">    from comdb2 import factories</span>
+<span class="sd">    conn = dbapi2.connect(&#39;mattdb&#39;, autocommit=True)</span>
+<span class="sd">    conn.row_factory = factories.dict_row_factory</span>
+<span class="sd">    c = conn.cursor()</span>
+<span class="sd">    for row in c.execute(&quot;select 1 as &#39;x&#39;, 2 as &#39;y&#39; union all select 3, 4&quot;):</span>
+<span class="sd">        print(row)</span>
+
+<span class="sd">This program will return each row as a `dict` rather than a `list`::</span>
+
+<span class="sd">    {&#39;y&#39;: 2, &#39;x&#39;: 1}</span>
+<span class="sd">    {&#39;y&#39;: 4, &#39;x&#39;: 3}</span>
+
+<span class="sd">Parameter Binding</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">In real applications you&#39;ll often need to pass parameters into a SQL query.</span>
+<span class="sd">This is done using parameter binding, either by name or by position.</span>
+
+<span class="sd">By Name</span>
+<span class="sd">~~~~~~~</span>
+
+<span class="sd">In the query, placeholders are specified using ``%(name)s``, and a mapping of</span>
+<span class="sd">``name`` to parameter value is passed to `Cursor.execute` along with the query.</span>
+<span class="sd">The ``%(`` and ``)s`` are fixed, and the ``name`` inside them varies for each</span>
+<span class="sd">parameter.  For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; query = &quot;select 25 between %(a)s and %(b)s&quot;</span>
+<span class="sd">    &gt;&gt;&gt; print(conn.cursor().execute(query, {&#39;a&#39;: 20, &#39;b&#39;: 42}).fetchall())</span>
+<span class="sd">    [[1]]</span>
+<span class="sd">    &gt;&gt;&gt; params = {&#39;a&#39;: 20, &#39;b&#39;: 23}</span>
+<span class="sd">    &gt;&gt;&gt; print(conn.cursor().execute(query, params).fetchall())</span>
+<span class="sd">    [[0]]</span>
+
+<span class="sd">In this example, we run the query with two different sets of</span>
+<span class="sd">parameters, producing different results.  First, we execute the query with</span>
+<span class="sd">parameter ``a`` bound to ``20`` and ``b`` bound to ``42``.  In this case,</span>
+<span class="sd">because ``20 &lt;= 25 &lt;= 42``, the expression evaluates to true, and a row</span>
+<span class="sd">containing a single column with a value of ``1`` is returned.</span>
+
+<span class="sd">When we run the same query with parameter ``b`` bound to ``23``, a row</span>
+<span class="sd">containing a single column with a value of ``0`` is returned instead, because</span>
+<span class="sd">``20 &lt;= 25 &lt;= 23`` is false.</span>
+
+<span class="sd">Warning:</span>
+<span class="sd">    Because named parameters are bound using ``%(name)s``, other ``%`` signs in</span>
+<span class="sd">    a query must be escaped.  For example, ``WHERE name like &#39;M%&#39;`` becomes</span>
+<span class="sd">    ``WHERE name LIKE &#39;M%%&#39;``.</span>
+
+<span class="sd">Danger:</span>
+<span class="sd">    This applies even when no parameters are passed at all - passing ``None``</span>
+<span class="sd">    or no parameters behaves the same as passing an empty `dict`.</span>
+
+<span class="sd">By Position</span>
+<span class="sd">~~~~~~~~~~~</span>
+
+<span class="sd">You can bind parameters positionally rather than by name, by using ``?``</span>
+<span class="sd">for each placeholder and providing a list or tuple of parameter values.</span>
+<span class="sd">For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; query = &quot;select 25 between ? and ?&quot;</span>
+<span class="sd">    &gt;&gt;&gt; print(conn.cursor().execute(query, [20, 42]).fetchall())</span>
+<span class="sd">    [[1]]</span>
+
+<span class="sd">In this example, we execute the query with the first ``?`` bound to 20 and the</span>
+<span class="sd">second ``?`` bound to 42, so a row with a single column with a value of ``1``</span>
+<span class="sd">is returned like in the previous example.</span>
+
+<span class="sd">Warning:</span>
+<span class="sd">    Unlike when binding parameters by name, you must not escape ``%`` signs in</span>
+<span class="sd">    the SQL when binding parameters positionally.</span>
+
+<span class="sd">    For example, you could do ``WHERE val % 5 = ?``, but not ``WHERE val %% 5 = ?``.</span>
+
+<span class="sd">Tip:</span>
+<span class="sd">    You can pass an empty tuple of parameters to avoid the need to escape ``%``</span>
+<span class="sd">    signs in the SQL even when you don&#39;t want to bind any parameters, like:</span>
+
+<span class="sd">    &gt;&gt;&gt; query = &quot;select 42 % 20&quot;</span>
+<span class="sd">    &gt;&gt;&gt; print(conn.cursor().execute(query, ()).fetchall())</span>
+<span class="sd">    [[2]]</span>
+
+<span class="sd">    Compare this against what happens if you don&#39;t pass any parameters at all:</span>
+
+<span class="sd">    &gt;&gt;&gt; print(conn.cursor().execute(query).fetchall())</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    ...</span>
+<span class="sd">    comdb2.dbapi2.InterfaceError: Invalid Python format string for query</span>
+
+
+<span class="sd">Types</span>
+<span class="sd">-----</span>
+
+<span class="sd">For all Comdb2 types, the same Python type is used for binding a parameter</span>
+<span class="sd">value as is returned for a SQL query result column of that type.  In brief, SQL</span>
+<span class="sd">types are mapped to Python types according to the following table:</span>
+
+<span class="sd">============   ================================================================</span>
+<span class="sd">SQL type       Python type</span>
+<span class="sd">============   ================================================================</span>
+<span class="sd">NULL           ``None``</span>
+<span class="sd">integer        `int`</span>
+<span class="sd">real           `float`</span>
+<span class="sd">blob           `bytes`</span>
+<span class="sd">text           `str`</span>
+<span class="sd">datetime       `datetime.datetime`</span>
+<span class="sd">datetimeus     `DatetimeUs`</span>
+<span class="sd">============   ================================================================</span>
+
+<span class="sd">See :ref:`Comdb2 to Python Type Mappings` for a thorough explanation of these</span>
+<span class="sd">type mappings and their implications.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    This module uses byte strings to represent BLOB columns, and Unicode</span>
+<span class="sd">    strings to represent TEXT columns.  This is a very common source of</span>
+<span class="sd">    problems for new users.</span>
+<span class="sd">    Make sure to carefully read :ref:`String and Blob Types` on that page.</span>
+
+<span class="sd">.. _Autocommit Mode:</span>
+
+<span class="sd">Autocommit Mode</span>
+<span class="sd">---------------</span>
+
+<span class="sd">In all of the examples above, we gave the ``autocommit=True`` keyword argument</span>
+<span class="sd">when calling `connect`.  This opts out of DB-API compliant transaction</span>
+<span class="sd">handling, in order to use Comdb2&#39;s native transaction semantics.</span>
+
+<span class="sd">By default, DB-API cursors are always in a transaction.  You can commit that</span>
+<span class="sd">transaction using `Connection.commit`, or roll it back using</span>
+<span class="sd">`Connection.rollback`.  For example::</span>
+
+<span class="sd">    conn = dbapi2.connect(&#39;mattdb&#39;)</span>
+<span class="sd">    cursor = conn.cursor()</span>
+<span class="sd">    query = &quot;insert into simple(key, val) values (%(key)s, %(val)s)&quot;</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 1, &#39;val&#39;: 2})</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 3, &#39;val&#39;: 4})</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 5, &#39;val&#39;: 6})</span>
+<span class="sd">    conn.commit()</span>
+
+<span class="sd">There are several things to note here.  The first is that the insert statements</span>
+<span class="sd">that were sent to the database don&#39;t take effect immediately, because they are</span>
+<span class="sd">implicitly part of a transaction that must be explicitly completed.  This is</span>
+<span class="sd">different from other Comdb2 APIs, where you must execute a ``BEGIN`` statement</span>
+<span class="sd">to start a transaction, and where statements otherwise take effect immediately.</span>
+
+<span class="sd">The second thing to note is that there are certain error conditions where</span>
+<span class="sd">a Comdb2 connection can automatically recover when outside of a transaction,</span>
+<span class="sd">but not within a transaction.  In other words, using transactions when they</span>
+<span class="sd">aren&#39;t needed can introduce new failure modes into your program.</span>
+
+<span class="sd">In order to provide greater compatibility with other Comdb2 interfaces and</span>
+<span class="sd">to eliminate the performance costs and extra error cases introduced by using</span>
+<span class="sd">transactions unnecessarily, we allow you to pass the non-standard</span>
+<span class="sd">``autocommit=True`` keyword argument when creating a new `Connection`. This</span>
+<span class="sd">results in the implicit transaction not being created. You can still start</span>
+<span class="sd">a transaction explicitly by passing a ``BEGIN`` statement to</span>
+<span class="sd">`Cursor.execute`.  For example::</span>
+
+<span class="sd">    conn = dbapi2.connect(&#39;mattdb&#39;, autocommit=True)</span>
+<span class="sd">    cursor = conn.cursor()</span>
+<span class="sd">    cursor.execute(&quot;delete from simple where 1=1&quot;)</span>
+<span class="sd">    cursor.execute(&quot;begin&quot;)</span>
+<span class="sd">    query = &quot;insert into simple(key, val) values (%(key)s, %(val)s)&quot;</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 1, &#39;val&#39;: 2})</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 3, &#39;val&#39;: 4})</span>
+<span class="sd">    cursor.execute(query, {&#39;key&#39;: 5, &#39;val&#39;: 6})</span>
+<span class="sd">    cursor.execute(&quot;rollback&quot;)</span>
+
+<span class="sd">In this example, because we&#39;ve used ``autocommit=True`` the delete statement</span>
+<span class="sd">takes effect immediately (that is, it is automatically committed).  We then</span>
+<span class="sd">explicitly create a transaction, insert 3 rows, then decide not to commit</span>
+<span class="sd">it, and instead explicitly roll back the transaction.</span>
+
+<span class="sd">To summarize: you cannot use ``autocommit`` mode if you intend to pass the</span>
+<span class="sd">`Connection` to a library that requires DB-API compliant connections.  You</span>
+<span class="sd">should prefer ``autocommit`` mode when you don&#39;t want to use transactions (for</span>
+<span class="sd">example, read-only queries where no particular consistency guarantees are</span>
+<span class="sd">required across queries).  If you do intend to use transactions but won&#39;t pass</span>
+<span class="sd">the `Connection` to a library that requires DB-API compliance, you can choose</span>
+<span class="sd">either mode.  It may be easier to port existing code if you use ``autocommit``</span>
+<span class="sd">mode, but avoiding ``autocommit`` mode may allow you to use 3rd party libraries</span>
+<span class="sd">in the future that require DB-API compliant connections.</span>
+
+<span class="sd">DB-API Compliance</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">The interface this module provides fully conforms to `the Python Database API</span>
+<span class="sd">Specification v2.0 &lt;https://www.python.org/dev/peps/pep-0249/&gt;`_ with a few</span>
+<span class="sd">specific exceptions:</span>
+
+<span class="sd">1. DB-API requires ``Date`` and ``DateFromTicks`` constructors, which we don&#39;t</span>
+<span class="sd">   provide because Comdb2 has no type for representing a date without a time</span>
+<span class="sd">   component.</span>
+
+<span class="sd">2. DB-API requires ``Time`` and ``TimeFromTicks`` constructors, which we don&#39;t</span>
+<span class="sd">   provide because Comdb2 has no type for representing a time without a date</span>
+<span class="sd">   component.</span>
+
+<span class="sd">3. DB-API is unclear about the required behavior of multiple calls to</span>
+<span class="sd">   `Connection.cursor` on a connection.  Comdb2 does not have a concept of</span>
+<span class="sd">   cursors as distinct from connection handles, so each time</span>
+<span class="sd">   `Connection.cursor` is called, we call `Cursor.close` on any existing, open</span>
+<span class="sd">   cursor for that connection.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">cdb2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cdb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnType</span><span class="p">,</span> <span class="n">Row</span><span class="p">,</span> <span class="n">Value</span><span class="p">,</span> <span class="n">ParameterValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;apilevel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;threadsafety&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;paramstyle&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;connect&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ColumnType&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Connection&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Cursor&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;STRING&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BINARY&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NUMBER&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DATETIME&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ROWID&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Datetime&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DatetimeUs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Binary&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TimestampUs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DatetimeFromTicks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DatetimeUsFromTicks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TimestampFromTicks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Error&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Warning&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InterfaceError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DatabaseError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InternalError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OperationalError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProgrammingError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;IntegrityError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DataError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NotSupportedError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;UniqueKeyConstraintError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ForeignKeyConstraintError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NonNullConstraintError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ParameterValue&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">apilevel</span> <span class="o">=</span> <span class="s2">&quot;2.0&quot;</span>
+<span class="sd">&quot;&quot;&quot;This module conforms to the Python Database API Specification 2.0.&quot;&quot;&quot;</span>
+
+<span class="n">threadsafety</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="sd">&quot;&quot;&quot;Two threads can use this module, but can&#39;t share one `Connection`.&quot;&quot;&quot;</span>
+
+<span class="n">paramstyle</span> <span class="o">=</span> <span class="s2">&quot;pyformat&quot;</span>
+<span class="sd">&quot;&quot;&quot;The SQL placeholder format for this module is ``%(name)s``.</span>
+
+<span class="sd">Comdb2&#39;s native placeholder format is ``@name``, but that cannot be used by</span>
+<span class="sd">this module because it&#39;s not an acceptable `DB-API 2.0 placeholder style</span>
+<span class="sd">&lt;https://www.python.org/dev/peps/pep-0249/#paramstyle&gt;`_.  This module uses</span>
+<span class="sd">``pyformat`` for named parameters because it is the only DB-API 2.0 paramstyle</span>
+<span class="sd">that we can translate into Comdb2&#39;s placeholder format without needing</span>
+<span class="sd">a SQL parser. This module also supports the ``qmark`` parameter style for</span>
+<span class="sd">binding parameters positionally.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    An int value is bound as ``%(my_int)s``, not as ``%(my_int)d`` - the last</span>
+<span class="sd">    character is always ``s``.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    When binding parameters by name, any ``%`` sign is recognized as the start</span>
+<span class="sd">    of a ``pyformat`` style placeholder, and so any literal ``%`` characters in</span>
+<span class="sd">    a SQL statement must be escaped by doubling. ``WHERE name like &#39;M%&#39;``</span>
+<span class="sd">    becomes ``WHERE name LIKE &#39;M%%&#39;``. This does not apply when binding</span>
+<span class="sd">    parameters positionally with ``?`` placeholders, nor when the literal ``%``</span>
+<span class="sd">    appears in a parameter value as opposed to literally in the query.</span>
+<span class="sd">    In either of those cases, the ``%`` characters must not be escaped.</span>
+
+<span class="sd">Warning:</span>
+<span class="sd">    Literal ``%`` signs in the query must be escaped when no parameters are</span>
+<span class="sd">    passed at all -- passing ``None`` or no parameters behaves the same as</span>
+<span class="sd">    passing an empty `dict`. You can avoid the need to escape ``%`` signs in</span>
+<span class="sd">    an unparametrized query by instead passing an empty `tuple` as parameters,</span>
+<span class="sd">    which causes the statement to be treated as having ``qmark`` placeholders</span>
+<span class="sd">    instead of ``pyformat`` placeholders.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">_FIRST_WORD_OF_STMT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    (?:           # match (without capturing)</span>
+<span class="sd">      \s*         #   optional whitespace</span>
+<span class="sd">      /\*.*?\*/   #   then a C-style /* ... */ comment, possibly across lines</span>
+<span class="sd">    |             # or</span>
+<span class="sd">      \s*         #   optional whitespace</span>
+<span class="sd">      --[^\n]*\n  #   then a SQL-style comment terminated by a newline</span>
+<span class="sd">    )*            # repeat until all comments have been matched</span>
+<span class="sd">    \s*           # then skip over any whitespace</span>
+<span class="sd">    (\w+)         # and capture the first word</span>
+<span class="sd">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">ASCII</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_VALID_SP_NAME</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Za-z0-9_.]+$&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@functools</span><span class="o">.</span><span class="n">total_ordering</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_TypeObject</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">value_names</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_names</span> <span class="o">=</span> <span class="n">value_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">cdb2</span><span class="o">.</span><span class="n">TYPE</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value_names</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">other</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">!=</span> <span class="n">other</span> <span class="ow">and</span> <span class="n">other</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;TypeObject&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_names</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_binary</span><span class="p">(</span><span class="n">string</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+
+<span class="n">STRING</span> <span class="o">=</span> <span class="n">_TypeObject</span><span class="p">(</span><span class="s2">&quot;CSTRING&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The type codes of TEXT result columns compare equal to this constant.&quot;&quot;&quot;</span>
+
+<span class="n">BINARY</span> <span class="o">=</span> <span class="n">_TypeObject</span><span class="p">(</span><span class="s2">&quot;BLOB&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The type codes of BLOB result columns compare equal to this constant.&quot;&quot;&quot;</span>
+
+<span class="n">NUMBER</span> <span class="o">=</span> <span class="n">_TypeObject</span><span class="p">(</span><span class="s2">&quot;INTEGER&quot;</span><span class="p">,</span> <span class="s2">&quot;REAL&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The type codes of numeric result columns compare equal to this constant.&quot;&quot;&quot;</span>
+
+<span class="n">DATETIME</span> <span class="o">=</span> <span class="n">_TypeObject</span><span class="p">(</span><span class="s2">&quot;DATETIME&quot;</span><span class="p">,</span> <span class="s2">&quot;DATETIMEUS&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The type codes of datetime result columns compare equal to this constant.&quot;&quot;&quot;</span>
+
+<span class="n">ROWID</span> <span class="o">=</span> <span class="n">STRING</span>
+
+<span class="c1"># comdb2 doesn&#39;t support Date or Time, so I&#39;m not defining them.</span>
+<span class="n">Datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+<span class="n">DatetimeUs</span> <span class="o">=</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">DatetimeUs</span>
+<span class="n">Binary</span> <span class="o">=</span> <span class="n">_binary</span>
+<span class="n">Timestamp</span> <span class="o">=</span> <span class="n">Datetime</span>
+<span class="n">TimestampUs</span> <span class="o">=</span> <span class="n">DatetimeUs</span>
+
+<span class="n">DatetimeFromTicks</span> <span class="o">=</span> <span class="n">Datetime</span><span class="o">.</span><span class="n">fromtimestamp</span>
+<span class="n">DatetimeUsFromTicks</span> <span class="o">=</span> <span class="n">DatetimeUs</span><span class="o">.</span><span class="n">fromtimestamp</span>
+<span class="n">TimestampFromTicks</span> <span class="o">=</span> <span class="n">Timestamp</span><span class="o">.</span><span class="n">fromtimestamp</span>
+<span class="n">TimestampUsFromTicks</span> <span class="o">=</span> <span class="n">TimestampUs</span><span class="o">.</span><span class="n">fromtimestamp</span>
+
+<span class="n">UserException</span> <span class="o">=</span> <span class="ne">Exception</span>
+
+
+<div class="viewcode-block" id="Error">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Error">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Error</span><span class="p">(</span><span class="n">UserException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the base class of all exceptions raised by this module.</span>
+
+<span class="sd">    In addition to being available at the module scope, this class and the</span>
+<span class="sd">    other exception classes derived from it are exposed as attributes on</span>
+<span class="sd">    `Connection` objects, to simplify error handling in environments where</span>
+<span class="sd">    multiple connections from different modules are used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="Warning">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Warning">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Warning</span><span class="p">(</span><span class="n">UserException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for important warnings.</span>
+
+<span class="sd">    This is required to exist by the DB-API interface, but we never raise it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="InterfaceError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.InterfaceError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for errors caused by misuse of this module.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="DatabaseError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.DatabaseError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatabaseError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all errors reported by the database.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="InternalError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.InternalError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InternalError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for internal errors reported by the database.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="OperationalError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.OperationalError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OperationalError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for errors related to the database&#39;s operation.</span>
+
+<span class="sd">    These errors are not necessarily the result of a bug either in the</span>
+<span class="sd">    application or in the database - for example, dropped connections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="ProgrammingError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.ProgrammingError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProgrammingError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for programming errors reported by the database.</span>
+
+<span class="sd">    For example, this will be raised for syntactically incorrect SQL, or for</span>
+<span class="sd">    passing a different number of parameters than are required by the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="IntegrityError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.IntegrityError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntegrityError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for integrity errors reported by the database.</span>
+
+<span class="sd">    For example, a subclass of this will be raised if a foreign key constraint</span>
+<span class="sd">    would be violated, or a constraint that a column may not be null, or that</span>
+<span class="sd">    an index may not have duplicates.  Other types of constraint violations may</span>
+<span class="sd">    raise this type directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="UniqueKeyConstraintError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.UniqueKeyConstraintError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniqueKeyConstraintError</span><span class="p">(</span><span class="n">IntegrityError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised when a unique key constraint would be broken.</span>
+
+<span class="sd">    Committing after either an INSERT or an UPDATE could result in this being</span>
+<span class="sd">    raised, by either adding a new row that violates a unique (non-dup) key</span>
+<span class="sd">    constraint or modifying an existing row in a way that would violate one.</span>
+
+<span class="sd">    .. versionadded:: 1.1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="ForeignKeyConstraintError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.ForeignKeyConstraintError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ForeignKeyConstraintError</span><span class="p">(</span><span class="n">IntegrityError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised when a foreign key constraint would be broken.</span>
+
+<span class="sd">    This would be raised when committing if the changes being committed would</span>
+<span class="sd">    violate referential integrity according to a foreign key constraint</span>
+<span class="sd">    configured on the database.  For instance, deleting a row from a parent</span>
+<span class="sd">    table would raise this if rows corresponding to its key still exist in</span>
+<span class="sd">    a child table and the constraint doesn&#39;t have ON DELETE CASCADE.  Likewise,</span>
+<span class="sd">    inserting a row into a child table would raise this if there was no row in</span>
+<span class="sd">    the parent table matching the new row&#39;s key.</span>
+
+<span class="sd">    .. versionadded:: 1.1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="NonNullConstraintError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.NonNullConstraintError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NonNullConstraintError</span><span class="p">(</span><span class="n">IntegrityError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised when a non-null constraint would be broken.</span>
+
+<span class="sd">    Committing after either an INSERT or an UPDATE could result in this being</span>
+<span class="sd">    raised if it would result in a null being stored in a non-nullable column.</span>
+<span class="sd">    Note that columns in a Comdb2 are not nullable by default.</span>
+
+<span class="sd">    .. versionadded:: 1.1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="DataError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.DataError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for errors related to the processed data.</span>
+
+<span class="sd">    For example, this will be raised if you attempt to write a value that&#39;s out</span>
+<span class="sd">    of range for the column type that would store it, or if you specify an</span>
+<span class="sd">    invalid timezone name for the connection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="NotSupportedError">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.NotSupportedError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotSupportedError</span><span class="p">(</span><span class="n">DatabaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised when unsupported operations are attempted.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<span class="n">_EXCEPTION_BY_RC</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;CONNECT_ERROR&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NOTCONNECTED&quot;</span><span class="p">]:</span> <span class="n">ProgrammingError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;PREPARE_ERROR&quot;</span><span class="p">]:</span> <span class="n">ProgrammingError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;IO_ERROR&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;INTERNAL&quot;</span><span class="p">]:</span> <span class="n">InternalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NOSTATEMENT&quot;</span><span class="p">]:</span> <span class="n">ProgrammingError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;BADCOLUMN&quot;</span><span class="p">]:</span> <span class="n">ProgrammingError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;BADSTATE&quot;</span><span class="p">]:</span> <span class="n">ProgrammingError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;ASYNCERR&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;INVALID_ID&quot;</span><span class="p">]:</span> <span class="n">InternalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;RECORD_OUT_OF_RANGE&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;REJECTED&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;STOPPED&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;BADREQ&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;DBCREATE_FAILED&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;THREADPOOL_INTERNAL&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;READONLY&quot;</span><span class="p">]:</span> <span class="n">NotSupportedError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NOMASTER&quot;</span><span class="p">]:</span> <span class="n">InternalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;UNTAGGED_DATABASE&quot;</span><span class="p">]:</span> <span class="n">NotSupportedError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;CONSTRAINTS&quot;</span><span class="p">]:</span> <span class="n">IntegrityError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;DEADLOCK&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;TRAN_IO_ERROR&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;ACCESS&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;TRAN_MODE_UNSUPPORTED&quot;</span><span class="p">]:</span> <span class="n">NotSupportedError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;VERIFY_ERROR&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;FKEY_VIOLATION&quot;</span><span class="p">]:</span> <span class="n">ForeignKeyConstraintError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NULL_CONSTRAINT&quot;</span><span class="p">]:</span> <span class="n">NonNullConstraintError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;CONV_FAIL&quot;</span><span class="p">]:</span> <span class="n">DataError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NONKLESS&quot;</span><span class="p">]:</span> <span class="n">NotSupportedError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;MALLOC&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;NOTSUPPORTED&quot;</span><span class="p">]:</span> <span class="n">NotSupportedError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;DUPLICATE&quot;</span><span class="p">]:</span> <span class="n">UniqueKeyConstraintError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;TZNAME_FAIL&quot;</span><span class="p">]:</span> <span class="n">DataError</span><span class="p">,</span>
+    <span class="n">cdb2</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="p">[</span><span class="s2">&quot;UNKNOWN&quot;</span><span class="p">]:</span> <span class="n">OperationalError</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_raise_wrapped_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">error_code</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> (cdb2api rc </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;null constraint violation&quot;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">NonNullConstraintError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>  <span class="c1"># DRQS 86013831</span>
+    <span class="k">raise</span> <span class="n">_EXCEPTION_BY_RC</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">OperationalError</span><span class="p">)(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sql_operation</span><span class="p">(</span><span class="n">sql</span><span class="p">):</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_FIRST_WORD_OF_STMT</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_operation_ends_transaction</span><span class="p">(</span><span class="n">operation</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">&quot;commit&quot;</span> <span class="ow">or</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">&quot;rollback&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_modifies_rows</span><span class="p">(</span><span class="n">operation</span><span class="p">):</span>
+    <span class="c1"># These operations can modify the contents of the database.</span>
+    <span class="c1"># exec is deliberately excluded because it might return a result set, and</span>
+    <span class="c1"># this function is used to determine whether it&#39;s safe to call</span>
+    <span class="c1"># cdb2_get_effects after running the operation.</span>
+    <span class="k">return</span> <span class="n">operation</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;commit&quot;</span><span class="p">,</span> <span class="s2">&quot;insert&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="s2">&quot;delete&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="connect">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.connect">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span>
+    <span class="n">database_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">,</span>
+    <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+    <span class="n">autocommit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Connection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Establish a connection to a Comdb2 database.</span>
+
+<span class="sd">    All arguments are passed directly through to the `Connection` constructor.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        DB-API 2.0 requires the module to expose `connect`, but not</span>
+<span class="sd">        `Connection`.  If portability across database modules is a concern, you</span>
+<span class="sd">        should always use `connect` to create your connections rather than</span>
+<span class="sd">        calling the `Connection` constructor directly.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Connection: A handle for the newly established connection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Connection</span><span class="p">(</span>
+        <span class="n">database_name</span><span class="o">=</span><span class="n">database_name</span><span class="p">,</span>
+        <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">,</span>
+        <span class="n">autocommit</span><span class="o">=</span><span class="n">autocommit</span><span class="p">,</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Connection">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Connection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Connection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a connection to a Comdb2 database.</span>
+
+<span class="sd">    By default, the connection will be made to the cluster configured as the</span>
+<span class="sd">    machine-wide default for the given database.  This is almost always what</span>
+<span class="sd">    you want.  If you need to connect to a database that&#39;s running on your</span>
+<span class="sd">    local machine rather than a cluster, you can pass &quot;local&quot; as the ``tier``.</span>
+<span class="sd">    It&#39;s also permitted to specify &quot;dev&quot;, &quot;alpha&quot;, &quot;beta&quot;, or &quot;prod&quot; as the</span>
+<span class="sd">    ``tier``, which will connect you directly to the tier you specify (firewall</span>
+<span class="sd">    permitting).</span>
+
+<span class="sd">    Alternately, you can pass a machine name as the ``host`` argument, to</span>
+<span class="sd">    connect directly to an instance of the given database on that host, rather</span>
+<span class="sd">    than on a cluster or the local machine.</span>
+
+<span class="sd">    The connection will use UTC as its timezone by default - you can change</span>
+<span class="sd">    this with a ``SET TIMEZONE`` statement if needed.</span>
+
+<span class="sd">    By default, or if ``autocommit`` is ``False``, `cursor` will return cursors</span>
+<span class="sd">    that behave as mandated by the Python DB API: every statement to be</span>
+<span class="sd">    executed is implicitly considered to be part of a transaction, and that</span>
+<span class="sd">    transaction must be ended explicitly with a call to `commit` (or</span>
+<span class="sd">    `rollback`).  If ``autocommit`` is ``True``, `cursor` will instead return</span>
+<span class="sd">    cursors that behave more in line with Comdb2&#39;s traditional behavior: the</span>
+<span class="sd">    side effects of any given statement are immediately committed unless you</span>
+<span class="sd">    previously started a transaction by executing a ``begin`` statement.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Using ``autocommit=True`` will ease porting from code using other</span>
+<span class="sd">        Comdb2 APIs, both because other Comdb2 APIs implicitly commit after</span>
+<span class="sd">        each statement in the same way as an autocommit `Connection` will, and</span>
+<span class="sd">        because there are certain operations that Comdb2 will implicitly</span>
+<span class="sd">        retry when outside of a transaction but won&#39;t retry when inside</span>
+<span class="sd">        a transaction - meaning that a non-autocommit `Connection` has extra</span>
+<span class="sd">        failure modes.  You should strongly consider using ``autocommit=True``,</span>
+<span class="sd">        especially for read-only use cases.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Python does not guarantee that object finalizers will be called when</span>
+<span class="sd">        the interpreter exits, so to ensure that the connection is cleanly</span>
+<span class="sd">        released you should call the `close` method when you&#39;re done with it.</span>
+<span class="sd">        You can use `contextlib.closing` to guarantee the connection is</span>
+<span class="sd">        released when a block completes.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        DB-API 2.0 requires the module to expose `connect`, but not</span>
+<span class="sd">        `Connection`.  If portability across database modules is a concern, you</span>
+<span class="sd">        should always use `connect` to create your connections rather than</span>
+<span class="sd">        instantiating this class directly.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        database_name (str): The name of the database to connect to.</span>
+<span class="sd">        tier (str): The cluster to connect to.</span>
+<span class="sd">        host (str): Alternately, a single remote host to connect to.</span>
+<span class="sd">        autocommit (bool): Whether to automatically commit after DML</span>
+<span class="sd">            statements, disabling DB-API 2.0&#39;s automatic implicit transactions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">database_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+        <span class="n">autocommit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tier</span> <span class="o">!=</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span>
+                <span class="s2">&quot;Connecting to a host by name and to a &quot;</span>
+                <span class="s2">&quot;cluster by tier are mutually exclusive&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_autocommit</span> <span class="o">=</span> <span class="n">autocommit</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="o">=</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="n">database_name</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_raise_wrapped_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="s2">&quot;Attempted to use a closed Connection&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">]],</span> <span class="n">Row</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Factory used when constructing result rows.</span>
+
+<span class="sd">        By default, or when set to ``None``, each row is returned as a `list`</span>
+<span class="sd">        of column values.  If you&#39;d prefer to receive rows as a `dict` or as</span>
+<span class="sd">        a `collections.namedtuple`, you can set this property to one of the</span>
+<span class="sd">        factories provided by the `comdb2.factories` module.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from comdb2.factories import dict_row_factory</span>
+<span class="sd">            &gt;&gt;&gt; conn.row_factory = dict_row_factory</span>
+<span class="sd">            &gt;&gt;&gt; cursor = conn.cursor()</span>
+<span class="sd">            &gt;&gt;&gt; cursor.execute(&quot;SELECT 1 as &#39;foo&#39;, 2 as &#39;bar&#39;&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; cursor.fetchone()</span>
+<span class="sd">            {&#39;foo&#39;: 1, &#39;bar&#39;: 2}</span>
+
+<span class="sd">        .. versionadded:: 0.9</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">row_factory</span>
+
+    <span class="nd">@row_factory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_factory</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">]],</span> <span class="n">Row</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_close_any_outstanding_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">cursor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cursor</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cursor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">operation</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Connection.close">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Connection.close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ack_current_event</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gracefully close the Comdb2 connection.</span>
+
+<span class="sd">        Once a `Connection` has been closed, no further operations may be</span>
+<span class="sd">        performed on it.</span>
+
+<span class="sd">        If the connection was used to consume events from a `Lua consumer`__,</span>
+<span class="sd">        then *ack_current_event* tells the database what to do with the</span>
+<span class="sd">        last event that was delivered. By default it will be marked as consumed</span>
+<span class="sd">        and won&#39;t be redelivered, but if ``ack_current_event=False`` then</span>
+<span class="sd">        the event will be redelivered to another consumer for processing.</span>
+
+<span class="sd">        __ https://bloomberg.github.io/comdb2/triggers.html#lua-consumers</span>
+
+<span class="sd">        If a socket pool is running on the machine and the connection was in</span>
+<span class="sd">        a clean state, this will turn over the connection to the socket pool.</span>
+<span class="sd">        This cannot be done if the connection was in a transaction or</span>
+<span class="sd">        in the middle of retrieving a result set.  Other restrictions may apply</span>
+<span class="sd">        as well.</span>
+
+<span class="sd">        You can ensure that this gets called at the end of a block using</span>
+<span class="sd">        something like:</span>
+
+<span class="sd">            &gt;&gt;&gt; with contextlib.closing(connect(&#39;mattdb&#39;)) as conn:</span>
+<span class="sd">            &gt;&gt;&gt;     for row in conn.cursor().execute(&quot;select 1&quot;):</span>
+<span class="sd">            &gt;&gt;&gt;         print(row)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="s2">&quot;close() called on already closed connection&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_close_any_outstanding_cursor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">ack_current_event</span><span class="o">=</span><span class="n">ack_current_event</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Connection.commit">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Connection.commit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Commit any pending transaction to the database.</span>
+
+<span class="sd">        This method will fail if the `Connection` is in ``autocommit`` mode and</span>
+<span class="sd">        no transaction was explicitly started.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="s2">&quot;commit&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Connection.rollback">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Connection.rollback">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rollback the current transaction.</span>
+
+<span class="sd">        This method will fail if the `Connection` is in ``autocommit`` mode and</span>
+<span class="sd">        no transaction was explicitly started.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Closing a connection without committing the changes first will</span>
+<span class="sd">            cause an implicit rollback to be performed, but will also prevent</span>
+<span class="sd">            that connection from being contributed to the socket pool, if one</span>
+<span class="sd">            is available.  Because of this, an explicit rollback should be</span>
+<span class="sd">            preferred when possible.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="s2">&quot;rollback&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Connection.cursor">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Connection.cursor">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cursor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new `Cursor` for this connection.</span>
+
+<span class="sd">        This calls `Cursor.close` on any outstanding `Cursor`; only one</span>
+<span class="sd">        `Cursor` is allowed per `Connection` at a time.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Although outstanding cursors are closed, uncommitted transactions</span>
+<span class="sd">            started by them are not rolled back, so the new `Cursor` will begin</span>
+<span class="sd">            in the middle of that uncommitted transaction.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cursor: A new cursor on this connection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_close_any_outstanding_cursor</span><span class="p">()</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">Cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_cursor</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="n">cursor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cursor</span></div>
+
+
+    <span class="c1"># Optional DB API Extension</span>
+    <span class="n">Error</span> <span class="o">=</span> <span class="n">Error</span>
+    <span class="ne">Warning</span> <span class="o">=</span> <span class="ne">Warning</span>
+    <span class="n">InterfaceError</span> <span class="o">=</span> <span class="n">InterfaceError</span>
+    <span class="n">DatabaseError</span> <span class="o">=</span> <span class="n">DatabaseError</span>
+    <span class="n">InternalError</span> <span class="o">=</span> <span class="n">InternalError</span>
+    <span class="n">OperationalError</span> <span class="o">=</span> <span class="n">OperationalError</span>
+    <span class="n">ProgrammingError</span> <span class="o">=</span> <span class="n">ProgrammingError</span>
+    <span class="n">IntegrityError</span> <span class="o">=</span> <span class="n">IntegrityError</span>
+    <span class="n">DataError</span> <span class="o">=</span> <span class="n">DataError</span>
+    <span class="n">NotSupportedError</span> <span class="o">=</span> <span class="n">NotSupportedError</span></div>
+
+
+
+<div class="viewcode-block" id="Cursor">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cursor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class used to send requests through a database connection.</span>
+
+<span class="sd">    This class is not meant to be instantiated directly; it should always be</span>
+<span class="sd">    created using `Connection.cursor`.  It provides methods for sending</span>
+<span class="sd">    requests to the database and for reading back the result sets produced by</span>
+<span class="sd">    the database.</span>
+
+<span class="sd">    Queries are made using the `execute` and `callproc` methods.  Result sets</span>
+<span class="sd">    can be consumed with the `fetchone`, `fetchmany`, or `fetchall` methods, or</span>
+<span class="sd">    (as a nonstandard DB-API 2.0 extension) by iterating over the `Cursor`.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Only one `Cursor` per `Connection` can exist at a time.  Creating a new</span>
+<span class="sd">        one will `close` the previous one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ErrorMessagesByOperation</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;begin&quot;</span><span class="p">:</span> <span class="s2">&quot;Transactions may not be started explicitly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;Use Connection.commit to commit transactions&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rollback&quot;</span><span class="p">:</span> <span class="s2">&quot;Use Connection.rollback to roll back transactions&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arraysize</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span> <span class="o">=</span> <span class="n">conn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">_hndl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="s2">&quot;Attempted to use a closed cursor&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">arraysize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Controls the number of rows to fetch at a time with `fetchmany`.</span>
+
+<span class="sd">        The default is ``1``, meaning that a single row will be fetched at</span>
+<span class="sd">        a time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arraysize</span>
+
+    <span class="nd">@arraysize</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">arraysize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arraysize</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provides the name and type of each column in the latest result set.</span>
+
+<span class="sd">        This read-only attribute will contain one element per column in the</span>
+<span class="sd">        result set.  Each of those elements will be a 7-element sequence whose</span>
+<span class="sd">        first element is the name of that column, whose second element is</span>
+<span class="sd">        a type code for that column, and whose five remaining elements are</span>
+<span class="sd">        ``None``.</span>
+
+<span class="sd">        The type codes can be compared for equality against the `STRING`,</span>
+<span class="sd">        `NUMBER`, `DATETIME`, and `BINARY` objects exposed by this module.  If</span>
+<span class="sd">        you need more granularity (e.g. knowing whether the result is</span>
+<span class="sd">        a ``REAL`` or an ``INTEGER``) you can compare the type code for</span>
+<span class="sd">        equality against the members of the `.cdb2.TYPE` dictionary.  Or, of</span>
+<span class="sd">        course, you can use `isinstance` to check the type of object returned</span>
+<span class="sd">        as that column&#39;s value.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cursor = connect(&#39;mattdb&#39;).cursor()</span>
+<span class="sd">            &gt;&gt;&gt; cursor.execute(&quot;select 1 as &#39;x&#39;, &#39;2&#39; as &#39;y&#39;, 3.0 as &#39;z&#39;&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; cursor.description[0][:2] == (&#39;x&#39;, NUMBER)</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; cursor.description[1][:2] == (&#39;y&#39;, STRING)</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; cursor.description[2][:2] == (&#39;z&#39;, NUMBER)</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; cursor.description[2][:2] == (&#39;z&#39;, TYPE[&#39;INTEGER&#39;])</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; cursor.description[2][:2] == (&#39;z&#39;, TYPE[&#39;REAL&#39;])</span>
+<span class="sd">            True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_description</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rowcount</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provides the count of rows modified by the last transaction.</span>
+
+<span class="sd">        For `Cursor` objects on a `Connection` that is not using ``autocommit``</span>
+<span class="sd">        mode, this count is valid only after the transaction is committed with</span>
+<span class="sd">        `Connection.commit()`.  For `Cursor` objects on a `Connection` that is</span>
+<span class="sd">        using ``autocommit`` mode, this count is valid after a successful</span>
+<span class="sd">        ``COMMIT``, or after an ``INSERT``, ``UPDATE``, or ``DELETE`` statement</span>
+<span class="sd">        run outside of an explicit transaction.  At all other times, ``-1`` is</span>
+<span class="sd">        returned.</span>
+
+<span class="sd">        In particular, ``-1`` is returned whenever a transaction is in</span>
+<span class="sd">        progress, because Comdb2 by default handles commit conflicts with other</span>
+<span class="sd">        transactions by rerunning each statement of the transaction.  As</span>
+<span class="sd">        a result, row counts obtained within a transaction are meaningless in</span>
+<span class="sd">        the default transaction level; either more or fewer rows may be</span>
+<span class="sd">        affected when the transaction eventually commits.</span>
+
+<span class="sd">        Also, ``-1`` is returned after ``SELECT`` or ``SELECTV``, because</span>
+<span class="sd">        querying the row count requires calling ``cdb2_get_effects``, which</span>
+<span class="sd">        would consume the result set before the user could iterate over it.</span>
+<span class="sd">        Likewise, ``-1`` is returned after ``EXEC PROCEDURE``, because a stored</span>
+<span class="sd">        procedure could emit a result set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span>
+
+    <span class="c1"># Optional DB API Extension</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Connection</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a reference to the `Connection` that this `Cursor` uses.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span>
+
+<div class="viewcode-block" id="Cursor.close">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the cursor now.</span>
+
+<span class="sd">        From this point forward an exception will be raised if any</span>
+<span class="sd">        operation is attempted with this `Cursor`.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This does not rollback any uncommitted operations executed by this</span>
+<span class="sd">            `Cursor`.  A new `Cursor` created from the `Connection` that this</span>
+<span class="sd">            `Cursor` uses will start off in the middle of that uncommitted</span>
+<span class="sd">            transaction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="Cursor.callproc">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.callproc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">callproc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">procname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ParameterValue</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ParameterValue</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Call a stored procedure with the given name.</span>
+
+<span class="sd">        The ``parameters`` sequence must contain one entry for each argument</span>
+<span class="sd">        that the procedure requires.</span>
+
+<span class="sd">        If the called procedure emits a result set, it is made available</span>
+<span class="sd">        through the fetch methods, or by iterating over the `Cursor`, as though</span>
+<span class="sd">        it was returned by a ``select`` statement.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            procname (str): The name of the stored procedure to be executed.</span>
+<span class="sd">            parameters (Sequence[Any]): A sequence of values to be passed, in</span>
+<span class="sd">                order, as the parameters to the stored procedure.  Each element</span>
+<span class="sd">                must be an instance of one of the Python types listed in</span>
+<span class="sd">                :doc:`types`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Any]: A copy of the input parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_VALID_SP_NAME</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">procname</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NotSupportedError</span><span class="p">(</span><span class="s2">&quot;Invalid procedure name &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">procname</span><span class="p">)</span>
+        <span class="n">params_as_dict</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">e</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parameters</span><span class="p">)}</span>
+        <span class="n">sql</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;exec procedure &quot;</span>
+            <span class="o">+</span> <span class="n">procname</span>
+            <span class="o">+</span> <span class="s2">&quot;(&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%%</span><span class="s2">(</span><span class="si">%d</span><span class="s2">)s&quot;</span> <span class="o">%</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">params_as_dict</span><span class="p">)))</span>
+            <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">params_as_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span><span class="p">[:]</span></div>
+
+
+<div class="viewcode-block" id="Cursor.execute">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sql</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterValue</span><span class="p">]</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ParameterValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">column_types</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ColumnType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cursor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a database operation (query or command).</span>
+
+<span class="sd">        The ``sql`` string may contain either named placeholders represented</span>
+<span class="sd">        as ``%(name)s`` or positionally ordered placeholders represented</span>
+<span class="sd">        as ``?``.</span>
+
+<span class="sd">        When the parameters are a mapping or ``None``, named placeholders are</span>
+<span class="sd">        being used, and so any literal ``%`` signs in the statement must be</span>
+<span class="sd">        escaped by doubling them, to distinguish them from the start of a named</span>
+<span class="sd">        placeholder. When a sequence of parameters is provided instead, any</span>
+<span class="sd">        placeholders must be positional ``?`` placeholders, and literal ``%``</span>
+<span class="sd">        signs in the SQL must not be escaped.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Using placeholders should always be the preferred method of</span>
+<span class="sd">            parameterizing the SQL query, as it prevents SQL injection</span>
+<span class="sd">            vulnerabilities, and is faster than dynamically building SQL</span>
+<span class="sd">            strings.</span>
+
+<span class="sd">        If ``column_types`` is provided and non-empty, it must be a sequence of</span>
+<span class="sd">        members of the `ColumnType` enumeration. The database will coerce the</span>
+<span class="sd">        data in the Nth column of the result set to the Nth given column type.</span>
+<span class="sd">        An error will be raised if the number of elements in ``column_types``</span>
+<span class="sd">        doesn&#39;t match the number of columns in the result set, or if one of the</span>
+<span class="sd">        elements is not a supported column type, or if coercion fails. If</span>
+<span class="sd">        ``column_types`` is empty or not provided, no coercion is performed.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Databases APIs are not required to allow result set column types to</span>
+<span class="sd">            be specified explicitly. We allow this as a non-standard DB-API 2.0</span>
+<span class="sd">            extension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sql (str): The SQL string to execute, as a Python format string.</span>
+<span class="sd">            parameters (Mapping[str, Any] | Sequence[Any]):</span>
+<span class="sd">                If the SQL statement has ``%(param_name)s`` style placeholders,</span>
+<span class="sd">                you must pass a mapping from parameter name to value.</span>
+<span class="sd">                If the SQL statement has ``?`` style placeholders, you must</span>
+<span class="sd">                instead pass an ordered sequence of parameter values.</span>
+<span class="sd">            column_types (Sequence[int]): An optional sequence of types (values</span>
+<span class="sd">                of the `ColumnType` enumeration) which the columns of the</span>
+<span class="sd">                result set will be coerced to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cursor: As a nonstandard DB-API 2.0 extension, this method returns</span>
+<span class="sd">            the `Cursor` that it was called on, which can be used as an</span>
+<span class="sd">            iterator over the result set returned by the query.  Iterating over</span>
+<span class="sd">            it will yield one ``list`` per row in the result set, where the</span>
+<span class="sd">            elements in the list correspond to the result columns within the</span>
+<span class="sd">            row, in positional order.</span>
+
+<span class="sd">            The `Connection.row_factory` property can be used to return rows as</span>
+<span class="sd">            a different type.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cursor.execute(&quot;select 1, 2 UNION ALL select %(x)s, %(y)s&quot;,</span>
+<span class="sd">            ...                {&#39;x&#39;: 2, &#39;y&#39;: 4})</span>
+<span class="sd">            &gt;&gt;&gt; cursor.fetchall()</span>
+<span class="sd">            [[1, 2], [2, 4]]</span>
+
+<span class="sd">            &gt;&gt;&gt; cursor.execute(&quot;select 1, 2 UNION ALL select ?, ?&quot;, [2, 4]])</span>
+<span class="sd">            &gt;&gt;&gt; cursor.fetchall()</span>
+<span class="sd">            [[1, 2], [2, 4]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="n">_sql_operation</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_autocommit</span><span class="p">:</span>
+            <span class="c1"># Certain operations are forbidden when not in autocommit mode.</span>
+            <span class="n">errmsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ErrorMessagesByOperation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">errmsg</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">column_types</span><span class="o">=</span><span class="n">column_types</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_description</span><span class="p">()</span>
+        <span class="c1"># Optional DB API Extension: execute&#39;s return value is unspecified.  We</span>
+        <span class="c1"># return an iterable over the rows, but this isn&#39;t portable across DBs.</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="Cursor.executemany">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.executemany">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executemany</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sql</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seq_of_parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterValue</span><span class="p">]]</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">ParameterValue</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the same SQL statement repeatedly with different parameters.</span>
+
+<span class="sd">        This is currently equivalent to calling execute multiple times, once</span>
+<span class="sd">        for each element provided in ``seq_of_parameters``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sql (str): The SQL string to execute, as a Python format string of</span>
+<span class="sd">                the format expected by `execute`.</span>
+<span class="sd">            seq_of_parameters (Sequence[Mapping[str, Any]] | Sequence[Sequence[Any]]):</span>
+<span class="sd">                The ``sql`` statement will be executed once per element in this</span>
+<span class="sd">                sequence, using each successive element as the parameter values</span>
+<span class="sd">                for the corresponding call to `.execute`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">parameters</span> <span class="ow">in</span> <span class="n">seq_of_parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">column_types</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_autocommit</span><span class="p">:</span>
+            <span class="c1"># Any non-SET operation starts a txn when not in autocommit mode.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="ow">and</span> <span class="n">operation</span> <span class="o">!=</span> <span class="s2">&quot;set&quot;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;begin&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">_raise_wrapped_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># If variable interpolation fails, then translate the exception to</span>
+            <span class="c1"># an InterfaceError to signal that it&#39;s a client-side problem.</span>
+            <span class="c1"># If binding by index then no need to modify sql</span>
+            <span class="n">by_name</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="s2">&quot;items&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">by_name</span><span class="p">:</span>
+                <span class="n">sql</span> <span class="o">=</span> <span class="n">sql</span> <span class="o">%</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;@&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">}</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">keyerr</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;No value provided for parameter </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">keyerr</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">keyerr</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid Python format string for query&quot;</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="k">if</span> <span class="n">_operation_ends_transaction</span><span class="p">(</span><span class="n">operation</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># txn ends, even on failure</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">column_types</span><span class="o">=</span><span class="n">column_types</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_raise_wrapped_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">&quot;begin&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># txn successfully started</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">_in_transaction</span> <span class="ow">and</span> <span class="n">_modifies_rows</span><span class="p">(</span><span class="n">operation</span><span class="p">):</span>
+            <span class="c1"># We&#39;re not in a transaction, and the last statement could have</span>
+            <span class="c1"># modified rows.  Either we&#39;ve just explicitly committed</span>
+            <span class="c1"># a transaction, or we&#39;re in autocommit mode and ran DML outside of</span>
+            <span class="c1"># an explicit transaction.  We can get the count of affected rows.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_rowcount</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Cursor.setinputsizes">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.setinputsizes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setinputsizes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sizes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;No-op; implemented for PEP-249 compliance.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Cursor.setoutputsize">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.setoutputsize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setoutputsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;No-op; implemented for PEP-249 compliance.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_rowcount</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">get_effects</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rowcount</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">column_names</span><span class="p">()</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="o">.</span><span class="n">column_types</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_description</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Cursor.fetchone">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.fetchone">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetchone</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Row</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the next row of the current result set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If no rows remain in the current result set, ``None`` is</span>
+<span class="sd">            returned, otherwise the next row of the result set is returned.  By</span>
+<span class="sd">            default the row is returned as a `list`, where the elements in the</span>
+<span class="sd">            list correspond to the result row&#39;s columns in positional order,</span>
+<span class="sd">            but this can be changed with the `Connection.row_factory` property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Cursor.fetchmany">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.fetchmany">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetchmany</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Row</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the next set of rows of the current result set.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n: Maximum number of rows to be returned.  If this argument is not</span>
+<span class="sd">                given, `Cursor.arraysize` is used as the maximum.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: Returns a `list` containing the next ``n`` rows of the</span>
+<span class="sd">            result set.  If fewer than ``n`` rows remain, the returned list</span>
+<span class="sd">            will contain fewer than ``n`` elements.  If no rows remain, the</span>
+<span class="sd">            list will be empty.  By default each row is</span>
+<span class="sd">            returned as a `list`, where the elements in the list correspond to</span>
+<span class="sd">            the result row&#39;s columns in positional order, but this can be</span>
+<span class="sd">            changed with the `Connection.row_factory` property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arraysize</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Cursor.fetchall">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.fetchall">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetchall</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Row</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch all remaining rows of the current result set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: Returns a `list` containing all remaining rows of the</span>
+<span class="sd">            result set.  By default each row is returned as a `list`, where the</span>
+<span class="sd">            elements in the list correspond to the result row&#39;s columns in</span>
+<span class="sd">            positional order, but this can be changed with the</span>
+<span class="sd">            `Connection.row_factory` property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">]</span></div>
+
+
+    <span class="c1"># Optional DB API Extension</span>
+<div class="viewcode-block" id="Cursor.__iter__">
+<a class="viewcode-back" href="../../dbapi2.html#comdb2.dbapi2.Cursor.__iter__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Row</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over all rows in a result set.</span>
+
+<span class="sd">        By default each row is returned as a `list`, where the elements in the</span>
+<span class="sd">        list correspond to the result row&#39;s columns in positional order, but</span>
+<span class="sd">        this can be changed with the `Connection.row_factory` property.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This is not required by DB-API 2.0; for maximum portability</span>
+<span class="sd">            applications should prefer to use `fetchone` or `fetchmany` or</span>
+<span class="sd">            `fetchall` instead.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cursor.execute(&quot;select 1, 2 UNION ALL select 3, 4&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; for row in cursor:</span>
+<span class="sd">            ...     print(row)</span>
+<span class="sd">            [1, 2]</span>
+<span class="sd">            [3, 4]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># Optional DB API Extension</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_description</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InterfaceError</span><span class="p">(</span><span class="s2">&quot;No result set exists&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hndl</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">cdb2</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_raise_wrapped_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="fm">__next__</span> <span class="o">=</span> <span class="nb">next</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2017, Bloomberg LP.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

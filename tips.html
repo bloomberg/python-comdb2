@@ -1,0 +1,244 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Best Practices, Tips, and Tricks &mdash; Comdb2 1.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=60b3a732"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="comdb2.factories Factory functions for use with Comdb2 handles" href="factories.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Comdb2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dbapi2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.dbapi2</span></code> DBAPI-2.0 compatible Comdb2 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdb2.html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comdb2.cdb2</span></code> Thin, pythonic wrapper over cdb2api</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Comdb2 to Python Type Mappings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factories.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comdb2.factories</span></code> Factory functions for use with Comdb2 handles</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Best Practices, Tips, and Tricks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Comdb2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Best Practices, Tips, and Tricks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tips.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="best-practices-tips-and-tricks">
+<h1>Best Practices, Tips, and Tricks<a class="headerlink" href="#best-practices-tips-and-tricks" title="Link to this heading"></a></h1>
+<ol class="arabic">
+<li><p>This package uses <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> for text and <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bytes</span></code></a> for blobs. See <a class="reference internal" href="types.html"><span class="doc">Comdb2 to Python Type Mappings</span></a> for
+an explanation of what Python types must be used when binding parameters,
+and what Python types will be returned for result columns.</p>
+<p>An error message saying “incompatible values from SQL blob of length 3 to
+bcstring field ‘foo’” most likely means that you passed a byte string where
+a unicode string should have been passed.</p>
+<p>An error message saying “incompatible values from SQL string of length 3 to
+bytearray field ‘bar’” most likely means that you passed a unicode string
+where a byte string should have been passed.  Note the byte string must be
+<em>exactly</em> the length of the column.  No padding is performed automatically,
+unless the column is declared with a <code class="docutils literal notranslate"><span class="pre">dbpad</span></code> attribute in the csc2 schema
+(for example <code class="docutils literal notranslate"><span class="pre">dbpad=0</span></code> will pad with null bytes or <code class="docutils literal notranslate"><span class="pre">dbpad=32</span></code> will pad
+with spaces).</p>
+<p>Not all places where you pass the wrong type of string will result in an
+exception - in some cases the SQL query will appear to succeed but
+a <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause that you expected to match some rows will silently fail
+to match any.</p>
+</li>
+<li><p>The latest version of this package only supports Python 3. If you can’t
+use Python 3, make sure to use version less than <code class="docutils literal notranslate"><span class="pre">1.5.0</span></code>.</p></li>
+<li><p>The database can time out connections that have been idle for a period of
+time, and each idle connection uses some amount of resources on the database
+server, so avoid leaving sessions open when they’re not in use.  As an
+example, prefer opening a new database connection for each client request in
+a service.</p></li>
+<li><p>Running a SQL statement using the <a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2</span></code></a> interface will implicitly open
+a transaction, as per PEP-249.  This means that, unlike other Comdb2
+interfaces, you need to explicitly call <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.commit" title="comdb2.dbapi2.Connection.commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Connection.commit</span></code></a> to save your
+changes.  If you write a program that seems to succeed but doesn’t make the
+updates you expected, make sure you didn’t miss a call to
+<a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection.commit" title="comdb2.dbapi2.Connection.commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">commit</span></code></a>.</p></li>
+<li><p>When transactions aren’t needed, prefer using <a class="reference internal" href="dbapi2.html#autocommit-mode"><span class="std std-ref">Autocommit Mode</span></a> on your
+<a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection" title="comdb2.dbapi2.Connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Connection</span></code></a> objects.  It results in less bookkeeping on the
+database server, and results in transparent retries after some error
+conditions - and it makes the behavior more consistent with other Comdb2
+interfaces.</p></li>
+<li><p>Always prefer binding parameters over dynamically generating SQL queries.
+Instead of this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM test where id=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">my_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Always do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM test where id=</span><span class="si">%(id)s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">my_id</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Because of this: <a class="reference external" href="https://xkcd.com/327/">https://xkcd.com/327/</a></p>
+<p>When using comdb2 R8, you can even bind a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> object like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;SELECT </span><span class="si">%(needle)s</span><span class="s2"> IN CARRAY(</span><span class="si">%(haystack)s</span><span class="s2">)&quot;</span><span class="p">,</span>
+    <span class="p">{</span><span class="s1">&#39;needle&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;haystack&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The two modules provided by this package use different syntax for SQL
+placeholders.  See <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Cursor.execute" title="comdb2.dbapi2.Cursor.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Cursor.execute</span></code></a> and <a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle.execute" title="comdb2.cdb2.Handle.execute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdb2.Handle.execute</span></code></a>
+for details.</p>
+</div>
+</li>
+<li><p>When using <a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2</span></code></a> but not parameter binding by position be sure to escape
+any literal <code class="docutils literal notranslate"><span class="pre">%</span></code> signs in a query by doubling them.  That is, instead of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;select * from log where msg like &#39;ERROR: %&#39; and pid = </span><span class="si">%(pid)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">{</span><span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="mi">1234</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You need to write:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;select * from log where msg like &#39;ERROR: </span><span class="si">%%</span><span class="s2">&#39; and pid = </span><span class="si">%(pid)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">{</span><span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="mi">1234</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Also, if you don’t want to pass any parameters to a <a class="reference internal" href="dbapi2.html#module-comdb2.dbapi2" title="comdb2.dbapi2: DBAPI-2.0 compatible Comdb2 API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2</span></code></a> query, it’s
+better to pass <code class="docutils literal notranslate"><span class="pre">()</span></code> than the default <code class="docutils literal notranslate"><span class="pre">None</span></code> value, because this removes
+the need to escape any literal <code class="docutils literal notranslate"><span class="pre">%</span></code> signs that appear in the query:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;select * from log where msg like &#39;ERROR: %&#39;&quot;</span><span class="p">,</span>
+    <span class="p">(),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.paramstyle" title="comdb2.dbapi2.paramstyle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.paramstyle</span></code></a> for an explanation of why.</p>
+</li>
+<li><p>Unlike many other databases, Comdb2 does not allow you to read uncommitted
+rows by default, even from the cursor that created them.  If you need to be
+able to read your own uncommitted work, you must execute <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">transaction</span>
+<span class="pre">read</span> <span class="pre">committed</span></code> as the first statement on a new <a class="reference internal" href="dbapi2.html#comdb2.dbapi2.Connection" title="comdb2.dbapi2.Connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi2.Connection</span></code></a> or
+<a class="reference internal" href="cdb2.html#comdb2.cdb2.Handle" title="comdb2.cdb2.Handle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdb2.Handle</span></code></a> (any isolation level higher than <code class="docutils literal notranslate"><span class="pre">READ</span> <span class="pre">COMMITTED</span></code> would
+obviously work as well).</p></li>
+<li><p>When using comdb2 R8, the library supports binding of (non-empty) <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> or
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> objects with the help of the <code class="docutils literal notranslate"><span class="pre">CARRAY</span></code> function, as long as all
+elements of the sequence are of the same type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2.dbapi2</span><span class="w"> </span><span class="kn">import</span> <span class="n">connect</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">search_in_list</span><span class="p">(</span><span class="n">needle</span><span class="p">,</span> <span class="n">haystack</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;needle&#39;</span><span class="p">:</span> <span class="n">needle</span><span class="p">,</span> <span class="s1">&#39;haystack&#39;</span><span class="p">:</span> <span class="n">haystack</span><span class="p">}</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;select </span><span class="si">%(needle)s</span><span class="s2"> in CARRAY(</span><span class="si">%(haystack)s</span><span class="s2">)&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+
+<span class="n">haystack</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+<span class="n">search_in_list</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">haystack</span><span class="p">)</span>
+<span class="n">search_in_list</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">haystack</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<blockquote>
+<div><p>If you still need to use R7, you would want to generate the query
+dynamically, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comdb2.dbapi2</span><span class="w"> </span><span class="kn">import</span> <span class="n">connect</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_bound_list</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="n">prefix</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">e</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">)}</span>
+    <span class="n">sql_frag</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%%</span><span class="s2">(</span><span class="si">%s</span><span class="s2">)s&quot;</span> <span class="o">%</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+    <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">sql_frag</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">search_in_list</span><span class="p">(</span><span class="n">needle</span><span class="p">,</span> <span class="n">haystack</span><span class="p">):</span>
+    <span class="n">haystack_params</span><span class="p">,</span> <span class="n">in_haystack_sql</span> <span class="o">=</span> <span class="n">_generate_bound_list</span><span class="p">(</span><span class="s2">&quot;hs&quot;</span><span class="p">,</span> <span class="n">haystack</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;needle&#39;</span><span class="p">:</span> <span class="n">needle</span><span class="p">}</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">haystack_params</span><span class="p">)</span>
+
+    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;select </span><span class="si">%(needle)s</span><span class="s2"> in &quot;</span> <span class="o">+</span> <span class="n">in_haystack_sql</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;mattdb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+
+<span class="n">haystack</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+<span class="n">search_in_list</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">haystack</span><span class="p">)</span>
+<span class="n">search_in_list</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">haystack</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="factories.html" class="btn btn-neutral float-left" title="comdb2.factories Factory functions for use with Comdb2 handles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2017, Bloomberg LP.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
