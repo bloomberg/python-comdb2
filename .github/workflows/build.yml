@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout bloomberg-comdb2 repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: bloomberg/comdb2
           path: bloomberg-comdb2
@@ -85,7 +85,7 @@ jobs:
           find /opt/bb &&
           rm bloomberg-comdb2.tar.gz
         '
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: 'Set up Python 3.8'
         uses: actions/setup-python@v6  # note that this step overwrites the PKG_CONFIG_PATH variable
         with:
