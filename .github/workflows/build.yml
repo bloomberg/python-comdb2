@@ -81,6 +81,7 @@ jobs:
           path: .
       - name: Install bloomberg-comdb2
         run: '
+          sudo apt-get update &&
           sudo apt-get install -qy libprotobuf-c-dev libssl-dev libunwind-dev &&
           sudo tar -C /opt -xzf bloomberg-comdb2.tar.gz &&
           find /opt/bb &&
@@ -93,6 +94,7 @@ jobs:
           python-version: '3.8'  # the lowest version that we support in CI
       - name: Build sdist
         run: '
+          sudo apt-get update &&
           sudo apt-get install -qy pkg-config &&
           PKG_CONFIG_PATH=/opt/bb/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
           pipx run build --sdist
@@ -125,6 +127,7 @@ jobs:
           path: .
       - name: Install bloomberg-comdb2
         run: '
+          sudo apt-get update &&
           sudo apt-get install -qy libprotobuf-c-dev libssl-dev libunwind-dev &&
           sudo tar -C /opt -xzf bloomberg-comdb2.tar.gz &&
           find /opt/bb &&
@@ -175,6 +178,7 @@ jobs:
           python-version: "${{matrix.python-version}}"
       - name: Install python-comdb2 from the sdist
         run: '
+          sudo apt-get update &&
           sudo apt-get install -qy pkg-config &&
           python -m pip install --upgrade pip &&
           PKG_CONFIG_PATH=/opt/bb/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
