@@ -14,6 +14,7 @@
 """Thin Python wrapper over libcdb2api"""
 
 from libc.string cimport strcmp, strcpy
+from libc.limits cimport INT_MAX
 from cpython.datetime cimport (import_datetime, PyTypeObject, timedelta_new,
                                PyDateTimeAPI)
 from cpython.ref cimport Py_TYPE, PyObject
@@ -49,6 +50,13 @@ cdef _string_as_bytes(s):
     elif type(s) is bytes:
         return s
     raise TypeError("unicode object or byte string required")
+
+
+cdef int _scalar_parameter_size(value) except -1:
+    cdef Py_ssize_t size = len(value)
+    if size > INT_MAX:
+        raise OverflowError("parameter value is too large to bind")
+    return <int>size
 
 
 cdef _column_type_name(int type):
@@ -140,13 +148,13 @@ cdef class _ParameterValue(object):
             elif isinstance(obj, bytes):
                 self.type = lib.CDB2_BLOB
                 self.owner = obj
-                self.size = len(self.owner)
+                self.size = _scalar_parameter_size(self.owner)
                 self.data = <char*>self.owner
                 return
             elif isinstance(obj, unicode):
                 self.type = lib.CDB2_CSTRING
                 self.owner = obj.encode('utf-8')
-                self.size = len(self.owner)
+                self.size = _scalar_parameter_size(self.owner)
                 self.data = <char*>self.owner
                 return
             elif isinstance(obj, DatetimeUs):

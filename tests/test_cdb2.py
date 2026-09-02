@@ -12,6 +12,7 @@
 import datetime
 
 from comdb2 import cdb2
+from comdb2 import _ccdb2
 from comdb2.factories import dict_row_factory
 from comdb2.factories import namedtuple_row_factory
 import pytest
@@ -311,6 +312,22 @@ def test_parameter_name_in_binding_errors_exception():
     assert exc.value.args[1] == (
         "Can't bind BadBytes value xx for parameter 'param': RuntimeError: YY"
     )
+
+
+def test_oversized_scalar_parameters_are_rejected():
+    class OversizedBytes(bytes):
+        def __len__(self):
+            return 1 << 31
+
+    class OversizedString(str):
+        def encode(self, *args, **kwargs):
+            return OversizedBytes()
+
+    for value in (OversizedBytes(), OversizedString()):
+        with pytest.raises(cdb2.Error) as exc:
+            _ccdb2._ParameterValue(value, "param")
+
+        assert isinstance(exc.value.__cause__, OverflowError)
 
 
 def test_parameter_name_in_binding_errors_noexception():
