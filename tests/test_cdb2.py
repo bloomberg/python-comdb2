@@ -330,6 +330,29 @@ def test_oversized_scalar_parameters_are_rejected():
         assert isinstance(exc.value.__cause__, OverflowError)
 
 
+@pytest.mark.parametrize(
+    "parameters,expected_errmsg",
+    [
+        (
+            {"values": [0] * 32768},
+            "ValueError: lists with more than 32767 elements cannot be bound",
+        ),
+        (
+            {"values": (0,) * 32768},
+            "ValueError: tuples with more than 32767 elements cannot be bound",
+        ),
+    ],
+)
+def test_oversized_parameter_array_error_matches_cdb2api(parameters, expected_errmsg):
+    hndl = cdb2.Handle("mattdb", "dev")
+
+    with pytest.raises(cdb2.Error) as exc:
+        hndl.execute("select * from carray(@values)", parameters)
+
+    assert exc.value.error_code == 113
+    assert expected_errmsg in exc.value.error_message
+
+
 def test_parameter_name_in_binding_errors_noexception():
     hndl = cdb2.Handle("mattdb", "dev")
 

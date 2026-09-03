@@ -31,6 +31,7 @@ cdef extern from "cdb2api.h" nogil:
 
     enum:
         CDB2_MAX_TZNAME
+        CDB2_MAX_BIND_ARRAY
 
     ctypedef struct cdb2_tm_t:
         int tm_sec
