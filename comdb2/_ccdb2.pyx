@@ -59,6 +59,18 @@ cdef int _scalar_parameter_size(value) except -1:
     return <int>size
 
 
+cdef void *_allocate_parameter_data(size_t count, size_t item_size) except NULL:
+    cdef void *data
+
+    if item_size != 0 and count > (<size_t>-1) // item_size:
+        raise OverflowError("parameter array is too large to bind")
+
+    data = PyMem_Malloc(count * item_size)
+    if data == NULL:
+        raise MemoryError()
+    return data
+
+
 cdef _column_type_name(int type):
     if   type == lib.CDB2_REAL:         return "CDB2_REAL"
     elif type == lib.CDB2_INTERVALDSUS: return "CDB2_INTERVALDSUS"
@@ -120,7 +132,7 @@ cdef class _ParameterValue(object):
     cdef int size
     cdef void *data
     cdef object owner
-    cdef int list_size
+    cdef Py_ssize_t list_size
 
     def __cinit__(self, obj, param_name):
         try:
@@ -135,14 +147,14 @@ cdef class _ParameterValue(object):
                 self.type = lib.CDB2_INTEGER
                 self.owner = None
                 self.size = sizeof(long long)
-                self.data = PyMem_Malloc(self.size)
+                self.data = _allocate_parameter_data(1, self.size)
                 (<long long*>self.data)[0] = obj
                 return
             elif isinstance(obj, float):
                 self.type = lib.CDB2_REAL
                 self.owner = None
                 self.size = sizeof(double)
-                self.data = PyMem_Malloc(self.size)
+                self.data = _allocate_parameter_data(1, self.size)
                 (<double*>self.data)[0] = obj
                 return
             elif isinstance(obj, bytes):
@@ -161,26 +173,31 @@ cdef class _ParameterValue(object):
                 self.type = lib.CDB2_DATETIMEUS
                 self.owner = None
                 self.size = sizeof(lib.cdb2_client_datetimeus_t)
-                self.data = PyMem_Malloc(self.size)
+                self.data = _allocate_parameter_data(1, self.size)
                 _bind_datetime(obj, <lib.cdb2_client_datetimeus_t*>self.data)
                 return
             elif isinstance(obj, datetime.datetime):
                 self.type = lib.CDB2_DATETIME
                 self.owner = None
                 self.size = sizeof(lib.cdb2_client_datetime_t)
-                self.data = PyMem_Malloc(self.size)
+                self.data = _allocate_parameter_data(1, self.size)
                 _bind_datetime(obj, <lib.cdb2_client_datetime_t*>self.data)
                 return
             elif isinstance(obj, (list, tuple)):
                 self.list_size = len(obj)
                 if 0 == self.list_size:
                     raise ValueError(f"empty {type(obj).__name__}s cannot be bound")
+                elif self.list_size > lib.CDB2_MAX_BIND_ARRAY:
+                    raise ValueError(
+                        f"{type(obj).__name__}s with more than"
+                        f" {lib.CDB2_MAX_BIND_ARRAY} elements cannot be bound"
+                    )
 
                 if all(isinstance(ele, int) for ele in obj):
                     self.type = lib.CDB2_INTEGER
                     self.size = sizeof(long long)
                     self.owner = None
-                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    self.data = _allocate_parameter_data(self.list_size, self.size)
                     for l_index in range(self.list_size):
                         (<long long*>self.data)[l_index] = obj[l_index]
                     return
@@ -188,7 +205,7 @@ cdef class _ParameterValue(object):
                     self.type = lib.CDB2_REAL
                     self.size = sizeof(double)
                     self.owner = None
-                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    self.data = _allocate_parameter_data(self.list_size, self.size)
                     for l_index in range(self.list_size):
                         (<double*>self.data)[l_index] = obj[l_index]
                     return
@@ -204,7 +221,7 @@ cdef class _ParameterValue(object):
                     self.type = lib.CDB2_BLOB
                     self.size = sizeof(blob_descriptor)
                     self.owner = owner
-                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    self.data = _allocate_parameter_data(self.list_size, self.size)
                     for l_index in range(self.list_size):
                         (<blob_descriptor*>self.data)[l_index].size = len(obj[l_index])
                         (<blob_descriptor*>self.data)[l_index].data = obj[l_index]
@@ -214,7 +231,7 @@ cdef class _ParameterValue(object):
                     self.size = sizeof(char*)
                     # Strings need to be converted to bytes
                     self.owner = [x.encode('utf-8') for x in obj]
-                    self.data = PyMem_Malloc(self.list_size * self.size)
+                    self.data = _allocate_parameter_data(self.list_size, self.size)
                     for l_index in range(self.list_size):
                         (<char**>self.data)[l_index] = <char*>(self.owner[l_index])
                     return
